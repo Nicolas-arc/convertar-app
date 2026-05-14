@@ -14,10 +14,15 @@ app.use(cors());
 app.use(express.json());
 
 // Supabase client (vars vienen de Railway environment)
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+let supabase;
+try {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+} catch (e) {
+  console.error('Supabase init error:', e.message);
+}
 
 // ── Health check ─────────────────────────────────────
 app.get('/', (req, res) => {
