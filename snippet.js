@@ -67,11 +67,35 @@
     track('purchase', null, null);
   }
 
+  // ── Esperar elemento en el DOM ───────────────────
+  function waitForEl(selector, cb, maxMs) {
+    var el = document.querySelector(selector);
+    if (el) { cb(el); return; }
+    var elapsed = 0;
+    var iv = setInterval(function () {
+      el = document.querySelector(selector);
+      elapsed += 100;
+      if (el || elapsed >= (maxMs || 8000)) {
+        clearInterval(iv);
+        if (el) cb(el);
+      }
+    }, 100);
+  }
+
   // ── Cargar config y ejecutar ─────────────────────
-  fetch(API_URL + '/config/' + SHOP_ID)
-    .then(function (r) { return r.json(); })
-    .then(function (cfg) { runAll(cfg); })
-    .catch(function () { runAll(null); });
+  function startConvertAR() {
+    fetch(API_URL + '/config/' + SHOP_ID)
+      .then(function (r) { return r.json(); })
+      .then(function (cfg) { runAll(cfg); })
+      .catch(function () { runAll({}); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startConvertAR);
+  } else {
+    // Ya cargó — pequeño delay para que TN termine de renderizar
+    setTimeout(startConvertAR, 200);
+  }
 
   function runAll(cfg) {
     cfg = cfg || {};
@@ -79,36 +103,42 @@
     var esProducto = !!(window.LS && window.LS.product);
     var pathActual = window.location.pathname;
 
-    // Producto
+    // Producto — espera a que #single-product exista
     if (esProducto) {
-      if (f.precio_tachado !== false) runTachado(cfg);
-      if (f.mejor_precio_badge !== false) runMejorPrecio(cfg);
-      if (f.cuotas !== false) runCuotas(cfg);
-      if (f.envio_badge !== false) runEnvioBadge(cfg);
-      if (f.tags) runTags(cfg);
-      if (f.countdown) runCountdown(cfg);
-      if (f.faq !== false) runFAQ(cfg);
-      if (f.sticky_bar) runStickyBar(cfg);
-      if (f.reviews && cfg.reviews && cfg.reviews.length) runReviews(cfg);
+      waitForEl('#single-product', function () {
+        if (f.precio_tachado !== false) runTachado(cfg);
+        if (f.mejor_precio_badge !== false) runMejorPrecio(cfg);
+        if (f.cuotas !== false) runCuotas(cfg);
+        if (f.envio_badge !== false) runEnvioBadge(cfg);
+        if (f.tags) runTags(cfg);
+        if (f.countdown) runCountdown(cfg);
+        if (f.faq !== false) runFAQ(cfg);
+        if (f.sticky_bar) runStickyBar(cfg);
+        if (f.reviews && cfg.reviews && cfg.reviews.length) runReviews(cfg);
+      });
     }
 
-    // Categorías
+    // Categorías — espera a que aparezca el grid
     if (f.hero_categorias !== false && cfg.categorias) {
       Object.keys(cfg.categorias).forEach(function (catPath) {
-        if (pathActual.includes(catPath)) {
+        if (pathActual.indexOf(catPath) > -1) {
           var catCfg = cfg.categorias[catPath];
-          if (catCfg.tipo === 'cuadros') runHeroCuadros(catCfg);
-          else if (catCfg.tipo === 'cortinas') runHeroCortinas(catCfg);
-          else runHeroGenerico(catCfg);
+          waitForEl('.js-product-table,.products-grid,.js-products-container,#products', function () {
+            if (catCfg.tipo === 'cuadros') runHeroCuadros(catCfg);
+            else if (catCfg.tipo === 'cortinas') runHeroCortinas(catCfg);
+            else runHeroGenerico(catCfg);
+          });
         }
       });
     }
 
-    // Listado (fuera de producto y categoría especial)
+    // Listado (fuera de producto) — espera a que haya cards
     if (!esProducto) {
-      if (f.precio_tachado !== false) runTachadoListado(cfg);
-      if (f.mejor_precio_badge !== false) runMejorPrecioListado(cfg);
-      if (f.cuotas !== false) runCuotasListado(cfg);
+      waitForEl('.js-item-product,.item-product', function () {
+        if (f.precio_tachado !== false) runTachadoListado(cfg);
+        if (f.mejor_precio_badge !== false) runMejorPrecioListado(cfg);
+        if (f.cuotas !== false) runCuotasListado(cfg);
+      });
     }
   }
 
