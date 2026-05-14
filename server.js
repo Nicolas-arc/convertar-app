@@ -25,26 +25,22 @@ app.get('/', (req, res) => {
 });
 
 // ── Panel de administración ───────────────────────────
-// GET /panel?secret=TU_SECRET&shop=pintoshogar
+// GET /panel?secret=TU_SECRET
 app.get('/panel', (req, res) => {
   const secret = req.query.secret || req.headers['x-admin-secret'];
   if (secret !== process.env.ADMIN_SECRET) {
-    return res.status(401).send(`
-      <!DOCTYPE html><html><head><meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>ConvertAR</title>
-      <style>body{font-family:system-ui;background:#0e0e0e;color:#e8e8e8;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;}
-      h2{color:#d4a85a;font-size:22px;}p{color:#888;font-size:14px;}
-      input{background:#161616;border:1px solid rgba(255,255,255,.1);color:white;padding:10px 16px;border-radius:8px;font-size:14px;width:260px;}
-      button{background:#d4a85a;color:#0e0e0e;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}
-      </style></head><body>
-      <h2>Convert<span style="color:#888">AR</span></h2>
-      <p>Ingresá tu clave de acceso</p>
-      <input type="password" id="k" placeholder="Secret key" onkeydown="if(event.key==='Enter')go()">
-      <button onclick="go()">Entrar</button>
-      <script>function go(){var k=document.getElementById('k').value;if(k)window.location='/panel?secret='+encodeURIComponent(k)+'&shop=${req.query.shop||'pintoshogar'}'}</script>
-      </body></html>
-    `);
+    const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ConvertAR</title>'
+      + '<style>body{font-family:system-ui;background:#0e0e0e;color:#e8e8e8;display:flex;'
+      + 'align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;}'
+      + 'input{background:#161616;border:1px solid #333;color:white;padding:10px 16px;'
+      + 'border-radius:8px;font-size:14px;width:260px;}'
+      + 'button{background:#d4a85a;color:#0e0e0e;border:none;padding:10px 24px;'
+      + 'border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}</style></head>'
+      + '<body><h2 style="color:#d4a85a">ConvertAR</h2>'
+      + '<input type="password" id="k" placeholder="Clave de acceso">'
+      + '<button onclick="window.location=\'/panel?secret=\'+document.getElementById(\'k\').value">Entrar</button>'
+      + '</body></html>';
+    return res.status(401).send(html);
   }
   res.sendFile(path.join(__dirname, 'panel.html'));
 });
