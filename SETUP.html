@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConvertAR — Guía de Setup</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --dark: #0e0e0e; --card: #161616; --border: rgba(255,255,255,.09);
+  --gold: #d4a85a; --gold2: #f0c97a; --green: #22c55e; --red: #ef4444;
+  --blue: #3b82f6; --muted: #888; --text: #e8e8e8;
+  --font: 'Segoe UI', system-ui, sans-serif;
+}
+body { font-family: var(--font); background: var(--dark); color: var(--text); padding: 0; }
+.container { max-width: 820px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* Header */
+.header { background: linear-gradient(135deg,#111,#1a1508); border-bottom: 2px solid var(--gold); padding: 40px 24px 32px; text-align: center; margin-bottom: 40px; }
+.header h1 { font-size: 42px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 8px; }
+.header h1 span { background: linear-gradient(135deg,var(--gold),var(--gold2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.header p { color: var(--muted); font-size: 15px; }
+
+/* Steps */
+.step { display: flex; gap: 20px; margin-bottom: 32px; }
+.step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--gold); color: #0e0e0e; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-body { flex: 1; }
+.step-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.step-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+.step-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+
+/* Code */
+.code-block { background: #0a0a0a; border: 1px solid rgba(212,168,90,.2); border-radius: 8px; padding: 14px; font-family: monospace; font-size: 13px; color: #ccc; white-space: pre-wrap; line-height: 1.6; margin: 10px 0; }
+.code-block .comment { color: #555; }
+.code-block .key { color: var(--gold); }
+.code-block .val { color: #7ec8a4; }
+
+/* Section title */
+.section-title { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 40px 0 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+/* Tag */
+.tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.tag-green { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+.tag-gold  { background: rgba(212,168,90,.12); color: var(--gold); border: 1px solid rgba(212,168,90,.2); }
+
+/* Costs table */
+.costs-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 600px) { .costs-wrap { grid-template-columns: 1fr; } }
+.cost-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+.cost-card h3 { font-size: 15px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.cost-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 13px; }
+.cost-row:last-child { border-bottom: none; }
+.cost-row .label { color: var(--muted); }
+.cost-row .price { font-weight: 700; }
+.cost-total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 14px; font-weight: 800; }
+.cost-total .price { color: var(--green); font-size: 18px; }
+
+/* Revenue calc */
+.revenue-card { background: linear-gradient(135deg, rgba(34,197,94,.06), var(--card)); border: 1px solid rgba(34,197,94,.2); border-radius: 14px; padding: 24px; margin-top: 20px; }
+.revenue-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 14px; }
+.revenue-row:last-child { border-bottom: none; }
+.revenue-total { margin-top: 16px; padding-top: 16px; border-top: 2px solid rgba(34,197,94,.3); display: flex; justify-content: space-between; font-size: 18px; font-weight: 900; }
+.revenue-total .val { color: var(--green); }
+
+/* Checklist */
+.checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.checklist li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; }
+.checklist li::before { content: '✓'; color: var(--green); font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Setup <span>ConvertAR</span></h1>
+  <p>Guía paso a paso para dejar el backend funcionando en Pintos Home</p>
+</div>
+
+<div class="container">
+
+  <!-- ═══ PASO A PASO ═══ -->
+  <div class="section-title">Paso a paso — Setup completo</div>
+
+  <!-- 1 -->
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <div class="step-title">Crear cuenta en Supabase <span class="tag tag-green">Gratis</span></div>
+      <div class="step-desc">Supabase es la base de datos donde se van a guardar los eventos de tracking y la configuración de cada tienda.</div>
+      <div class="step-card">
+        <ul class="checklist">
+          <li>Entrá a <strong>supabase.com</strong> → "Start your project" → Registrate con Google o email</li>
+          <li>Hacé click en <strong>"New project"</strong> → Nombre: <code>convertar</code> → Región: South America → Generá una contraseña fuerte (guardala)</li>
+          <li>Una vez creado, andá a <strong>Settings → API</strong></li>
+          <li>Copiá los 3 valores que necesitás:<br>
+            <div class="code-block"><span class="comment"># Guardar estos valores</span>
+<span class="key">SUPABASE_URL</span>       = <span class="val">https://XXXX.supabase.co</span>
+<span class="key">SUPABASE_ANON_KEY</span>  = <span class="val">eyJhbG... (la "anon public key")</span>
+<span class="key">SUPABASE_SERVICE_KEY</span> = <span class="val">eyJhbG... (la "service_role key")</span></div>
+          </li>
+          <li>Andá a <strong>SQL Editor</strong> → copiá y pegá todo el contenido del archivo <code>schema.sql</code> → click "Run" → debe decir "Success"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <div class="step-title">Crear cuenta en Railway <span class="tag tag-green">Gratis</span></div>
+      <div class="step-desc">Railway es donde corre el servidor Node.js. El free tier alcanza para empezar tranquilo.</div>
+      <div class="step-card">
+        <ul class="checklist">
+          <li>Entrá a <strong>railway.app</strong> → "Login" → Entrá con tu cuenta de GitHub (si no tenés, creá una en github.com — es gratis y tarda 2 min)</li>
+          <li>Click en <strong>"New Project"</strong> → <strong>"Deploy from GitHub repo"</strong></li>
+          <li>Si es la primera vez, autorizá a Railway a acceder a tus repos de GitHub</li>
+          <li>Subí la carpeta <code>convertar-app</code> a un repositorio de GitHub (nuevo, público o privado) — arrastrá los archivos desde el Finder</li>
+          <li>Seleccioná ese repositorio en Railway → click <strong>"Deploy Now"</strong></li>
+          <li>Esperá ~2 minutos a que haga el deploy (vas a ver logs en tiempo real)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <div class="step-title">Configurar las variables de entorno en Railway</div>
+      <div class="step-desc">Las variables son como un archivo .env pero guardado de forma segura en Railway — nunca van al código.</div>
+      <div class="step-card">
+        <ul class="checklist">
+          <li>En Railway, click en tu proyecto → click en el servicio → tab <strong>"Variables"</strong></li>
+          <li>Agregá estas variables una por una con "Add Variable":
+            <div class="code-block"><span class="key">SUPABASE_URL</span>         = <span class="val">https://XXXX.supabase.co</span>
+<span class="key">SUPABASE_SERVICE_KEY</span> = <span class="val">eyJhbG... (service_role)</span>
+<span class="key">ADMIN_SECRET</span>         = <span class="val">una-clave-secreta-que-inventes</span>
+<span class="key">PORT</span>                 = <span class="val">3000</span></div>
+          </li>
+          <li>Railway hace redeploy automático al guardar — esperá 1 minuto</li>
+          <li>Copiá la URL pública del servidor → en Railway, tab <strong>"Settings"</strong> → <strong>"Domains"</strong> → va a ser algo como <code>convertar-app-production.up.railway.app</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <div class="step-title">Verificar que el servidor está andando</div>
+      <div class="step-desc">Antes de conectar la tienda, confirmamos que el backend responde bien.</div>
+      <div class="step-card">
+        <ul class="checklist">
+          <li>Abrí en el navegador: <code>https://TU-APP.railway.app/</code><br>
+            Debe responder: <div class="code-block">{ "ok": true, "app": "ConvertAR", "version": "1.0.0" }</div></li>
+          <li>Probá la config de Pintos: <code>https://TU-APP.railway.app/config/pintoshogar</code><br>
+            Debe devolver el JSON de configuración</li>
+          <li>Si todo responde → el backend está listo ✅</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <div class="step-title">Actualizar el snippet y pegarlo en Tienda Nube</div>
+      <div class="step-desc">Ahora conectamos la tienda de Pintos al backend.</div>
+      <div class="step-card">
+        <ul class="checklist">
+          <li>Abrí el archivo <code>snippet.js</code></li>
+          <li>Cambiá la línea <code>API_URL</code>:
+            <div class="code-block"><span class="key">var API_URL</span> = <span class="val">'https://TU-APP.railway.app'</span>; <span class="comment">// ← tu URL real</span></div>
+          </li>
+          <li>Copiá todo el contenido del archivo <code>snippet.js</code></li>
+          <li>En Tienda Nube: <strong>Configuración → Códigos externos → Para la tienda</strong></li>
+          <li>Reemplazá el código actual con el nuevo snippet completo → Guardar</li>
+          <li>Abrí un producto de Pintos en el browser → abrí DevTools (F12) → Console<br>
+            No debe haber errores en rojo relacionados con ConvertAR</li>
+          <li>Verificá en Supabase → Table Editor → events → que empiecen a aparecer filas con <code>event_type: "productView"</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <div class="step-title">Abrir el panel de configuración</div>
+      <div class="step-desc">Ya podés gestionar todos los features desde el panel sin tocar más código.</div>
+      <div class="step-card">
+        <ul class="checklist">
+          <li>Abrí el archivo <code>panel.html</code> en Chrome</li>
+          <li>Cambiá en el código: <code>var API_URL = 'https://TU-APP.railway.app'</code> y <code>var ADMIN_SECRET = 'tu-clave'</code></li>
+          <li>Activá o desactivá features, configurá el FAQ, tags, countdown → click "Guardar cambios"</li>
+          <li>Los cambios se aplican en Pintos Home en tiempo real (el snippet lee la config cada vez que alguien visita la tienda)</li>
+          <li>En la sección "Analytics" vas a ver los datos de conversión en tiempo real</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ COSTOS ═══ -->
+  <div class="section-title">Costos de infraestructura</div>
+
+  <div class="costs-wrap">
+    <div class="cost-card">
+      <h3>🌱 Ahora (0–20 clientes)</h3>
+      <div class="cost-row"><span class="label">Supabase Free</span><span class="price" style="color:var(--green);">$0</span></div>
+      <div class="cost-row"><span class="label">Railway Hobby</span><span class="price" style="color:var(--green);">$0</span></div>
+      <div class="cost-row"><span class="label">Dominio .app/año</span><span class="price">~$1/mes</span></div>
+      <div class="cost-total"><span>Total infra/mes</span><span class="price">~$1 USD</span></div>
+    </div>
+    <div class="cost-card">
+      <h3>🚀 Escala (20–150 clientes)</h3>
+      <div class="cost-row"><span class="label">Supabase Pro</span><span class="price">$25 USD</span></div>
+      <div class="cost-row"><span class="label">Railway Pro</span><span class="price">$20 USD</span></div>
+      <div class="cost-row"><span class="label">Dominio</span><span class="price">$1 USD</span></div>
+      <div class="cost-total"><span>Total infra/mes</span><span class="price">$46 USD</span></div>
+    </div>
+  </div>
+
+  <div class="revenue-card">
+    <div style="font-size:15px;font-weight:800;margin-bottom:16px;">📈 Proyección de ingresos — 100 clientes</div>
+    <div class="revenue-row"><span>40 clientes Starter × $9.900</span><span style="color:var(--muted);">$396.000 ARS</span></div>
+    <div class="revenue-row"><span>45 clientes Pro × $19.900</span><span style="color:var(--muted);">$895.500 ARS</span></div>
+    <div class="revenue-row"><span>15 clientes Escala × $34.900</span><span style="color:var(--muted);">$523.500 ARS</span></div>
+    <div class="revenue-row"><span>Costo infra (≈$46 USD × $1.200)</span><span style="color:var(--red);">−$55.200 ARS</span></div>
+    <div class="revenue-total">
+      <span>Ganancia neta / mes</span>
+      <span class="val">$1.759.800 ARS</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:12px;">
+      Margen de infraestructura: <strong style="color:var(--green);">~97%</strong> · El costo no escala proporcionalmente con los clientes.
+    </div>
+  </div>
+
+  <!-- ═══ ARCHIVOS ═══ -->
+  <div class="section-title">Archivos del proyecto</div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+    <div style="padding:14px 18px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);color:var(--muted);">convertar-app/</div>
+    <div style="display:flex;flex-direction:column;gap:0;">
+      <div style="padding:12px 18px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;">
+        <span><code style="color:var(--gold);">server.js</code></span>
+        <span style="color:var(--muted);">Backend Node.js — tracking + config + analytics</span>
+      </div>
+      <div style="padding:12px 18px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;">
+        <span><code style="color:var(--gold);">package.json</code></span>
+        <span style="color:var(--muted);">Dependencias (express, cors, supabase)</span>
+      </div>
+      <div style="padding:12px 18px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;">
+        <span><code style="color:var(--gold);">schema.sql</code></span>
+        <span style="color:var(--muted);">Tablas de Supabase — pegar en SQL Editor</span>
+      </div>
+      <div style="padding:12px 18px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;">
+        <span><code style="color:var(--gold);">snippet.js</code></span>
+        <span style="color:var(--muted);">JS que va en TN — todos los features + tracking</span>
+      </div>
+      <div style="padding:12px 18px;display:flex;justify-content:space-between;font-size:13px;">
+        <span><code style="color:var(--gold);">panel.html</code></span>
+        <span style="color:var(--muted);">Panel de configuración + analytics dashboard</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

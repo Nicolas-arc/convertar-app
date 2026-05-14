@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConvertAR — Panel de configuración</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --dark: #0e0e0e; --card: #161616; --border: rgba(255,255,255,.09);
+  --gold: #d4a85a; --green: #22c55e; --red: #ef4444; --blue: #3b82f6;
+  --muted: #888; --text: #e8e8e8; --font: 'Segoe UI', system-ui, sans-serif;
+}
+body { font-family: var(--font); background: var(--dark); color: var(--text); min-height: 100vh; }
+
+/* ── NAV ── */
+nav { background: #111; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+.nav-logo { font-size: 18px; font-weight: 900; letter-spacing: .5px; }
+.nav-logo span { color: var(--gold); }
+.nav-shop { font-size: 12px; color: var(--muted); background: rgba(255,255,255,.05); padding: 4px 12px; border-radius: 20px; }
+.nav-save { background: var(--gold); color: #0e0e0e; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+.nav-save:hover { opacity: .85; }
+.nav-save:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── LAYOUT ── */
+.layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 57px); }
+@media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
+
+/* ── SIDEBAR ── */
+.sidebar { background: #111; border-right: 1px solid var(--border); padding: 20px 0; }
+.sidebar-item { padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); transition: all .15s; display: flex; align-items: center; gap: 10px; border-left: 3px solid transparent; }
+.sidebar-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.sidebar-item.active { color: var(--text); border-left-color: var(--gold); background: rgba(212,168,90,.05); }
+.sidebar-section { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #444; padding: 16px 20px 6px; }
+
+/* ── MAIN ── */
+.main { padding: 28px 32px; max-width: 800px; }
+.page { display: none; }
+.page.active { display: block; }
+.page-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.page-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+/* ── CARDS ── */
+.config-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 14px; }
+.config-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.config-card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.config-card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.config-card-body { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: none; }
+.config-card-body.open { display: block; }
+
+/* ── TOGGLE ── */
+.toggle-wrap { display: flex; align-items: center; gap: 10px; }
+.toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: #333; border-radius: 24px; cursor: pointer; transition: background .2s; }
+.toggle-slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform .2s; }
+input:checked + .toggle-slider { background: var(--green); }
+input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ── FORM ELEMENTS ── */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; display: block; margin-bottom: 6px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; background: rgba(255,255,255,.05); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--text);
+  font-family: var(--font); transition: border-color .15s;
+}
+.form-input:focus, .form-textarea:focus { outline: none; border-color: rgba(212,168,90,.5); }
+.form-textarea { min-height: 80px; resize: vertical; }
+
+/* ── FAQ EDITOR ── */
+.faq-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.faq-row { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.faq-row-top { display: flex; gap: 8px; margin-bottom: 8px; }
+.faq-row-q { flex: 1; }
+.faq-del { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.25); color: var(--red); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; border: none; flex-shrink: 0; }
+.btn-add { background: rgba(255,255,255,.06); border: 1px dashed rgba(255,255,255,.15); color: var(--muted); padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-size: 13px; transition: all .15s; }
+.btn-add:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── ANALYTICS ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi-box { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.kpi-val { font-size: 30px; font-weight: 800; line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ── SNIPPET BOX ── */
+.snippet-box { background: #0a0a0a; border: 1px solid rgba(212,168,90,.25); border-radius: 10px; padding: 16px; font-family: monospace; font-size: 12px; color: #aaa; white-space: pre; overflow-x: auto; line-height: 1.6; }
+.copy-btn { background: var(--gold); color: #0e0e0e; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+.copy-btn:hover { opacity: .85; }
+
+/* ── STATUS ── */
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.dot-green { background: var(--green); }
+.dot-yellow { background: #f59e0b; }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-logo">Convert<span>AR</span></div>
+  <div class="nav-shop">🏪 Pintos Home · Plan Pro</div>
+  <button class="nav-save" id="btnSave" onclick="saveConfig()" disabled>Guardar cambios</button>
+</nav>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">General</div>
+    <div class="sidebar-item active" onclick="showPage('features', this)">⚡ Features</div>
+    <div class="sidebar-item" onclick="showPage('envio', this)">🚚 Envío</div>
+    <div class="sidebar-item" onclick="showPage('tags', this)">🏷 Tags</div>
+    <div class="sidebar-item" onclick="showPage('countdown', this)">⏱ Countdown</div>
+    <div class="sidebar-item" onclick="showPage('faq', this)">❓ FAQ</div>
+    <div class="sidebar-section">Analytics</div>
+    <div class="sidebar-item" onclick="showPage('analytics', this)">📊 Dashboard</div>
+    <div class="sidebar-section">Instalación</div>
+    <div class="sidebar-item" onclick="showPage('snippet', this)">📋 Snippet JS</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- FEATURES -->
+    <div class="page active" id="page-features">
+      <div class="page-title">⚡ Features activos</div>
+      <div class="page-sub">Activá o desactivá cada mejora. Los cambios se aplican en tu tienda al guardar.</div>
+
+      <div id="features-list"></div>
+    </div>
+
+    <!-- ENVÍO -->
+    <div class="page" id="page-envio">
+      <div class="page-title">🚚 Badge de envío</div>
+      <div class="page-sub">Configura el texto que aparece en el badge glassmorphism del producto.</div>
+      <div class="config-card">
+        <div class="form-group">
+          <label class="form-label">Tipo de envío</label>
+          <select class="form-select" id="envio-tipo" onchange="markDirty()">
+            <option value="gratis">Envío gratis a todo el país</option>
+            <option value="calculado">Se calcula por código postal</option>
+            <option value="personalizado">Texto personalizado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Texto principal del badge</label>
+          <input type="text" class="form-input" id="envio-texto" placeholder="Envío gratis a todo el país" oninput="markDirty()">
+        </div>
+      </div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="page" id="page-tags">
+      <div class="page-title">🏷 Tags por producto</div>
+      <div class="page-sub">Asigná tags a productos específicos por su ID de TN.</div>
+      <div class="config-card">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+          Para encontrar el ID de un producto: abrí el producto en TN y mirá la URL. Ej: /admin/products/<strong style="color:var(--gold)">123456</strong>/edit
+        </div>
+        <div id="tags-list"></div>
+        <button class="btn-add" onclick="addTagRow()">+ Agregar producto con tag</button>
+      </div>
+    </div>
+
+    <!-- COUNTDOWN -->
+    <div class="page" id="page-countdown">
+      <div class="page-title">⏱ Countdown de oferta</div>
+      <div class="page-sub">Mostrá un temporizador de urgencia en el producto.</div>
+      <div class="config-card">
+        <div class="form-group">
+          <label class="form-label">Texto de la urgencia</label>
+          <input type="text" class="form-input" id="cd-texto" placeholder="Oferta termina en" oninput="markDirty()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha y hora de fin</label>
+          <input type="datetime-local" class="form-input" id="cd-end" onchange="markDirty()">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:10px;">
+            <label class="toggle"><input type="checkbox" id="cd-enabled" onchange="markDirty()"><span class="toggle-slider"></span></label>
+            Activar countdown en todos los productos
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="page" id="page-faq">
+      <div class="page-title">❓ Preguntas frecuentes</div>
+      <div class="page-sub">Las preguntas se muestran debajo de la descripción en todos los productos.</div>
+      <div class="config-card">
+        <div class="faq-list" id="faq-list"></div>
+        <button class="btn-add" onclick="addFaqRow()">+ Agregar pregunta</button>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="page-title">📊 Analytics de conversión</div>
+      <div class="page-sub">Datos en tiempo real de tu tienda. <span style="color:var(--green)"><span class="status-dot dot-green"></span>En vivo</span></div>
+      <div class="kpi-grid">
+        <div class="kpi-box">
+          <div class="kpi-label">Visitas a productos (7d)</div>
+          <div class="kpi-val" style="color:var(--blue);" id="kpi-views">—</div>
+          <div class="kpi-sub">productView events</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">Add-to-cart (7d)</div>
+          <div class="kpi-val" style="color:#a855f7;" id="kpi-carts">—</div>
+          <div class="kpi-sub">addToCart events</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">Ventas (7d)</div>
+          <div class="kpi-val" style="color:var(--green);" id="kpi-purchases">—</div>
+          <div class="kpi-sub">purchase events</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">Conversión global</div>
+          <div class="kpi-val" style="color:var(--gold);" id="kpi-conv">—</div>
+          <div class="kpi-sub">visitas → compra</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <strong style="color:var(--text);">Para ver datos reales:</strong><br>
+        1. Instalá el snippet en tu tienda TN<br>
+        2. Configurá la URL de Railway en el snippet (API_URL)<br>
+        3. Los datos aparecen acá automáticamente en tiempo real.
+      </div>
+      <div id="analytics-products" style="margin-top:20px;"></div>
+    </div>
+
+    <!-- SNIPPET -->
+    <div class="page" id="page-snippet">
+      <div class="page-title">📋 Snippet de instalación</div>
+      <div class="page-sub">Copiá este código y pegalo en TN → Configuración → Códigos externos → Para la tienda.</div>
+      <div class="config-card">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+          ⚠️ Antes de pegar: reemplazá <code style="color:var(--gold);">TU-APP.railway.app</code> con la URL de tu servidor Railway.
+        </div>
+        <div class="snippet-box" id="snippet-preview"></div>
+        <button class="copy-btn" onclick="copySnippet()">📋 Copiar snippet</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var SHOP_ID    = 'pintoshogar';
+var API_URL    = 'https://TU-APP.railway.app';  // ← cambiar
+var ADMIN_SECRET = 'MI_SECRET';                  // ← cambiar (mismo que en Railway)
+
+var config = {};
+var isDirty = false;
+
+var featureDefs = [
+  { key: 'envio_badge',    label: 'Badge de envío',           icon: '🚚', desc: 'Card glassmorphism con info de envío en cada producto.' },
+  { key: 'precio_tachado', label: 'Precio tachado',           icon: '💰', desc: 'Muestra el precio de lista tachado con % de descuento.' },
+  { key: 'tags',           label: 'Tags por producto',        icon: '🏷', desc: '"Más vendido", "Hot Days", "Nuevo" — configurables por SKU.' },
+  { key: 'countdown',      label: 'Countdown de oferta',      icon: '⏱', desc: 'Temporizador de urgencia en la página de producto.' },
+  { key: 'faq',            label: 'FAQ de objeciones',        icon: '❓', desc: 'Acordeón de preguntas frecuentes debajo de la descripción.' },
+  { key: 'video_slider',   label: 'Video Slider 9:16',        icon: '🎬', desc: 'Slider con videos y fotos estilo Reels. (Próximamente)' },
+  { key: 'sticky_bar',     label: 'Sticky buy bar (mobile)',  icon: '📱', desc: 'Barra fija inferior en mobile con precio y botón de compra.' },
+  { key: 'reviews',        label: 'Reseñas verificadas',      icon: '⭐', desc: 'Bloque de reviews de compradores reales.' }
+];
+
+// ── Cargar config desde backend ──────────────────
+function loadConfig() {
+  fetch(API_URL + '/config/' + SHOP_ID)
+    .then(function(r) { return r.json(); })
+    .then(function(cfg) {
+      config = cfg;
+      renderAll();
+    })
+    .catch(function() {
+      // Demo mode sin backend
+      config = {
+        features: { envio_badge:true, precio_tachado:true, tags:false, countdown:false, faq:true, video_slider:false, sticky_bar:false, reviews:false },
+        envio: { tipo: 'gratis', texto: 'Envío gratis a todo el país' },
+        tags: {},
+        countdown: { enabled:false, end_date:null, texto:'Oferta termina en' },
+        faq: [
+          { q:'¿Los productos vienen listos para instalar?', a:'Sí, incluyen todo lo necesario.' },
+          { q:'¿Qué pasa si llega dañado?', a:'Lo reponemos sin costo. Escribinos por WhatsApp con foto.' },
+          { q:'¿En cuántos días recibo?', a:'GBA: 2-4 días. Interior: 5-10 días hábiles.' }
+        ],
+        reviews: []
+      };
+      renderAll();
+    });
+}
+
+function renderAll() {
+  renderFeatures();
+  renderEnvio();
+  renderCountdown();
+  renderFAQ();
+  renderTags();
+  renderSnippet();
+  loadAnalytics();
+}
+
+// ── Features toggles ─────────────────────────────
+function renderFeatures() {
+  var list = document.getElementById('features-list');
+  list.innerHTML = '';
+  featureDefs.forEach(function(def) {
+    var on = config.features[def.key] || false;
+    var card = document.createElement('div');
+    card.className = 'config-card';
+    card.innerHTML =
+      '<div class="config-card-header">' +
+      '<div class="config-card-title">' + def.icon + ' ' + def.label + '</div>' +
+      '<div class="toggle-wrap"><label class="toggle">' +
+      '<input type="checkbox" ' + (on?'checked':'') + ' onchange="toggleFeature(\'' + def.key + '\', this.checked)">' +
+      '<span class="toggle-slider"></span></label>' +
+      '<span style="font-size:12px;color:' + (on?'var(--green)':'var(--muted)') + ';">' + (on?'Activo':'Inactivo') + '</span></div>' +
+      '</div>' +
+      '<div class="config-card-desc">' + def.desc + '</div>';
+    list.appendChild(card);
+  });
+}
+
+function toggleFeature(key, val) {
+  config.features[key] = val;
+  renderFeatures();
+  markDirty();
+}
+
+// ── Envío ─────────────────────────────────────────
+function renderEnvio() {
+  if (!config.envio) config.envio = {};
+  document.getElementById('envio-tipo').value = config.envio.tipo || 'gratis';
+  document.getElementById('envio-texto').value = config.envio.texto || '';
+}
+
+// ── Countdown ────────────────────────────────────
+function renderCountdown() {
+  var cd = config.countdown || {};
+  document.getElementById('cd-texto').value   = cd.texto || 'Oferta termina en';
+  document.getElementById('cd-end').value     = cd.end_date ? cd.end_date.slice(0,16) : '';
+  document.getElementById('cd-enabled').checked = cd.enabled || false;
+}
+
+// ── FAQ ──────────────────────────────────────────
+function renderFAQ() {
+  var list = document.getElementById('faq-list');
+  list.innerHTML = '';
+  (config.faq || []).forEach(function(item, i) {
+    list.appendChild(makeFaqRow(item.q, item.a, i));
+  });
+}
+function makeFaqRow(q, a, idx) {
+  var div = document.createElement('div');
+  div.className = 'faq-row';
+  div.innerHTML =
+    '<div class="faq-row-top">' +
+    '<input class="form-input faq-row-q" placeholder="Pregunta" value="' + (q||'').replace(/"/g,'&quot;') + '" oninput="markDirty()">' +
+    '<button class="faq-del" onclick="delFaqRow(' + idx + ')">✕</button></div>' +
+    '<textarea class="form-textarea" placeholder="Respuesta" oninput="markDirty()">' + (a||'') + '</textarea>';
+  return div;
+}
+function addFaqRow() {
+  if (!config.faq) config.faq = [];
+  config.faq.push({ q:'', a:'' });
+  renderFAQ();
+  markDirty();
+}
+function delFaqRow(idx) {
+  config.faq.splice(idx, 1);
+  renderFAQ();
+  markDirty();
+}
+
+// ── Tags ─────────────────────────────────────────
+function renderTags() {
+  var list = document.getElementById('tags-list');
+  list.innerHTML = '';
+  Object.entries(config.tags || {}).forEach(function(e) {
+    list.appendChild(makeTagRow(e[0], e[1].join(',')));
+  });
+}
+function makeTagRow(pid, tags) {
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;';
+  div.innerHTML =
+    '<input class="form-input" style="flex:0 0 140px;" placeholder="ID producto" value="' + pid + '" oninput="markDirty()">' +
+    '<input class="form-input" placeholder="mas_vendido, hot_days, nuevo, envio_free" value="' + tags + '" oninput="markDirty()">' +
+    '<button class="faq-del" onclick="this.parentElement.remove();markDirty()">✕</button>';
+  return div;
+}
+function addTagRow() {
+  document.getElementById('tags-list').appendChild(makeTagRow('', ''));
+}
+
+// ── Analytics ────────────────────────────────────
+function loadAnalytics() {
+  fetch(API_URL + '/analytics/' + SHOP_ID + '?days=7')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('kpi-views').textContent     = d.summary.views.toLocaleString();
+      document.getElementById('kpi-carts').textContent     = d.summary.carts.toLocaleString();
+      document.getElementById('kpi-purchases').textContent = d.summary.purchases.toLocaleString();
+      document.getElementById('kpi-conv').textContent      = d.summary.conversion + '%';
+
+      if (d.products && d.products.length) {
+        var wrap = document.getElementById('analytics-products');
+        wrap.innerHTML = '<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--muted);">CONVERSIÓN POR PRODUCTO</div>';
+        d.products.slice(0,10).forEach(function(p) {
+          var conv = parseFloat(p.conv);
+          var color = conv >= 3 ? 'var(--green)' : conv >= 1.5 ? '#f59e0b' : 'var(--red)';
+          wrap.innerHTML += '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
+            '<div><div style="font-size:13px;font-weight:600;">' + p.name + '</div>' +
+            '<div style="font-size:11px;color:var(--muted);">👁 ' + p.views + ' vistas · 🛒 ' + p.carts + ' carritos · ✅ ' + p.purchases + ' ventas</div></div>' +
+            '<div style="font-size:18px;font-weight:800;color:' + color + ';">' + p.conv + '%</div></div>';
+        });
+      }
+    })
+    .catch(function() {
+      ['kpi-views','kpi-carts','kpi-purchases','kpi-conv'].forEach(function(id) {
+        document.getElementById(id).textContent = 'Sin datos';
+      });
+    });
+}
+
+// ── Snippet preview ──────────────────────────────
+function renderSnippet() {
+  var code = '<script src="' + API_URL + '/snippet.js?shop=' + SHOP_ID + '"><\/script>';
+  document.getElementById('snippet-preview').textContent = code;
+}
+function copySnippet() {
+  navigator.clipboard.writeText(document.getElementById('snippet-preview').textContent);
+  var btn = document.querySelector('.copy-btn');
+  btn.textContent = '✅ Copiado!';
+  setTimeout(function() { btn.textContent = '📋 Copiar snippet'; }, 2000);
+}
+
+// ── Guardar ──────────────────────────────────────
+function markDirty() {
+  isDirty = true;
+  document.getElementById('btnSave').disabled = false;
+}
+
+function saveConfig() {
+  // Leer FAQ del DOM
+  var faqRows = document.querySelectorAll('#faq-list .faq-row');
+  config.faq = [];
+  faqRows.forEach(function(row) {
+    var q = row.querySelector('input').value.trim();
+    var a = row.querySelector('textarea').value.trim();
+    if (q) config.faq.push({ q, a });
+  });
+
+  // Leer tags del DOM
+  config.tags = {};
+  document.querySelectorAll('#tags-list > div').forEach(function(row) {
+    var inputs = row.querySelectorAll('input');
+    var pid = inputs[0].value.trim();
+    var tags = inputs[1].value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+    if (pid) config.tags[pid] = tags;
+  });
+
+  // Envío
+  config.envio = {
+    tipo:  document.getElementById('envio-tipo').value,
+    texto: document.getElementById('envio-texto').value
+  };
+
+  // Countdown
+  config.countdown = {
+    enabled:  document.getElementById('cd-enabled').checked,
+    end_date: document.getElementById('cd-end').value || null,
+    texto:    document.getElementById('cd-texto').value
+  };
+
+  fetch(API_URL + '/config/' + SHOP_ID, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ config, secret: ADMIN_SECRET })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function() {
+    var btn = document.getElementById('btnSave');
+    btn.textContent = '✅ Guardado!';
+    btn.disabled = true;
+    isDirty = false;
+    setTimeout(function() { btn.textContent = 'Guardar cambios'; }, 2000);
+  })
+  .catch(function() {
+    alert('Error guardando. Verificá que el backend esté corriendo.');
+  });
+}
+
+// ── Nav ──────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.sidebar-item').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Init ─────────────────────────────────────────
+loadConfig();
+</script>
+</body>
+</html>
