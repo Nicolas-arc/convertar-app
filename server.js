@@ -7,6 +7,7 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -21,6 +22,44 @@ const supabase = createClient(
 // ── Health check ─────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ ok: true, app: 'ConvertAR', version: '1.0.0' });
+});
+
+// ── Panel de administración ───────────────────────────
+// GET /panel?secret=TU_SECRET&shop=pintoshogar
+app.get('/panel', (req, res) => {
+  const secret = req.query.secret || req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).send(`
+      <!DOCTYPE html><html><head><meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>ConvertAR</title>
+      <style>body{font-family:system-ui;background:#0e0e0e;color:#e8e8e8;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;}
+      h2{color:#d4a85a;font-size:22px;}p{color:#888;font-size:14px;}
+      input{background:#161616;border:1px solid rgba(255,255,255,.1);color:white;padding:10px 16px;border-radius:8px;font-size:14px;width:260px;}
+      button{background:#d4a85a;color:#0e0e0e;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}
+      </style></head><body>
+      <h2>Convert<span style="color:#888">AR</span></h2>
+      <p>Ingresá tu clave de acceso</p>
+      <input type="password" id="k" placeholder="Secret key" onkeydown="if(event.key==='Enter')go()">
+      <button onclick="go()">Entrar</button>
+      <script>function go(){var k=document.getElementById('k').value;if(k)window.location='/panel?secret='+encodeURIComponent(k)+'&shop=${req.query.shop||'pintoshogar'}'}</script>
+      </body></html>
+    `);
+  }
+  res.sendFile(path.join(__dirname, 'panel.html'));
+});
+
+// ── Servir snippet.js como archivo estático ───────────
+app.get('/snippet.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.sendFile(path.join(__dirname, 'snippet.js'));
+});
+
+// ── Manifest PWA ──────────────────────────────────────
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.sendFile(path.join(__dirname, 'manifest.json'));
 });
 
 // ── TRACKING — recibe eventos del snippet JS ──────────
