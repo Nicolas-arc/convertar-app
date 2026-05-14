@@ -68,7 +68,6 @@ nav {
 .config-panel {
   width: 400px; flex-shrink: 0; overflow-y: auto;
   border-right: 1px solid var(--border); padding: 24px 22px;
-  transition: width .3s;
 }
 .page { display: none; }
 .page.active { display: block; }
@@ -116,11 +115,17 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .snippet-box { background: #0a0a0a; border: 1px solid rgba(212,168,90,.25); border-radius: 9px; padding: 14px; font-family: monospace; font-size: 11px; color: #aaa; white-space: pre-wrap; word-break: break-all; line-height: 1.6; }
 .copy-btn { background: var(--gold); color: #0e0e0e; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 8px; }
 
+/* category rows */
+.cat-row { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 9px; padding: 14px; margin-bottom: 10px; }
+.cat-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.cat-row-title { font-size: 13px; font-weight: 700; color: var(--gold); }
+.filtro-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+.filtro-row input { flex: 1; }
+
 /* ── PREVIEW PANE ── */
 .preview-pane {
   flex: 1; overflow-y: auto; background: #f5f3ef;
   display: flex; flex-direction: column;
-  transition: all .3s;
 }
 .preview-pane.hidden { display: none; }
 
@@ -129,6 +134,13 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
   padding: 10px 16px; display: flex; align-items: center; gap: 10px;
   position: sticky; top: 0; z-index: 10;
 }
+.preview-tabs { display: flex; gap: 6px; }
+.preview-tab {
+  font-size: 10px; font-weight: 600; padding: 4px 12px; border-radius: 5px;
+  cursor: pointer; background: rgba(0,0,0,.06); color: #666; border: none;
+  transition: all .15s;
+}
+.preview-tab.active { background: #1a1a1a; color: white; }
 .preview-dots { display: flex; gap: 5px; }
 .preview-dots span { width: 10px; height: 10px; border-radius: 50%; }
 .d1 { background: #ff5f56; } .d2 { background: #ffbd2e; } .d3 { background: #27c93f; }
@@ -139,6 +151,8 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .preview-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #999; }
 
 .preview-store { font-family: 'Segoe UI', system-ui, sans-serif; }
+.preview-screen { display: none; }
+.preview-screen.active { display: block; }
 
 /* Store header */
 .store-header {
@@ -152,7 +166,6 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 
 /* Product layout */
 .prod-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 0; max-width: 900px; margin: 0 auto; padding: 24px 20px; }
-@media (max-width: 700px) { .prod-layout { grid-template-columns: 1fr; } }
 
 /* Gallery */
 .prod-gallery { padding-right: 20px; }
@@ -161,7 +174,6 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
   aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
   font-size: 60px; margin-bottom: 8px; position: relative; overflow: hidden;
 }
-.prod-main-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
 .prod-thumbs { display: flex; gap: 6px; }
 .prod-thumb { width: 52px; height: 52px; background: #e8e3dc; border-radius: 6px; border: 2px solid transparent; cursor: pointer; }
 .prod-thumb.active { border-color: #1a1a1a; }
@@ -188,7 +200,6 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
   border: none; border-radius: 8px; padding: 14px;
   font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 8px;
 }
-.btn-cart:hover { background: #b71c1c; }
 .prod-stock { font-size: 11px; color: #888; text-align: center; margin-bottom: 12px; }
 
 /* ConvertAR features en el preview */
@@ -204,6 +215,21 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .pv-cd-num { font-size: 16px; font-weight: 800; color: white; line-height: 1; }
 .pv-cd-lbl { font-size: 8px; color: rgba(255,255,255,.4); text-transform: uppercase; }
 .pv-cd-sep { font-size: 14px; font-weight: 800; color: rgba(198,40,40,.5); align-self: center; }
+
+/* Mejor precio preview */
+#pv-mejor-precio { display: none; margin-bottom: 10px; }
+#pv-mejor-precio.show { display: block; }
+.pv-mp-chip {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+  border: 1px solid rgba(212,168,90,.4); border-radius: 10px;
+  padding: 8px 14px; min-width: 120px; position: relative; overflow: hidden;
+}
+.pv-mp-chip::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg, rgba(212,168,90,.06), transparent); }
+.pv-mp-line1 { font-size: 9px; font-weight: 700; color: #d4a85a; letter-spacing: 1px; text-transform: uppercase; }
+.pv-mp-line2 { font-size: 8px; font-weight: 600; color: rgba(212,168,90,.6); text-transform: uppercase; letter-spacing: .5px; }
+.pv-mp-price { font-size: 18px; font-weight: 900; color: white; margin: 2px 0; }
+.pv-mp-saving { font-size: 9px; color: #22c55e; font-weight: 600; }
 
 #pv-envio { display: none; margin-top: 12px; }
 #pv-envio.show { display: flex; }
@@ -228,7 +254,6 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .pv-faq-title { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
 .pv-faq-item { border: 1px solid #e0dcd6; border-radius: 8px; overflow: hidden; margin-bottom: 6px; }
 .pv-faq-q { padding: 12px 16px; background: #f7f5f2; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 12px; font-weight: 600; color: #1a1a1a; }
-.pv-faq-q:hover { background: #ede9e2; }
 .pv-faq-arr { font-size: 10px; color: #b8954a; transition: transform .2s; }
 .pv-faq-a { display: none; padding: 12px 16px; font-size: 12px; color: #555; line-height: 1.6; background: white; border-top: 1px solid #e0dcd6; }
 .pv-faq-item.open .pv-faq-a { display: block; }
@@ -240,22 +265,38 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .pv-reviews-title { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
 .pv-review-card { background: #f7f5f2; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
 
-/* badge overlay en imagen */
-.prod-badge-envio {
-  display: none; position: absolute; top: 10px; left: 10px;
-  background: #e53935; color: white; font-size: 9px; font-weight: 700;
-  padding: 4px 8px; border-radius: 4px; letter-spacing: .5px; text-transform: uppercase;
-  writing-mode: vertical-rl; text-orientation: mixed;
+/* ── HERO PREVIEW (Categorías) ── */
+.hero-preview {
+  background: #1a1a1a; padding: 24px; position: relative; overflow: hidden; min-height: 180px;
+  display: flex; flex-direction: column; justify-content: flex-end;
 }
+.hero-preview-bg {
+  position: absolute; inset: 0; background: linear-gradient(135deg, #1a1a1a 0%, #333 50%, #1a1a1a 100%);
+  opacity: .7;
+}
+.hero-preview-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.7), rgba(0,0,0,.2)); }
+.hero-preview-content { position: relative; z-index: 1; }
+.hero-preview-title { font-size: 18px; font-weight: 900; color: white; margin-bottom: 12px; line-height: 1.3; }
+.hero-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.hero-pill {
+  background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.2); border-radius: 10px;
+  padding: 8px 14px; cursor: pointer; transition: all .2s; text-align: center;
+}
+.hero-pill.active { background: rgba(212,168,90,.25); border-color: rgba(212,168,90,.6); }
+.hero-pill-label { font-size: 11px; font-weight: 700; color: white; }
+.hero-pill-sub { font-size: 9px; color: rgba(255,255,255,.5); }
 
-/* Disabled overlay */
-.preview-empty {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; color: var(--muted);
-  gap: 12px; padding: 40px;
-}
-.preview-empty-icon { font-size: 48px; opacity: .3; }
-.preview-empty-text { font-size: 14px; text-align: center; line-height: 1.6; }
+/* Listing grid preview */
+.listing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px; background: #f5f3ef; }
+.listing-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.listing-img { background: #f0ece5; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; }
+.listing-body { padding: 8px; }
+.listing-name { font-size: 10px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; line-height: 1.3; }
+.listing-price { font-size: 13px; font-weight: 800; color: #1a1a1a; }
+.listing-compare { font-size: 10px; color: #bbb; text-decoration: line-through; }
+.listing-cuotas { font-size: 9px; color: #555; margin-top: 2px; }
+.listing-mp-badge { font-size: 8px; font-weight: 700; color: #d4a85a; background: rgba(212,168,90,.1); border: 1px solid rgba(212,168,90,.25); border-radius: 3px; padding: 2px 5px; margin-top: 3px; display: inline-block; }
 </style>
 </head>
 <body>
@@ -277,12 +318,16 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <div class="sidebar-section">Configurar</div>
+    <div class="sidebar-section">Página de producto</div>
     <div class="sidebar-item active" onclick="showPage('features', this)">⚡ Features</div>
     <div class="sidebar-item" onclick="showPage('envio', this)">🚚 Envío</div>
+    <div class="sidebar-item" onclick="showPage('mejor_precio', this)">💰 Mejor Precio</div>
+    <div class="sidebar-item" onclick="showPage('cuotas', this)">📦 Cuotas</div>
     <div class="sidebar-item" onclick="showPage('tags', this)">🏷 Tags</div>
     <div class="sidebar-item" onclick="showPage('countdown', this)">⏱ Countdown</div>
     <div class="sidebar-item" onclick="showPage('faq', this)">❓ FAQ</div>
+    <div class="sidebar-section">Categorías</div>
+    <div class="sidebar-item" onclick="showPage('categorias', this)">🏪 Categorías</div>
     <div class="sidebar-section">Datos</div>
     <div class="sidebar-item" onclick="showPage('analytics', this)">📊 Analytics</div>
     <div class="sidebar-section">Setup</div>
@@ -308,13 +353,57 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
           <label class="form-label">Tipo de envío</label>
           <select class="form-select" id="envio-tipo" onchange="markDirty();updatePreview()">
             <option value="gratis">Envío gratis a todo el país</option>
-            <option value="calculado">Se calcula por código postal</option>
+            <option value="calcular">Se calcula por código postal</option>
             <option value="personalizado">Texto personalizado</option>
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Texto del badge</label>
           <input type="text" class="form-input" id="envio-texto" placeholder="Envío gratis a todo el país" oninput="markDirty();updatePreview()">
+        </div>
+      </div>
+    </div>
+
+    <!-- MEJOR PRECIO -->
+    <div class="page" id="page-mejor_precio">
+      <div class="page-title">💰 Mejor Precio</div>
+      <div class="page-sub">Badge dorado y tarjetas que muestran el precio con descuento por transferencia / efectivo.</div>
+      <div class="config-card">
+        <div class="form-group">
+          <label class="form-label">Descuento (%)</label>
+          <input type="number" class="form-input" id="mp-descuento" min="1" max="50" placeholder="10" oninput="markDirty();updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Línea 1 del chip</label>
+          <input type="text" class="form-input" id="mp-line1" placeholder="Mejor Precio" oninput="markDirty();updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Línea 2 del chip</label>
+          <input type="text" class="form-input" id="mp-line2" placeholder="Transferencia" oninput="markDirty();updatePreview()">
+        </div>
+        <div style="background:rgba(212,168,90,.06);border:1px solid rgba(212,168,90,.2);border-radius:8px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6;">
+          💡 Requiere que actives <strong style="color:var(--text);">💰 Mejor Precio</strong> en Features.
+        </div>
+      </div>
+    </div>
+
+    <!-- CUOTAS -->
+    <div class="page" id="page-cuotas">
+      <div class="page-title">📦 Cuotas sin interés</div>
+      <div class="page-sub">Muestra cuotas en la página de producto y en el listado de categoría.</div>
+      <div class="config-card">
+        <div class="form-group">
+          <label class="form-label">Cantidad de cuotas</label>
+          <input type="number" class="form-input" id="cuotas-cantidad" min="2" max="24" placeholder="6" oninput="markDirty();updatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:13px;font-weight:500;color:var(--text);">
+            <label class="toggle"><input type="checkbox" id="cuotas-sin-interes" onchange="markDirty();updatePreview()"><span class="toggle-slider"></span></label>
+            Sin interés
+          </label>
+        </div>
+        <div style="background:rgba(212,168,90,.06);border:1px solid rgba(212,168,90,.2);border-radius:8px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6;">
+          💡 Requiere que actives <strong style="color:var(--text);">📦 Cuotas</strong> en Features.
         </div>
       </div>
     </div>
@@ -347,7 +436,7 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
       <div class="page-sub">Temporizador de urgencia en todos los productos.</div>
       <div class="config-card">
         <div class="form-group">
-          <label class="form-label" style="display:flex;align-items:center;gap:10px;">
+          <label class="form-label" style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:13px;font-weight:500;color:var(--text);">
             <label class="toggle"><input type="checkbox" id="cd-enabled" onchange="markDirty();updatePreview()"><span class="toggle-slider"></span></label>
             Activar countdown
           </label>
@@ -371,6 +460,14 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
         <div class="faq-list" id="faq-list"></div>
         <button class="btn-add" onclick="addFaqRow()">+ Agregar pregunta</button>
       </div>
+    </div>
+
+    <!-- CATEGORÍAS -->
+    <div class="page" id="page-categorias">
+      <div class="page-title">🏪 Categorías</div>
+      <div class="page-sub">Hero banner con filtros para páginas de categoría. Cada URL puede tener su propio hero y pills de filtro.</div>
+      <div id="categorias-list"></div>
+      <button class="btn-add" onclick="addCatRow()" style="margin-top:4px;">+ Agregar categoría</button>
     </div>
 
     <!-- ANALYTICS -->
@@ -405,11 +502,20 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
     <!-- SNIPPET -->
     <div class="page" id="page-snippet">
       <div class="page-title">📋 Snippet</div>
-      <div class="page-sub">Pegá en TN → Configuración → Códigos externos → Para la tienda.</div>
+      <div class="page-sub">Pegá esto en TN → Configuración → Códigos externos → <strong>Para la tienda</strong>.</div>
       <div class="config-card">
-        <div style="font-size:12px;color:var(--green);margin-bottom:10px;">✅ URL: convertar-app-production.up.railway.app</div>
+        <div style="font-size:12px;color:var(--green);margin-bottom:10px;">✅ Snippet cargado desde Railway — siempre actualizado</div>
         <div class="snippet-box" id="snippet-preview"></div>
-        <button class="copy-btn" onclick="copySnippet()">📋 Copiar</button>
+        <button class="copy-btn" onclick="copySnippet()">📋 Copiar snippet</button>
+      </div>
+      <div class="config-card" style="margin-top:10px;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px;">Cómo instalarlo en Tienda Nube</div>
+        <ol style="font-size:12px;color:var(--muted);padding-left:18px;line-height:2;">
+          <li>En TN admin: <strong style="color:var(--text);">Configuración → Códigos externos</strong></li>
+          <li>Ir a <strong style="color:var(--text);">Para la tienda</strong> (no "Para la página de inicio")</li>
+          <li>Pegar el snippet y hacer clic en <strong style="color:var(--gold);">Guardar</strong></li>
+          <li>Verificar en pintoshogar.com.ar que se apliquen los cambios</li>
+        </ol>
       </div>
     </div>
 
@@ -421,157 +527,246 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
       <div class="preview-dots">
         <span class="d1"></span><span class="d2"></span><span class="d3"></span>
       </div>
-      <div class="preview-url">pintoshogar.com.ar/productos/combo-home-black-out-lino-voile</div>
-      <div class="preview-label">Preview en vivo</div>
+      <div class="preview-url" id="preview-url-bar">pintoshogar.com.ar/productos/combo-home-black-out-lino-voile</div>
+      <div class="preview-tabs">
+        <button class="preview-tab active" onclick="switchScreen('producto', this)">Producto</button>
+        <button class="preview-tab" onclick="switchScreen('categoria', this)">Categoría</button>
+      </div>
     </div>
 
-    <div class="preview-store">
-      <!-- Store Header -->
-      <div class="store-header">
-        <div style="display:flex;align-items:center;gap:16px;">
-          <div style="display:flex;gap:5px;align-items:center;">
-            <div style="width:8px;height:8px;background:#1a1a1a;border-radius:1px;"></div>
-            <div style="width:8px;height:8px;background:#1a1a1a;border-radius:1px;"></div>
-            <div style="width:8px;height:8px;background:#1a1a1a;border-radius:1px;"></div>
+    <!-- PANTALLA: PRODUCTO -->
+    <div class="preview-screen active" id="screen-producto">
+      <div class="preview-store">
+        <!-- Store Header -->
+        <div class="store-header">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="store-logo">PINTOS<br><span style="font-size:8px;letter-spacing:4px;font-weight:400;">HOME</span></div>
           </div>
-          <div class="store-logo">PINTOS<br><span style="font-size:8px;letter-spacing:4px;font-weight:400;">HOME</span></div>
-        </div>
-        <div class="store-nav-links">
-          <span>CORTINAS BLACK OUT</span>
-          <span>CUADROS</span>
-          <span>HOME DECOR</span>
-        </div>
-        <div class="store-icons">🔍 👤 🛒</div>
-      </div>
-
-      <!-- Product -->
-      <div class="prod-layout">
-        <!-- Gallery -->
-        <div class="prod-gallery">
-          <div class="prod-main-img">
-            <div class="prod-badge-envio" id="pv-img-badge">ENVÍO<br>GRATIS</div>
-            <div style="font-size:80px;">🪟</div>
+          <div class="store-nav-links">
+            <span>CORTINAS BLACK OUT</span>
+            <span>CUADROS</span>
+            <span>HOME DECOR</span>
           </div>
-          <div class="prod-thumbs">
-            <div class="prod-thumb active"></div>
-            <div class="prod-thumb"></div>
-            <div class="prod-thumb"></div>
-            <div class="prod-thumb"></div>
-          </div>
+          <div class="store-icons">🔍 👤 🛒</div>
         </div>
 
-        <!-- Info -->
-        <div class="prod-info">
-          <div class="prod-brand">Pintos Home</div>
-
-          <!-- Tags -->
-          <div id="pv-tags"></div>
-
-          <div class="prod-title">Combo Home | Black Out Lino + Voile | Lavable · Bloquea 100% la luz · 210cm x 130cm</div>
-
-          <div class="prod-rating">
-            <span class="prod-stars">★★★★★</span>
-            <span style="font-size:12px;font-weight:600;">5.0</span>
-            <span class="prod-reviews-count">· 5.382 reseñas</span>
-          </div>
-
-          <!-- Price -->
-          <div class="prod-price-row">
-            <span class="prod-price">$74.999</span>
-            <span class="prod-price-compare" id="pv-compare" style="display:none;">$97.775</span>
-            <span class="prod-off-pill" id="pv-off-pill" style="display:none;">23% OFF</span>
-          </div>
-
-          <div class="prod-cuotas">6 cuotas sin interés de <strong>$12.499,83</strong></div>
-
-          <!-- Countdown -->
-          <div id="pv-countdown">
-            <div class="pv-cd-label" id="pv-cd-label">⚡ OFERTA TERMINA EN</div>
-            <div class="pv-cd-timer">
-              <div class="pv-cd-unit"><div class="pv-cd-num" id="pv-cd-h">02</div><div class="pv-cd-lbl">Hs</div></div>
-              <div class="pv-cd-sep">:</div>
-              <div class="pv-cd-unit"><div class="pv-cd-num" id="pv-cd-m">47</div><div class="pv-cd-lbl">Min</div></div>
-              <div class="pv-cd-sep">:</div>
-              <div class="pv-cd-unit"><div class="pv-cd-num" id="pv-cd-s">33</div><div class="pv-cd-lbl">Seg</div></div>
+        <!-- Product -->
+        <div class="prod-layout">
+          <!-- Gallery -->
+          <div class="prod-gallery">
+            <div class="prod-main-img">
+              <div style="font-size:80px;">🪟</div>
+            </div>
+            <div class="prod-thumbs">
+              <div class="prod-thumb active"></div>
+              <div class="prod-thumb"></div>
+              <div class="prod-thumb"></div>
+              <div class="prod-thumb"></div>
             </div>
           </div>
 
-          <div class="prod-variants">
-            <div class="prod-variant-label">Color: Gris Topo + Voile</div>
-            <div class="prod-color-opts">
-              <div class="prod-color active" style="background:#9e9e9e;"></div>
-              <div class="prod-color" style="background:#f5f5f5;border:1px solid #ddd;"></div>
-              <div class="prod-color" style="background:#1a1a1a;"></div>
-              <div class="prod-color" style="background:#795548;"></div>
-              <div class="prod-color" style="background:#e0c9a6;"></div>
+          <!-- Info -->
+          <div class="prod-info">
+            <div class="prod-brand">Pintos Home</div>
+
+            <!-- Tags -->
+            <div id="pv-tags"></div>
+
+            <div class="prod-title">Combo Home | Black Out Lino + Voile | Lavable · Bloquea 100% la luz · 210cm x 130cm</div>
+
+            <div class="prod-rating">
+              <span class="prod-stars">★★★★★</span>
+              <span style="font-size:12px;font-weight:600;">5.0</span>
+              <span class="prod-reviews-count">· 5.382 reseñas</span>
             </div>
-          </div>
 
-          <button class="btn-cart">Agregar al carrito</button>
-          <div class="prod-stock">121 en stock</div>
+            <!-- Price -->
+            <div class="prod-price-row">
+              <span class="prod-price">$74.999</span>
+              <span class="prod-price-compare" id="pv-compare" style="display:none;">$97.775</span>
+              <span class="prod-off-pill" id="pv-off-pill" style="display:none;">23% OFF</span>
+            </div>
 
-          <!-- Envío badge -->
-          <div id="pv-envio">
-            <div class="pv-envio-card">
-              <div class="pv-envio-icon">🚚</div>
-              <div>
-                <div class="pv-envio-title" id="pv-envio-text">Envío gratis a todo el país</div>
-                <div class="pv-envio-sub">Ingresá tu código postal para saber cuándo llega</div>
+            <!-- Cuotas -->
+            <div class="prod-cuotas" id="pv-cuotas" style="display:none;"></div>
+
+            <!-- Mejor precio -->
+            <div id="pv-mejor-precio">
+              <div class="pv-mp-chip">
+                <div class="pv-mp-line1" id="pv-mp-line1">Mejor Precio</div>
+                <div class="pv-mp-price" id="pv-mp-price">$67.499</div>
+                <div class="pv-mp-line2" id="pv-mp-line2">Transferencia</div>
+                <div class="pv-mp-saving" id="pv-mp-saving">Ahorrás $7.500 (10%)</div>
+              </div>
+            </div>
+
+            <!-- Countdown -->
+            <div id="pv-countdown">
+              <div class="pv-cd-label" id="pv-cd-label">⚡ OFERTA TERMINA EN</div>
+              <div class="pv-cd-timer">
+                <div class="pv-cd-unit"><div class="pv-cd-num" id="pv-cd-h">02</div><div class="pv-cd-lbl">Hs</div></div>
+                <div class="pv-cd-sep">:</div>
+                <div class="pv-cd-unit"><div class="pv-cd-num" id="pv-cd-m">47</div><div class="pv-cd-lbl">Min</div></div>
+                <div class="pv-cd-sep">:</div>
+                <div class="pv-cd-unit"><div class="pv-cd-num" id="pv-cd-s">33</div><div class="pv-cd-lbl">Seg</div></div>
+              </div>
+            </div>
+
+            <div class="prod-variants">
+              <div class="prod-variant-label">Color: Gris Topo + Voile</div>
+              <div class="prod-color-opts">
+                <div class="prod-color active" style="background:#9e9e9e;"></div>
+                <div class="prod-color" style="background:#f5f5f5;border:1px solid #ddd;"></div>
+                <div class="prod-color" style="background:#1a1a1a;"></div>
+                <div class="prod-color" style="background:#795548;"></div>
+              </div>
+            </div>
+
+            <button class="btn-cart">Agregar al carrito</button>
+            <div class="prod-stock">121 en stock</div>
+
+            <!-- Envío badge -->
+            <div id="pv-envio">
+              <div class="pv-envio-card">
+                <div class="pv-envio-icon">🚚</div>
+                <div>
+                  <div class="pv-envio-title" id="pv-envio-text">Envío gratis a todo el país</div>
+                  <div class="pv-envio-sub">Ingresá tu código postal para saber cuándo llega</div>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- Description + Features below fold -->
+          <div class="prod-desc-section">
+            <div class="prod-desc-title">Descripción</div>
+            <div class="prod-desc-text">
+              La habitación que siempre imaginaste, en un solo combo.<br><br>
+              Oscuridad total cuando la necesitás. Luz suave y difusa cuando ambientás.
+              <strong>Variante Black Out:</strong> Tela técnica que bloquea el 100% de la luz solar.
+            </div>
+
+            <!-- FAQ -->
+            <div id="pv-faq">
+              <div class="pv-faq-title">❓ Preguntas frecuentes</div>
+              <div id="pv-faq-list"></div>
+            </div>
+
+            <!-- Reviews -->
+            <div id="pv-reviews">
+              <div class="pv-reviews-title">⭐ Opiniones de compradores</div>
+              <div id="pv-reviews-list"></div>
+            </div>
+          </div>
         </div>
-
-        <!-- Description + Features below fold -->
-        <div class="prod-desc-section">
-          <div class="prod-desc-title">Descripción</div>
-          <div class="prod-desc-text">
-            La habitación que siempre imaginaste, en un solo combo.<br><br>
-            Oscuridad total cuando la necesitás. Luz suave y difusa cuando ambientás. Dos texturas, una armonía.
-            <strong>Variante Black Out:</strong> Tela técnica de alta densidad que bloquea el 100% de la luz solar.
-            Ideal para dormir mejor desde la primera noche.
-          </div>
-
-          <!-- FAQ -->
-          <div id="pv-faq">
-            <div class="pv-faq-title">❓ Preguntas frecuentes</div>
-            <div id="pv-faq-list"></div>
-          </div>
-
-          <!-- Reviews -->
-          <div id="pv-reviews">
-            <div class="pv-reviews-title">⭐ Opiniones de compradores</div>
-            <div id="pv-reviews-list"></div>
-          </div>
-        </div>
-
       </div>
     </div>
-  </div>
 
-</div>
+    <!-- PANTALLA: CATEGORÍA -->
+    <div class="preview-screen" id="screen-categoria">
+      <div class="preview-store">
+        <!-- Store Header -->
+        <div class="store-header">
+          <div class="store-logo">PINTOS<br><span style="font-size:8px;letter-spacing:4px;font-weight:400;">HOME</span></div>
+          <div class="store-nav-links">
+            <span>CORTINAS BLACK OUT</span>
+            <span>CUADROS</span>
+          </div>
+          <div class="store-icons">🔍 👤 🛒</div>
+        </div>
+
+        <!-- Hero Categoría -->
+        <div class="hero-preview" id="pv-hero">
+          <div class="hero-preview-bg" id="pv-hero-bg"></div>
+          <div class="hero-preview-overlay"></div>
+          <div class="hero-preview-content">
+            <div class="hero-preview-title" id="pv-hero-title">Elegí cómo querés transformar tu hogar</div>
+            <div class="hero-pills" id="pv-hero-pills"></div>
+          </div>
+        </div>
+
+        <!-- Listing grid -->
+        <div class="listing-grid">
+          <div class="listing-card">
+            <div class="listing-img">🪟</div>
+            <div class="listing-body">
+              <div class="listing-name">Black Out Lino 210cm</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span class="listing-price">$74.999</span>
+                <span class="listing-compare" id="lv-compare-1" style="display:none;">$97.775</span>
+              </div>
+              <div class="listing-cuotas" id="lv-cuotas-1" style="display:none;"></div>
+              <div class="listing-mp-badge" id="lv-mp-1" style="display:none;"></div>
+            </div>
+          </div>
+          <div class="listing-card">
+            <div class="listing-img">🖼️</div>
+            <div class="listing-body">
+              <div class="listing-name">Set x3 Cuadros Natural</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span class="listing-price">$42.990</span>
+                <span class="listing-compare" id="lv-compare-2" style="display:none;">$55.887</span>
+              </div>
+              <div class="listing-cuotas" id="lv-cuotas-2" style="display:none;"></div>
+              <div class="listing-mp-badge" id="lv-mp-2" style="display:none;"></div>
+            </div>
+          </div>
+          <div class="listing-card">
+            <div class="listing-img">🛋️</div>
+            <div class="listing-body">
+              <div class="listing-name">Combo Home Completo</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span class="listing-price">$129.990</span>
+                <span class="listing-compare" id="lv-compare-3" style="display:none;">$168.987</span>
+              </div>
+              <div class="listing-cuotas" id="lv-cuotas-3" style="display:none;"></div>
+              <div class="listing-mp-badge" id="lv-mp-3" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /previewPane -->
+
+</div><!-- /shell -->
 
 <script>
 var SHOP_ID      = 'pintoshogar';
 var API_URL      = 'https://convertar-app-production.up.railway.app';
 var ADMIN_SECRET = 'pintos2026';
 
-var config   = {};
-var isDirty  = false;
+var config      = {};
+var isDirty     = false;
 var showPreview = true;
-var cdInterval = null;
+var cdInterval  = null;
+var currentScreen = 'producto';
+
+// ── Switch preview screens ───────────────────────
+function switchScreen(id, btn) {
+  currentScreen = id;
+  document.querySelectorAll('.preview-screen').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.preview-tab').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+  var urls = {
+    producto: 'pintoshogar.com.ar/productos/combo-home-black-out-lino-voile',
+    categoria: 'pintoshogar.com.ar/cuadros-pintos-home'
+  };
+  document.getElementById('preview-url-bar').textContent = urls[id] || '';
+  updatePreview();
+}
 
 // ── Countdown en preview ─────────────────────────
 function startPreviewCountdown() {
   if (cdInterval) clearInterval(cdInterval);
-  var endVal = document.getElementById('cd-end').value;
+  var endVal  = document.getElementById('cd-end').value;
   var endTime = endVal ? new Date(endVal).getTime() : Date.now() + 2 * 3600000 + 47 * 60000;
-
   function tick() {
     var rem = Math.max(0, endTime - Date.now());
-    var h   = Math.floor(rem / 3600000);
-    var m   = Math.floor((rem % 3600000) / 60000);
-    var s   = Math.floor((rem % 60000) / 1000);
+    var h = Math.floor(rem / 3600000);
+    var m = Math.floor((rem % 3600000) / 60000);
+    var s = Math.floor((rem % 60000) / 1000);
     var hEl = document.getElementById('pv-cd-h');
     var mEl = document.getElementById('pv-cd-m');
     var sEl = document.getElementById('pv-cd-s');
@@ -587,114 +782,248 @@ function startPreviewCountdown() {
 function updatePreview() {
   var f = config.features || {};
 
+  /* ---- PRODUCTO ---- */
+
   // Precio tachado
   var compare = document.getElementById('pv-compare');
   var offPill = document.getElementById('pv-off-pill');
-  if (f.precio_tachado) {
-    compare.style.display = 'inline';
-    offPill.style.display = 'inline';
-  } else {
-    compare.style.display = 'none';
-    offPill.style.display = 'none';
+  if (compare) { compare.style.display = f.precio_tachado ? 'inline' : 'none'; }
+  if (offPill)  { offPill.style.display  = f.precio_tachado ? 'inline' : 'none'; }
+
+  // Cuotas (producto)
+  var cuotasEl = document.getElementById('pv-cuotas');
+  if (cuotasEl) {
+    var cuotasCfg = config.cuotas || {};
+    var cant = cuotasCfg.cantidad || 6;
+    var sinInt = cuotasCfg.sin_interes !== false;
+    if (f.cuotas) {
+      var cuotaMonto = (74999 / cant).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      cuotasEl.style.display = '';
+      cuotasEl.innerHTML = cant + ' cuotas ' + (sinInt ? 'sin interés' : 'con interés') + ' de <strong>$' + cuotaMonto + '</strong>';
+    } else {
+      cuotasEl.style.display = 'none';
+    }
+  }
+
+  // Mejor precio (producto)
+  var mpWrap = document.getElementById('pv-mejor-precio');
+  if (mpWrap) {
+    var mpCfg = config.mejor_precio || {};
+    var pct = parseFloat(mpCfg.descuento_pct || document.getElementById('mp-descuento').value || 10);
+    if (f.mejor_precio_badge) {
+      mpWrap.className = 'show';
+      var basePrice = 74999;
+      var discounted = Math.round(basePrice * (1 - pct / 100));
+      var saving = basePrice - discounted;
+      var line1 = document.getElementById('mp-line1').value || mpCfg.chip_line1 || 'Mejor Precio';
+      var line2 = document.getElementById('mp-line2').value || mpCfg.chip_line2 || 'Transferencia';
+      document.getElementById('pv-mp-line1').textContent = line1;
+      document.getElementById('pv-mp-line2').textContent = line2;
+      document.getElementById('pv-mp-price').textContent = '$' + discounted.toLocaleString('es-AR');
+      document.getElementById('pv-mp-saving').textContent = 'Ahorrás $' + saving.toLocaleString('es-AR') + ' (' + pct + '%)';
+    } else {
+      mpWrap.className = '';
+    }
   }
 
   // Tags
   var tagsWrap = document.getElementById('pv-tags');
-  tagsWrap.className = f.tags ? 'show' : '';
-  if (f.tags) {
-    var tagDefs = {
-      mas_vendido: { txt: '🔥 Más vendido', bg: '#1a1a1a', color: '#d4a85a' },
-      hot_days:    { txt: '⚡ Hot Days',    bg: 'linear-gradient(135deg,#c62828,#e53935)', color: '#fff' },
-      nuevo:       { txt: '✨ Nuevo',        bg: '#0d47a1', color: '#fff' },
-      envio_free:  { txt: '🚚 Envío gratis', bg: '#1b5e20', color: '#fff' }
-    };
-    // Mostrar el primer producto con tags, o demo
-    var allTags = Object.values(config.tags || {});
-    var demoTags = allTags.length ? allTags[0] : ['mas_vendido'];
-    tagsWrap.innerHTML = '';
-    demoTags.forEach(function(key) {
-      var def = tagDefs[key];
-      if (!def) return;
-      var t = document.createElement('span');
-      t.className = 'pv-tag';
-      t.style.cssText = 'background:' + def.bg + ';color:' + def.color + ';';
-      t.textContent = def.txt;
-      tagsWrap.appendChild(t);
-    });
+  if (tagsWrap) {
+    tagsWrap.className = f.tags ? 'show' : '';
+    if (f.tags) {
+      var tagDefs = {
+        mas_vendido: { txt: '🔥 Más vendido', bg: '#1a1a1a', color: '#d4a85a' },
+        hot_days:    { txt: '⚡ Hot Days',    bg: 'linear-gradient(135deg,#c62828,#e53935)', color: '#fff' },
+        nuevo:       { txt: '✨ Nuevo',        bg: '#0d47a1', color: '#fff' },
+        envio_free:  { txt: '🚚 Envío gratis', bg: '#1b5e20', color: '#fff' }
+      };
+      var allTags = Object.values(config.tags || {});
+      var demoTags = allTags.length ? allTags[0] : ['mas_vendido'];
+      tagsWrap.innerHTML = '';
+      demoTags.forEach(function(key) {
+        var def = tagDefs[key];
+        if (!def) return;
+        var t = document.createElement('span');
+        t.className = 'pv-tag';
+        t.style.cssText = 'background:' + def.bg + ';color:' + def.color + ';';
+        t.textContent = def.txt;
+        tagsWrap.appendChild(t);
+      });
+    }
   }
 
   // Countdown
   var cdEnabled = document.getElementById('cd-enabled') && document.getElementById('cd-enabled').checked;
   var cdWrap = document.getElementById('pv-countdown');
-  if (f.countdown && cdEnabled) {
-    cdWrap.className = 'show';
-    var texto = (document.getElementById('cd-texto') && document.getElementById('cd-texto').value) || 'Oferta termina en';
-    document.getElementById('pv-cd-label').textContent = '⚡ ' + texto.toUpperCase();
-    startPreviewCountdown();
-  } else {
-    cdWrap.className = '';
-    if (cdInterval) clearInterval(cdInterval);
+  if (cdWrap) {
+    if (f.countdown && cdEnabled) {
+      cdWrap.className = 'show';
+      var texto = (document.getElementById('cd-texto') && document.getElementById('cd-texto').value) || 'Oferta termina en';
+      document.getElementById('pv-cd-label').textContent = '⚡ ' + texto.toUpperCase();
+      startPreviewCountdown();
+    } else {
+      cdWrap.className = '';
+      if (cdInterval) clearInterval(cdInterval);
+    }
   }
 
   // Envío badge
   var envioWrap = document.getElementById('pv-envio');
-  envioWrap.className = f.envio_badge ? 'show' : '';
-  if (f.envio_badge) {
-    var envioTxt = (document.getElementById('envio-texto') && document.getElementById('envio-texto').value) ||
-                   (config.envio && config.envio.texto) || 'Envío gratis a todo el país';
-    var el = document.getElementById('pv-envio-text');
-    if (el) el.textContent = envioTxt;
+  if (envioWrap) {
+    envioWrap.className = f.envio_badge ? 'show' : '';
+    if (f.envio_badge) {
+      var envioTxt = (document.getElementById('envio-texto') && document.getElementById('envio-texto').value) ||
+                     (config.envio && config.envio.texto) || 'Envío gratis a todo el país';
+      var el = document.getElementById('pv-envio-text');
+      if (el) el.textContent = envioTxt;
+    }
   }
 
   // FAQ
   var faqWrap = document.getElementById('pv-faq');
   var faqList = document.getElementById('pv-faq-list');
-  if (f.faq) {
-    faqWrap.className = 'show';
-    faqList.innerHTML = '';
-    // Leer del DOM del editor
-    var rows = document.querySelectorAll('#faq-list .faq-row');
-    var items = [];
-    rows.forEach(function(row) {
-      var q = row.querySelector('input') && row.querySelector('input').value;
-      var a = row.querySelector('textarea') && row.querySelector('textarea').value;
-      if (q) items.push({ q: q, a: a || '' });
-    });
-    if (!items.length) items = config.faq || [];
-    items.forEach(function(item) {
-      var div = document.createElement('div');
-      div.className = 'pv-faq-item';
-      div.innerHTML = '<div class="pv-faq-q" onclick="this.parentElement.classList.toggle(\'open\')">' +
-        item.q + '<span class="pv-faq-arr">▼</span></div>' +
-        '<div class="pv-faq-a">' + item.a + '</div>';
-      faqList.appendChild(div);
-    });
-  } else {
-    faqWrap.className = '';
+  if (faqWrap && faqList) {
+    if (f.faq) {
+      faqWrap.className = 'show';
+      faqList.innerHTML = '';
+      var rows = document.querySelectorAll('#faq-list .faq-row');
+      var items = [];
+      rows.forEach(function(row) {
+        var q = row.querySelector('input') && row.querySelector('input').value;
+        var a = row.querySelector('textarea') && row.querySelector('textarea').value;
+        if (q) items.push({ q: q, a: a || '' });
+      });
+      if (!items.length) items = config.faq || [];
+      items.forEach(function(item) {
+        var div = document.createElement('div');
+        div.className = 'pv-faq-item';
+        div.innerHTML = '<div class="pv-faq-q" onclick="this.parentElement.classList.toggle(\'open\')">' +
+          escHtml(item.q) + '<span class="pv-faq-arr">▼</span></div>' +
+          '<div class="pv-faq-a">' + escHtml(item.a) + '</div>';
+        faqList.appendChild(div);
+      });
+    } else {
+      faqWrap.className = '';
+    }
   }
 
   // Reviews
   var revWrap = document.getElementById('pv-reviews');
   var revList = document.getElementById('pv-reviews-list');
-  if (f.reviews && config.reviews && config.reviews.length) {
-    revWrap.className = 'show';
-    revList.innerHTML = '';
-    config.reviews.slice(0,3).forEach(function(r) {
-      var card = document.createElement('div');
-      card.className = 'pv-review-card';
-      var stars = '★'.repeat(r.rating||5) + '☆'.repeat(5-(r.rating||5));
-      card.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
-        '<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">' +
-        r.name.slice(0,2).toUpperCase() + '</div>' +
-        '<div><div style="font-size:12px;font-weight:600;">' + r.name + '</div>' +
-        '<div style="color:#f5a623;font-size:11px;">' + stars + '</div></div></div>' +
-        '<div style="font-size:12px;color:#555;line-height:1.5;">' + r.text + '</div>' +
-        '<div style="font-size:10px;color:#2e7d32;margin-top:5px;">✅ Compra verificada</div>';
-      revList.appendChild(card);
+  if (revWrap && revList) {
+    if (f.reviews && config.reviews && config.reviews.length) {
+      revWrap.className = 'show';
+      revList.innerHTML = '';
+      config.reviews.slice(0,3).forEach(function(r) {
+        var card = document.createElement('div');
+        card.className = 'pv-review-card';
+        var stars = '★'.repeat(r.rating||5) + '☆'.repeat(5-(r.rating||5));
+        card.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+          '<div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">' +
+          escHtml(r.name.slice(0,2).toUpperCase()) + '</div>' +
+          '<div><div style="font-size:12px;font-weight:600;">' + escHtml(r.name) + '</div>' +
+          '<div style="color:#f5a623;font-size:11px;">' + stars + '</div></div></div>' +
+          '<div style="font-size:12px;color:#555;line-height:1.5;">' + escHtml(r.text) + '</div>' +
+          '<div style="font-size:10px;color:#2e7d32;margin-top:5px;">✅ Compra verificada</div>';
+        revList.appendChild(card);
+      });
+    } else {
+      revWrap.className = '';
+    }
+  }
+
+  /* ---- CATEGORÍA ---- */
+  updateCategoryPreview();
+}
+
+function updateCategoryPreview() {
+  var f = config.features || {};
+
+  // Hero
+  var heroTitle = document.getElementById('pv-hero-title');
+  var heroPills = document.getElementById('pv-hero-pills');
+  var heroBg    = document.getElementById('pv-hero-bg');
+  if (!heroTitle) return;
+
+  // Tomar la primera categoría configurada (o defaults)
+  var cats = config.categorias || {};
+  var firstCat = Object.values(cats)[0];
+  if (firstCat) {
+    heroTitle.textContent = firstCat.hero_titulo || 'Elegí cómo querés transformar tu hogar';
+    if (firstCat.hero_imagen) {
+      heroBg.style.backgroundImage = 'url(' + firstCat.hero_imagen + ')';
+      heroBg.style.backgroundSize = 'cover';
+      heroBg.style.backgroundPosition = 'center';
+      heroBg.style.opacity = '1';
+    }
+    heroPills.innerHTML = '';
+    (firstCat.filtros || []).forEach(function(fil, idx) {
+      var pill = document.createElement('div');
+      pill.className = 'hero-pill' + (idx === 0 ? ' active' : '');
+      pill.innerHTML = '<div class="hero-pill-label">' + escHtml(fil.label || fil.key) + '</div>' +
+        (fil.sub ? '<div class="hero-pill-sub">' + escHtml(fil.sub) + '</div>' : '');
+      pill.onclick = function() {
+        heroPills.querySelectorAll('.hero-pill').forEach(function(p) { p.classList.remove('active'); });
+        pill.classList.add('active');
+      };
+      heroPills.appendChild(pill);
     });
   } else {
-    revWrap.className = '';
+    heroTitle.textContent = f.hero_categorias ? 'Elegí cómo querés transformar tu hogar' : 'Banner de categoría';
+    heroPills.innerHTML = '';
+    if (f.hero_categorias) {
+      ['Todos','Set x3','Set x6','Personalizado'].forEach(function(l, i) {
+        var pill = document.createElement('div');
+        pill.className = 'hero-pill' + (i === 0 ? ' active' : '');
+        pill.innerHTML = '<div class="hero-pill-label">' + l + '</div>';
+        heroPills.appendChild(pill);
+      });
+    }
   }
+
+  // Listing: precio tachado, cuotas y mejor precio en cards
+  var listingCfg = { prices: [74999, 42990, 129990] };
+  listingCfg.prices.forEach(function(price, idx) {
+    var i = idx + 1;
+    var compareEl = document.getElementById('lv-compare-' + i);
+    var cuotasEl  = document.getElementById('lv-cuotas-' + i);
+    var mpEl      = document.getElementById('lv-mp-' + i);
+    if (!compareEl) return;
+
+    if (f.precio_tachado) {
+      var compare = Math.round(price * 1.3);
+      compareEl.style.display = '';
+      compareEl.textContent = '$' + compare.toLocaleString('es-AR');
+    } else {
+      compareEl.style.display = 'none';
+    }
+
+    if (f.cuotas) {
+      var cuotasCfg = config.cuotas || {};
+      var cant = cuotasCfg.cantidad || 6;
+      var sinInt = cuotasCfg.sin_interes !== false;
+      var monto = (price / cant).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+      cuotasEl.style.display = '';
+      cuotasEl.textContent = cant + 'x $' + monto + (sinInt ? ' sin interés' : '');
+    } else {
+      cuotasEl.style.display = 'none';
+    }
+
+    if (f.mejor_precio_badge) {
+      var mpCfg = config.mejor_precio || {};
+      var pct = parseFloat(document.getElementById('mp-descuento').value || mpCfg.descuento_pct || 10);
+      var line1 = document.getElementById('mp-line1').value || mpCfg.chip_line1 || 'Mejor Precio';
+      var discounted = Math.round(price * (1 - pct / 100));
+      mpEl.style.display = '';
+      mpEl.textContent = line1 + ': $' + discounted.toLocaleString('es-AR');
+    } else {
+      mpEl.style.display = 'none';
+    }
+  });
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Toggle preview ───────────────────────────────
@@ -702,27 +1031,22 @@ function togglePreview() {
   showPreview = !showPreview;
   var pane = document.getElementById('previewPane');
   var btn  = document.getElementById('btnPreview');
-  if (showPreview) {
-    pane.classList.remove('hidden');
-    btn.classList.add('active');
-    btn.textContent = '👁 Preview';
-  } else {
-    pane.classList.add('hidden');
-    btn.classList.remove('active');
-    btn.textContent = '👁 Preview';
-  }
+  pane.classList.toggle('hidden', !showPreview);
+  btn.classList.toggle('active', showPreview);
 }
 
 // ── Features ─────────────────────────────────────
 var featureDefs = [
-  { key: 'precio_tachado', label: 'Precio tachado + % OFF',   icon: '💰', desc: 'Muestra el precio de lista tachado con la pastilla de descuento.' },
-  { key: 'envio_badge',    label: 'Badge de envío',           icon: '🚚', desc: 'Card glassmorphism con info de envío debajo del botón de compra.' },
-  { key: 'tags',           label: 'Tags por producto',        icon: '🏷', desc: '"Más vendido", "Hot Days", "Nuevo" — configurables por SKU.' },
-  { key: 'countdown',      label: 'Countdown de oferta',      icon: '⏱', desc: 'Temporizador de urgencia en la página de producto.' },
-  { key: 'faq',            label: 'FAQ de objeciones',        icon: '❓', desc: 'Acordeón de preguntas frecuentes debajo de la descripción.' },
-  { key: 'video_slider',   label: 'Video Slider 9:16',        icon: '🎬', desc: 'Videos verticales estilo Reels en la galería. (Próximamente)' },
-  { key: 'sticky_bar',     label: 'Sticky bar mobile',        icon: '📱', desc: 'Barra fija inferior en celular con precio y botón Comprar.' },
-  { key: 'reviews',        label: 'Reseñas verificadas',      icon: '⭐', desc: 'Bloque de reviews de compradores reales.' }
+  { key: 'precio_tachado',    label: 'Precio tachado + % OFF',      icon: '💰', desc: 'Muestra el precio de lista tachado con la pastilla de descuento.' },
+  { key: 'mejor_precio_badge',label: 'Mejor Precio (Transferencia)', icon: '🏷', desc: 'Chip y tarjetas con precio con descuento por transferencia/efectivo.' },
+  { key: 'cuotas',            label: 'Cuotas sin interés',           icon: '📦', desc: 'Muestra cuotas en producto y en el listado de categoría.' },
+  { key: 'envio_badge',       label: 'Badge de envío',               icon: '🚚', desc: 'Card glassmorphism con info de envío debajo del botón de compra.' },
+  { key: 'tags',              label: 'Tags por producto',            icon: '🏷', desc: '"Más vendido", "Hot Days", "Nuevo" — configurables por SKU.' },
+  { key: 'countdown',         label: 'Countdown de oferta',         icon: '⏱', desc: 'Temporizador de urgencia en la página de producto.' },
+  { key: 'faq',               label: 'FAQ de objeciones',           icon: '❓', desc: 'Acordeón de preguntas frecuentes debajo de la descripción.' },
+  { key: 'hero_categorias',   label: 'Hero de Categorías',          icon: '🏪', desc: 'Banner hero con filtros en páginas de cuadros, cortinas y más.' },
+  { key: 'sticky_bar',        label: 'Sticky bar mobile',           icon: '📱', desc: 'Barra fija inferior en celular con precio y botón Comprar.' },
+  { key: 'reviews',           label: 'Reseñas verificadas',         icon: '⭐', desc: 'Bloque de reviews de compradores reales.' }
 ];
 
 function renderFeatures() {
@@ -736,10 +1060,10 @@ function renderFeatures() {
       '<div class="config-card-header">' +
       '<div class="config-card-title">' + def.icon + ' ' + def.label + '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;">' +
-      '<label class="toggle"><input type="checkbox" ' + (on?'checked':'') +
+      '<label class="toggle"><input type="checkbox" ' + (on ? 'checked' : '') +
       ' onchange="toggleFeature(\'' + def.key + '\', this.checked)">' +
       '<span class="toggle-slider"></span></label>' +
-      '<span style="font-size:11px;color:' + (on?'var(--green)':'var(--muted)') + ';min-width:44px;">' + (on?'Activo':'Inactivo') + '</span>' +
+      '<span style="font-size:11px;color:' + (on ? 'var(--green)' : 'var(--muted)') + ';min-width:44px;">' + (on ? 'Activo' : 'Inactivo') + '</span>' +
       '</div></div>' +
       '<div class="config-card-desc">' + def.desc + '</div>';
     list.appendChild(card);
@@ -761,12 +1085,27 @@ function renderEnvio() {
   document.getElementById('envio-texto').value = config.envio.texto || '';
 }
 
+// ── Mejor precio ──────────────────────────────────
+function renderMejorPrecio() {
+  var mp = config.mejor_precio || {};
+  document.getElementById('mp-descuento').value = mp.descuento_pct || 10;
+  document.getElementById('mp-line1').value     = mp.chip_line1   || 'Mejor Precio';
+  document.getElementById('mp-line2').value     = mp.chip_line2   || 'Transferencia';
+}
+
+// ── Cuotas ────────────────────────────────────────
+function renderCuotas() {
+  var c = config.cuotas || {};
+  document.getElementById('cuotas-cantidad').value    = c.cantidad    || 6;
+  document.getElementById('cuotas-sin-interes').checked = c.sin_interes !== false;
+}
+
 // ── Countdown ────────────────────────────────────
 function renderCountdown() {
   var cd = config.countdown || {};
-  document.getElementById('cd-texto').value      = cd.texto    || 'Oferta termina en';
-  document.getElementById('cd-end').value        = cd.end_date ? cd.end_date.slice(0,16) : '';
-  document.getElementById('cd-enabled').checked  = cd.enabled  || false;
+  document.getElementById('cd-texto').value     = cd.texto    || 'Oferta termina en';
+  document.getElementById('cd-end').value       = cd.end_date ? cd.end_date.slice(0,16) : '';
+  document.getElementById('cd-enabled').checked = cd.enabled  || false;
 }
 
 // ── FAQ ──────────────────────────────────────────
@@ -783,9 +1122,9 @@ function makeFaqRow(q, a, idx) {
   div.className = 'faq-row';
   div.innerHTML =
     '<div class="faq-row-top">' +
-    '<input class="form-input faq-row-q" placeholder="Pregunta" value="' + (q||'').replace(/"/g,'&quot;') + '" oninput="markDirty();updatePreview()">' +
+    '<input class="form-input faq-row-q" placeholder="Pregunta" value="' + escHtml(q||'') + '" oninput="markDirty();updatePreview()">' +
     '<button class="faq-del" onclick="delFaqRow(' + idx + ')">✕</button></div>' +
-    '<textarea class="form-textarea" placeholder="Respuesta" oninput="markDirty();updatePreview()">' + (a||'') + '</textarea>';
+    '<textarea class="form-textarea" placeholder="Respuesta" oninput="markDirty();updatePreview()">' + escHtml(a||'') + '</textarea>';
   return div;
 }
 function addFaqRow() {
@@ -810,13 +1149,107 @@ function makeTagRow(pid, tags) {
   var div = document.createElement('div');
   div.style.cssText = 'display:flex;gap:7px;margin-bottom:7px;';
   div.innerHTML =
-    '<input class="form-input" style="flex:0 0 130px;" placeholder="ID producto" value="' + pid + '" oninput="markDirty()">' +
-    '<input class="form-input" placeholder="mas_vendido, hot_days..." value="' + tags + '" oninput="markDirty();updatePreview()">' +
-    '<button class="faq-del" onclick="this.parentElement.remove();markDirty();updatePreview()">✕</button>';
+    '<input class="form-input" style="flex:0 0 130px;" placeholder="ID producto" value="' + escHtml(pid) + '" oninput="markDirty()">' +
+    '<input class="form-input" placeholder="mas_vendido, hot_days..." value="' + escHtml(tags) + '" oninput="markDirty();updatePreview()">' +
+    '<button class="faq-del" onclick="this.parentElement.remove();markDirty()">✕</button>';
   return div;
 }
 function addTagRow() {
   document.getElementById('tags-list').appendChild(makeTagRow('', ''));
+}
+
+// ── Categorías ───────────────────────────────────
+function renderCategorias() {
+  var list = document.getElementById('categorias-list');
+  list.innerHTML = '';
+  var cats = config.categorias || {};
+  Object.entries(cats).forEach(function(entry) {
+    list.appendChild(makeCatRow(entry[0], entry[1]));
+  });
+  updateCategoryPreview();
+}
+
+function makeCatRow(slug, cat) {
+  var div = document.createElement('div');
+  div.className = 'cat-row';
+  div.dataset.slug = slug;
+
+  var filtrosHtml = (cat.filtros || []).map(function(f, i) {
+    return '<div class="filtro-row" data-fidx="' + i + '">' +
+      '<input class="form-input" style="flex:0 0 90px;" placeholder="key" value="' + escHtml(f.key||'') + '" oninput="markDirty();syncCat()">' +
+      '<input class="form-input" placeholder="Label" value="' + escHtml(f.label||'') + '" oninput="markDirty();syncCat()">' +
+      '<input class="form-input" placeholder="Sub (opcional)" value="' + escHtml(f.sub||'') + '" oninput="markDirty();syncCat()">' +
+      '<button class="faq-del" onclick="this.closest(\'.filtro-row\').remove();markDirty();syncCat()">✕</button>' +
+      '</div>';
+  }).join('');
+
+  div.innerHTML =
+    '<div class="cat-row-header">' +
+    '<div class="cat-row-title">/' + escHtml(slug.replace(/^\//,'')) + '</div>' +
+    '<button class="faq-del" onclick="this.closest(\'.cat-row\').remove();markDirty();updateCategoryPreview()">Eliminar</button>' +
+    '</div>' +
+    '<div class="form-group"><label class="form-label">URL slug</label>' +
+    '<input class="form-input cat-slug" placeholder="/cuadros-pintos-home" value="' + escHtml(slug) + '" oninput="markDirty();syncCat()"></div>' +
+    '<div class="form-group"><label class="form-label">Tipo</label>' +
+    '<select class="form-select cat-tipo" onchange="markDirty()">' +
+    ['cuadros','cortinas','generico'].map(function(t) {
+      return '<option value="' + t + '"' + (cat.tipo === t ? ' selected' : '') + '>' + t + '</option>';
+    }).join('') + '</select></div>' +
+    '<div class="form-group"><label class="form-label">Título del hero</label>' +
+    '<input class="form-input cat-titulo" placeholder="Elegí cómo querés transformar tu hogar" value="' + escHtml(cat.hero_titulo||'') + '" oninput="markDirty();syncCat()"></div>' +
+    '<div class="form-group"><label class="form-label">URL imagen de fondo</label>' +
+    '<input class="form-input cat-imagen" placeholder="https://cdn.tutienda.com/imagen.jpg" value="' + escHtml(cat.hero_imagen||'') + '" oninput="markDirty();syncCat()"></div>' +
+    '<div class="form-group"><label class="form-label">Pills de filtro</label>' +
+    '<div class="filtros-list">' + filtrosHtml + '</div>' +
+    '<button class="btn-add" style="margin-top:6px;" onclick="addFiltroRow(this)">+ Agregar filtro</button>' +
+    '</div>';
+
+  return div;
+}
+
+function addCatRow() {
+  if (!config.categorias) config.categorias = {};
+  var newSlug = '/nueva-categoria-' + Date.now();
+  config.categorias[newSlug] = { tipo: 'generico', hero_titulo: '', filtros: [] };
+  renderCategorias();
+  markDirty();
+}
+
+function addFiltroRow(btn) {
+  var filtrosList = btn.previousElementSibling;
+  var newRow = document.createElement('div');
+  newRow.className = 'filtro-row';
+  newRow.innerHTML =
+    '<input class="form-input" style="flex:0 0 90px;" placeholder="key" oninput="markDirty();syncCat()">' +
+    '<input class="form-input" placeholder="Label" oninput="markDirty();syncCat()">' +
+    '<input class="form-input" placeholder="Sub (opcional)" oninput="markDirty();syncCat()">' +
+    '<button class="faq-del" onclick="this.closest(\'.filtro-row\').remove();markDirty();syncCat()">✕</button>';
+  filtrosList.appendChild(newRow);
+  markDirty();
+}
+
+function syncCat() {
+  // Rebuild config.categorias from DOM
+  config.categorias = {};
+  document.querySelectorAll('.cat-row').forEach(function(row) {
+    var slug = row.querySelector('.cat-slug').value.trim();
+    if (!slug) return;
+    var filtros = [];
+    row.querySelectorAll('.filtro-row').forEach(function(fr) {
+      var inputs = fr.querySelectorAll('input');
+      var key   = inputs[0] && inputs[0].value.trim();
+      var label = inputs[1] && inputs[1].value.trim();
+      var sub   = inputs[2] && inputs[2].value.trim();
+      if (key || label) filtros.push({ key: key||label, label: label||key, sub: sub||'' });
+    });
+    config.categorias[slug] = {
+      tipo:        row.querySelector('.cat-tipo').value,
+      hero_titulo: row.querySelector('.cat-titulo').value.trim(),
+      hero_imagen: row.querySelector('.cat-imagen').value.trim(),
+      filtros:     filtros
+    };
+  });
+  updateCategoryPreview();
 }
 
 // ── Analytics ────────────────────────────────────
@@ -824,19 +1257,19 @@ function loadAnalytics() {
   fetch(API_URL + '/analytics/' + SHOP_ID + '?days=7')
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      document.getElementById('kpi-views').textContent     = d.summary.views.toLocaleString();
-      document.getElementById('kpi-carts').textContent     = d.summary.carts.toLocaleString();
-      document.getElementById('kpi-purchases').textContent = d.summary.purchases.toLocaleString();
+      document.getElementById('kpi-views').textContent     = (d.summary.views||0).toLocaleString();
+      document.getElementById('kpi-carts').textContent     = (d.summary.carts||0).toLocaleString();
+      document.getElementById('kpi-purchases').textContent = (d.summary.purchases||0).toLocaleString();
       document.getElementById('kpi-conv').textContent      = d.summary.conversion + '%';
 
       var wrap = document.getElementById('analytics-products');
       if (d.products && d.products.length) {
         wrap.innerHTML = '<div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Conversión por producto</div>';
         d.products.slice(0,10).forEach(function(p) {
-          var conv = parseFloat(p.conv);
+          var conv  = parseFloat(p.conv);
           var color = conv >= 3 ? 'var(--green)' : conv >= 1.5 ? '#f59e0b' : 'var(--red)';
           wrap.innerHTML += '<div style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">' +
-            '<div><div style="font-size:12px;font-weight:600;">' + p.name + '</div>' +
+            '<div><div style="font-size:12px;font-weight:600;">' + escHtml(p.name) + '</div>' +
             '<div style="font-size:10px;color:var(--muted);">👁 ' + p.views + ' · 🛒 ' + p.carts + ' · ✅ ' + p.purchases + '</div></div>' +
             '<div style="font-size:16px;font-weight:800;color:' + color + ';">' + p.conv + '%</div></div>';
         });
@@ -853,15 +1286,14 @@ function loadAnalytics() {
 
 // ── Snippet ──────────────────────────────────────
 function renderSnippet() {
-  var url  = 'pintoshogar.com.ar/productos/tu-producto';
-  var code = '<!-- ConvertAR v1.0 -->\n<script>\n(function(){\n  var SHOP_ID="pintoshogar";\n  var API_URL="https://convertar-app-production.up.railway.app";\n  // ... cargá el snippet completo desde el archivo snippet.js\n})();\n<\/script>';
+  var code = '<!-- ConvertAR v2.0 - pintoshogar -->\n<script src="https://convertar-app-production.up.railway.app/snippet.js" defer><\/script>';
   document.getElementById('snippet-preview').textContent = code;
 }
 function copySnippet() {
   navigator.clipboard.writeText(document.getElementById('snippet-preview').textContent);
   var btn = document.querySelector('.copy-btn');
   btn.textContent = '✅ Copiado!';
-  setTimeout(function() { btn.textContent = '📋 Copiar'; }, 2000);
+  setTimeout(function() { btn.textContent = '📋 Copiar snippet'; }, 2000);
 }
 
 // ── Guardar ──────────────────────────────────────
@@ -891,17 +1323,32 @@ function saveConfig() {
 
   config.envio = {
     tipo:  document.getElementById('envio-tipo').value,
-    texto: document.getElementById('envio-texto').value
+    texto: document.getElementById('envio-texto').value.trim()
   };
+
+  config.mejor_precio = {
+    descuento_pct: parseFloat(document.getElementById('mp-descuento').value) || 10,
+    chip_line1:    document.getElementById('mp-line1').value.trim() || 'Mejor Precio',
+    chip_line2:    document.getElementById('mp-line2').value.trim() || 'Transferencia'
+  };
+
+  config.cuotas = {
+    cantidad:    parseInt(document.getElementById('cuotas-cantidad').value) || 6,
+    sin_interes: document.getElementById('cuotas-sin-interes').checked
+  };
+
   config.countdown = {
     enabled:  document.getElementById('cd-enabled').checked,
     end_date: document.getElementById('cd-end').value || null,
-    texto:    document.getElementById('cd-texto').value
+    texto:    document.getElementById('cd-texto').value.trim()
   };
+
+  // Sincronizar categorías desde DOM
+  syncCat();
 
   var btn = document.getElementById('btnSave');
   btn.textContent = 'Guardando...';
-  btn.disabled = true;
+  btn.disabled    = true;
 
   fetch(API_URL + '/config/' + SHOP_ID, {
     method: 'POST',
@@ -916,7 +1363,7 @@ function saveConfig() {
   })
   .catch(function() {
     btn.textContent = 'Error — reintentar';
-    btn.disabled = false;
+    btn.disabled    = false;
     setTimeout(function() { btn.textContent = 'Guardar cambios'; btn.disabled = false; }, 3000);
   });
 }
@@ -927,29 +1374,75 @@ function showPage(id, el) {
   document.querySelectorAll('.sidebar-item').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('page-' + id).classList.add('active');
   el.classList.add('active');
+  // Switch preview to match section
+  if (id === 'categorias') {
+    switchScreen('categoria', document.querySelector('.preview-tab:last-child'));
+  } else if (currentScreen === 'categoria' && id !== 'categorias') {
+    switchScreen('producto', document.querySelector('.preview-tab:first-child'));
+  }
 }
 
 // ── Load config ──────────────────────────────────
+var defaultConfig = {
+  features: {
+    precio_tachado: true, mejor_precio_badge: true, cuotas: true,
+    envio_badge: true, tags: false, countdown: false, faq: true,
+    hero_categorias: true, sticky_bar: false, reviews: false
+  },
+  envio: { tipo: 'calcular', texto: 'Medio de envío: presioná y poné tu código postal para saber cuándo llega.' },
+  mejor_precio: { descuento_pct: 10, chip_line1: 'Mejor Precio', chip_line2: 'Transferencia' },
+  cuotas: { cantidad: 6, sin_interes: true },
+  tags: {},
+  countdown: { enabled: false, end_date: null, texto: 'Oferta termina en' },
+  faq: [
+    { q: '¿Los productos vienen listos para usar/instalar?', a: 'Sí, todos nuestros productos incluyen todo lo necesario para su instalación.' },
+    { q: '¿Qué pasa si el producto llega dañado?', a: 'Todos los envíos están asegurados. Si llega con algún daño, escribinos por WhatsApp con foto y lo reponemos sin costo.' },
+    { q: '¿En cuántos días recibo mi pedido?', a: 'GBA: 2-4 días hábiles. Interior del país: 5-10 días hábiles.' },
+    { q: '¿Puedo elegir el largo de la cortina?', a: 'Sí, tenemos opciones de 150cm, 210cm, 240cm, 260cm y 300cm de largo.' }
+  ],
+  reviews: [],
+  categorias: {
+    '/cuadros-pintos-home': {
+      tipo: 'cuadros',
+      hero_titulo: 'Elegí cómo querés transformar tu hogar',
+      hero_imagen: '',
+      filtros: [
+        { key: 'todos',        label: 'Todos',        sub: 'Ver todo' },
+        { key: 'x3',          label: 'Set x3',       sub: '40x35 · Envío gratis' },
+        { key: 'x6',          label: 'Set x6',       sub: '30x20 · Envío gratis' },
+        { key: 'personalizado',label: 'Personalizado',sub: 'Creá tu galería' }
+      ]
+    },
+    '/black-out': {
+      tipo: 'cortinas',
+      hero_titulo: '¿Cuál es la cortina perfecta para tu ventana?',
+      hero_imagen: '',
+      filtros: [
+        { key: 'todos', label: 'Todos',  sub: '' },
+        { key: 'h150',  label: '150cm',  sub: 'Ventana estándar' },
+        { key: 'h210',  label: '210cm',  sub: 'Altura media' },
+        { key: 'h240',  label: '240cm',  sub: 'Piso a techo' },
+        { key: 'h260',  label: '260cm',  sub: 'Techo alto' },
+        { key: 'h300',  label: '300cm',  sub: 'Loft / dúplex' }
+      ]
+    }
+  }
+};
+
 function loadConfig() {
   fetch(API_URL + '/config/' + SHOP_ID)
     .then(function(r) { return r.json(); })
     .then(function(cfg) {
-      config = cfg;
+      // Merge defaults for missing keys
+      config = Object.assign({}, defaultConfig, cfg);
+      config.features  = Object.assign({}, defaultConfig.features,  cfg.features  || {});
+      config.mejor_precio = cfg.mejor_precio || defaultConfig.mejor_precio;
+      config.cuotas    = cfg.cuotas    || defaultConfig.cuotas;
+      config.categorias = cfg.categorias || defaultConfig.categorias;
       renderAll();
     })
     .catch(function() {
-      config = {
-        features: { envio_badge:true, precio_tachado:true, tags:false, countdown:false, faq:true, video_slider:false, sticky_bar:false, reviews:false },
-        envio: { tipo:'gratis', texto:'Envío gratis a todo el país' },
-        tags: {},
-        countdown: { enabled:false, end_date:null, texto:'Oferta termina en' },
-        faq: [
-          { q:'¿Los productos vienen listos para instalar?', a:'Sí, incluyen todo lo necesario.' },
-          { q:'¿Qué pasa si llega dañado?', a:'Lo reponemos sin costo. Escribinos por WhatsApp con foto.' },
-          { q:'¿En cuántos días recibo?', a:'GBA: 2-4 días. Interior: 5-10 días hábiles.' }
-        ],
-        reviews: []
-      };
+      config = JSON.parse(JSON.stringify(defaultConfig));
       renderAll();
     });
 }
@@ -957,9 +1450,12 @@ function loadConfig() {
 function renderAll() {
   renderFeatures();
   renderEnvio();
+  renderMejorPrecio();
+  renderCuotas();
   renderCountdown();
   renderFAQ();
   renderTags();
+  renderCategorias();
   renderSnippet();
   loadAnalytics();
   updatePreview();
