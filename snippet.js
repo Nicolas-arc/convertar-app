@@ -67,13 +67,20 @@
     track('purchase', null, null);
   }
 
-  // ── Esperar elemento en el DOM ───────────────────
+  // ── Esperar elemento en el DOM (acepta múltiples selectores separados por coma) ──
   function waitForEl(selector, cb, maxMs) {
-    var el = document.querySelector(selector);
+    var sels = selector.split(',').map(function(s) { return s.trim(); });
+    function find() {
+      for (var i = 0; i < sels.length; i++) {
+        try { var el = document.querySelector(sels[i]); if (el) return el; } catch(e) {}
+      }
+      return null;
+    }
+    var el = find();
     if (el) { cb(el); return; }
     var elapsed = 0;
     var iv = setInterval(function () {
-      el = document.querySelector(selector);
+      el = find();
       elapsed += 100;
       if (el || elapsed >= (maxMs || 8000)) {
         clearInterval(iv);
@@ -81,6 +88,19 @@
       }
     }, 100);
   }
+
+  // ── Selector robusto del contenedor de producto ──
+  // Cubre: template Atlántico, Pacífico, Trend, Materia y custom
+  var PROD_SCOPE_SEL = [
+    '#single-product',
+    '.js-product-detail',
+    '[data-store="product-detail"]',
+    '.product-detail',
+    '.js-product-main',
+    '.product__info',
+    'main[class*="product"]',
+    'section[class*="product"]'
+  ].join(',');
 
   // ── Cargar config y ejecutar ─────────────────────
   function startConvertAR() {
@@ -103,9 +123,9 @@
     var esProducto = !!(window.LS && window.LS.product);
     var pathActual = window.location.pathname;
 
-    // Producto — espera a que #single-product exista
+    // Producto — espera a que aparezca el contenedor (cualquier template de TN)
     if (esProducto) {
-      waitForEl('#single-product', function () {
+      waitForEl(PROD_SCOPE_SEL, function () {
         if (f.precio_tachado !== false) runTachado(cfg);
         if (f.mejor_precio_badge !== false) runMejorPrecio(cfg);
         if (f.cuotas !== false) runCuotas(cfg);
@@ -147,6 +167,14 @@
   // ════════════════════════════════════════════════
   var _priceObs = null;
 
+  function getScope() {
+    var sels = PROD_SCOPE_SEL.split(',');
+    for (var i = 0; i < sels.length; i++) {
+      try { var el = document.querySelector(sels[i].trim()); if (el) return el; } catch(e) {}
+    }
+    return null;
+  }
+
   function runTachado(cfg) {
     clearTimeout(window._cvaTachadoT);
     var viejoBadge = document.getElementById('cva-tachado-prod');
@@ -154,7 +182,7 @@
     var viejoOff = document.getElementById('cva-off-pill');
     if (viejoOff) viejoOff.remove();
 
-    var scope = document.getElementById('single-product');
+    var scope = getScope();
     if (!scope) return;
     var priceEl = document.getElementById('price_display') || scope.querySelector('.js-price-display,[data-store="price"]');
     if (!priceEl) return;
@@ -230,7 +258,7 @@
     var line1 = mp.chip_line1 || 'Mejor Precio';
     var line2 = mp.chip_line2 || 'Transferencia';
 
-    var scope = document.getElementById('single-product');
+    var scope = getScope();
     if (!scope) return;
     var priceEl = document.getElementById('price_display') || scope.querySelector('.js-price-display');
     if (!priceEl) return;
@@ -350,7 +378,7 @@
   function runCuotas(cfg) {
     var cant = (cfg.cuotas && cfg.cuotas.cantidad) || 6;
     try {
-      var scope = document.querySelector('#single-product');
+      var scope = getScope();
       var cont = scope && (scope.querySelector('.js-max-installments .js-max-installments') || scope.querySelector('.js-max-installments-container'));
       var priceEl = scope && (document.getElementById('price_display') || scope.querySelector('.js-price-display'));
       if (!cont || !priceEl) return;
@@ -385,7 +413,7 @@
   // ════════════════════════════════════════════════
   function runEnvioBadge(cfg) {
     if (document.getElementById('cva-envio-badge')) return;
-    var scope = document.getElementById('single-product');
+    var scope = getScope();
     if (!scope) return;
 
     var envioTxt = (cfg.envio && cfg.envio.texto) || 'Medio de envío: presioná y poné tu código postal para saber cuándo llega.';
@@ -443,7 +471,7 @@
     var pid = String(window.LS.product.id);
     var tags = (cfg.tags && cfg.tags[pid]) || [];
     if (!tags.length) return;
-    var scope = document.getElementById('single-product');
+    var scope = getScope();
     if (!scope || document.getElementById('cva-tags-wrap')) return;
     var tagDefs = {
       mas_vendido: { txt: '🔥 Más vendido', bg: '#1a1a1a', color: '#d4a85a' },
@@ -471,7 +499,7 @@
   function runCountdown(cfg) {
     var cdCfg = cfg.countdown;
     if (!cdCfg || !cdCfg.enabled || !cdCfg.end_date) return;
-    var scope = document.getElementById('single-product');
+    var scope = getScope();
     if (!scope || document.getElementById('cva-countdown')) return;
     var endTime = new Date(cdCfg.end_date).getTime();
     if (Date.now() > endTime) return;
@@ -527,7 +555,7 @@
   // ════════════════════════════════════════════════
   function runStickyBar(cfg) {
     if (!/Mobi|Android/i.test(navigator.userAgent)) return;
-    var scope = document.getElementById('single-product');
+    var scope = getScope();
     if (!scope || document.getElementById('cva-sticky-bar')) return;
     var priceEl = scope.querySelector('.js-price-display,#price_display');
     if (!priceEl) return;
