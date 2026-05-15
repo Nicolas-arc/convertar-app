@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConvertAR — Resumen del Proyecto</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --dark: #0e0e0e; --card: #161616; --card2: #1c1c1c;
+  --border: rgba(255,255,255,.08); --gold: #d4a85a;
+  --green: #22c55e; --red: #ef4444; --blue: #3b82f6; --purple: #a855f7;
+  --muted: #666; --text: #e8e8e8; --sub: #999;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--dark); color: var(--text);
+  min-height: 100vh; padding: 40px 20px 80px;
+}
+
+/* ── HEADER ── */
+.header {
+  max-width: 900px; margin: 0 auto 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border); padding-bottom: 28px;
+}
+.logo { font-size: 28px; font-weight: 900; letter-spacing: .5px; }
+.logo span { color: var(--gold); }
+.badge-version {
+  background: rgba(212,168,90,.12); border: 1px solid rgba(212,168,90,.3);
+  color: var(--gold); font-size: 12px; font-weight: 700;
+  padding: 5px 14px; border-radius: 20px;
+}
+.header-right { text-align: right; }
+.header-date { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+
+/* ── LAYOUT ── */
+.container { max-width: 900px; margin: 0 auto; }
+.section { margin-bottom: 40px; }
+.section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 24px; margin-bottom: 10px;
+}
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.card-sm { padding: 16px 18px; }
+
+/* ── STATUS GRID ── */
+.status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.status-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.green { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,.4); }
+.status-dot.red { background: var(--red); }
+.status-dot.yellow { background: #f59e0b; }
+.status-label { font-size: 13px; font-weight: 600; }
+.status-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── PLATFORM CARDS ── */
+.platform-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 24px;
+}
+.platform-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+}
+.platform-icon {
+  width: 42px; height: 42px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.platform-name { font-size: 16px; font-weight: 800; }
+.platform-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.kv-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.kv-row:last-child { border-bottom: none; padding-bottom: 0; }
+.kv-key { color: var(--muted); flex: 0 0 140px; font-size: 12px; }
+.kv-val { color: var(--text); font-weight: 500; word-break: break-all; }
+.kv-val a { color: var(--gold); text-decoration: none; }
+.kv-val a:hover { text-decoration: underline; }
+.kv-val code {
+  background: rgba(255,255,255,.07); padding: 2px 7px;
+  border-radius: 4px; font-family: monospace; font-size: 12px; color: #ccc;
+}
+
+/* ── FEATURES LIST ── */
+.features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px; }
+.feature-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.feature-num {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: rgba(212,168,90,.12); color: var(--gold);
+  font-size: 11px; font-weight: 800; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+.feature-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.feature-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* ── FILES TABLE ── */
+.files-table { width: 100%; border-collapse: collapse; }
+.files-table th {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); text-align: left; padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.files-table td {
+  padding: 12px 12px; font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: top;
+}
+.files-table tr:last-child td { border-bottom: none; }
+.file-name { font-family: monospace; font-size: 12px; color: var(--gold); font-weight: 600; }
+.file-desc { color: var(--sub); font-size: 12px; }
+
+/* ── NEXT STEPS ── */
+.steps-list { list-style: none; }
+.steps-list li {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.steps-list li:last-child { border-bottom: none; }
+.step-num {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3);
+  color: var(--blue); font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.step-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.step-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background: #0a0a0a; border: 1px solid rgba(212,168,90,.2);
+  border-radius: 10px; padding: 16px 18px;
+  font-family: monospace; font-size: 12px; color: #aaa;
+  white-space: pre; overflow-x: auto; line-height: 1.7;
+  margin-top: 8px;
+}
+.code-block .c { color: #555; }
+.code-block .s { color: #98c379; }
+.code-block .k { color: var(--gold); }
+
+/* ── TAG BADGES ── */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; margin: 2px;
+}
+.tag-green { background: rgba(34,197,94,.1); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+.tag-gold  { background: rgba(212,168,90,.1); color: var(--gold);  border: 1px solid rgba(212,168,90,.2); }
+.tag-blue  { background: rgba(59,130,246,.1);  color: var(--blue);  border: 1px solid rgba(59,130,246,.2); }
+.tag-red   { background: rgba(239,68,68,.1);   color: var(--red);   border: 1px solid rgba(239,68,68,.2); }
+
+/* ── ALERT ── */
+.alert {
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; align-items: flex-start; gap: 14px; margin-bottom: 10px;
+}
+.alert-warn { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25); }
+.alert-info { background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.2); }
+.alert-success { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2); }
+.alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.alert-body { font-size: 13px; line-height: 1.6; color: var(--sub); }
+.alert-body strong { color: var(--text); }
+
+/* ── SNIPPET ── */
+.snippet-copy {
+  background: var(--gold); color: #0e0e0e; border: none;
+  padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 700;
+  cursor: pointer; margin-top: 10px; display: inline-block;
+}
+
+@media (max-width: 600px) {
+  .header { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .header-right { text-align: left; }
+  .card-grid, .features-grid, .status-grid { grid-template-columns: 1fr; }
+  .kv-key { flex: 0 0 110px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="logo">Convert<span>AR</span></div>
+    <div style="font-size:13px;color:var(--muted);margin-top:5px;">Resumen técnico del proyecto</div>
+  </div>
+  <div class="header-right">
+    <div class="header-date">Mayo 2026</div>
+    <div class="badge-version">v2.0 — En desarrollo</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ESTADO ACTUAL -->
+  <div class="section">
+    <div class="section-title">Estado actual</div>
+    <div class="status-grid">
+      <div class="status-card">
+        <div class="status-dot green"></div>
+        <div>
+          <div class="status-label">Railway</div>
+          <div class="status-sub">Backend online</div>
+        </div>
+      </div>
+      <div class="status-card">
+        <div class="status-dot green"></div>
+        <div>
+          <div class="status-label">Supabase</div>
+          <div class="status-sub">Config actualizada</div>
+        </div>
+      </div>
+      <div class="status-card">
+        <div class="status-dot green"></div>
+        <div>
+          <div class="status-label">Panel v2</div>
+          <div class="status-sub">Todas las secciones</div>
+        </div>
+      </div>
+      <div class="status-card">
+        <div class="status-dot yellow"></div>
+        <div>
+          <div class="status-label">Snippet en TN</div>
+          <div class="status-sub">Código viejo activo (ok)</div>
+        </div>
+      </div>
+      <div class="status-card">
+        <div class="status-dot red"></div>
+        <div>
+          <div class="status-label">Snippet nuevo</div>
+          <div class="status-sub">Pendiente testeo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTA IMPORTANTE -->
+  <div class="section">
+    <div class="alert alert-warn">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-body">
+        <strong>Tarea pendiente más importante:</strong> El snippet nuevo (<code style="background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px;">snippet.js</code> desde Railway) está deployado pero <strong>no fue testeado en la tienda real</strong>. Hay un fix de timing agregado (<code style="background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px;">waitForEl</code>) que debería resolver el problema. Actualmente en TN sigue el código viejo que funciona bien.
+      </div>
+    </div>
+    <div class="alert alert-info">
+      <div class="alert-icon">💡</div>
+      <div class="alert-body">
+        <strong>Para testear el snippet nuevo:</strong> En TN → Configuración → Códigos externos → Para la tienda, reemplazar todo por:<br>
+        <code style="background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px;">&lt;script src="https://convertar-app-production.up.railway.app/snippet.js" defer&gt;&lt;/script&gt;</code><br>
+        Si no aparecen las mejoras, revisar consola (F12) y buscar errores.
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATAFORMAS -->
+  <div class="section">
+    <div class="section-title">Plataformas y accesos</div>
+    <div class="card-grid">
+
+      <!-- Railway -->
+      <div class="platform-card">
+        <div class="platform-header">
+          <div class="platform-icon" style="background:rgba(130,80,255,.15);">🚂</div>
+          <div>
+            <div class="platform-name">Railway</div>
+            <div class="platform-sub">Hosting del backend</div>
+          </div>
+        </div>
+        <div class="kv-row"><div class="kv-key">URL pública</div><div class="kv-val"><a href="https://convertar-app-production.up.railway.app" target="_blank">convertar-app-production.up.railway.app</a></div></div>
+        <div class="kv-row"><div class="kv-key">Proyecto</div><div class="kv-val"><code>robust-nourishment</code></div></div>
+        <div class="kv-row"><div class="kv-key">Servicio</div><div class="kv-val"><code>convertar-app</code></div></div>
+        <div class="kv-row"><div class="kv-key">Deploy</div><div class="kv-val">Auto desde GitHub main</div></div>
+        <div class="kv-row"><div class="kv-key">ADMIN_SECRET</div><div class="kv-val"><code>pintos2026</code></div></div>
+      </div>
+
+      <!-- GitHub -->
+      <div class="platform-card">
+        <div class="platform-header">
+          <div class="platform-icon" style="background:rgba(255,255,255,.06);">🐙</div>
+          <div>
+            <div class="platform-name">GitHub</div>
+            <div class="platform-sub">Repositorio del código</div>
+          </div>
+        </div>
+        <div class="kv-row"><div class="kv-key">Repo</div><div class="kv-val"><a href="https://github.com/Nicolas-arc/convertar-app" target="_blank">Nicolas-arc/convertar-app</a></div></div>
+        <div class="kv-row"><div class="kv-key">Branch</div><div class="kv-val"><code>main</code></div></div>
+        <div class="kv-row"><div class="kv-key">Usuario</div><div class="kv-val"><code>Nicolas-arc</code></div></div>
+        <div class="kv-row"><div class="kv-key">PAT Token</div><div class="kv-val"><span style="color:#22c55e;">✅ Rotado mayo 2026 — guardado en gestor de contraseñas</span></div></div>
+        <div class="kv-row"><div class="kv-key">Push comando</div><div class="kv-val" style="font-size:11px;font-family:monospace;">git push https://Nicolas-arc:&lt;PAT&gt;@github.com/Nicolas-arc/convertar-app.git main</div></div>
+      </div>
+
+      <!-- Supabase -->
+      <div class="platform-card">
+        <div class="platform-header">
+          <div class="platform-icon" style="background:rgba(62,207,142,.12);">🗄️</div>
+          <div>
+            <div class="platform-name">Supabase</div>
+            <div class="platform-sub">Base de datos PostgreSQL</div>
+          </div>
+        </div>
+        <div class="kv-row"><div class="kv-key">URL</div><div class="kv-val"><code>oaujnzdjvqmtmpajsuoq.supabase.co</code></div></div>
+        <div class="kv-row"><div class="kv-key">Cuenta</div><div class="kv-val"><code>nicolas@pintoshome.com</code></div></div>
+        <div class="kv-row"><div class="kv-key">Tabla 1</div><div class="kv-val"><code>shops</code> — config JSONB</div></div>
+        <div class="kv-row"><div class="kv-key">Tabla 2</div><div class="kv-val"><code>events</code> — tracking</div></div>
+        <div class="kv-row"><div class="kv-key">RLS</div><div class="kv-val"><span style="color:var(--red);">Desactivado</span> (necesario)</div></div>
+        <div class="kv-row"><div class="kv-key">shop_id TN</div><div class="kv-val"><code>pintoshogar</code></div></div>
+      </div>
+
+      <!-- Tienda Nube -->
+      <div class="platform-card">
+        <div class="platform-header">
+          <div class="platform-icon" style="background:rgba(0,180,255,.1);">🛒</div>
+          <div>
+            <div class="platform-name">Tienda Nube</div>
+            <div class="platform-sub">pintoshogar.com.ar</div>
+          </div>
+        </div>
+        <div class="kv-row"><div class="kv-key">Tienda</div><div class="kv-val"><a href="https://pintoshogar.com.ar" target="_blank">pintoshogar.com.ar</a></div></div>
+        <div class="kv-row"><div class="kv-key">Dónde va el snippet</div><div class="kv-val">Configuración → Códigos externos → Para la tienda</div></div>
+        <div class="kv-row"><div class="kv-key">Estado</div><div class="kv-val"><span style="color:#f59e0b;">Código viejo activo</span></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div class="section">
+    <div class="section-title">Panel de administración</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+        <div>
+          <div style="font-size:16px;font-weight:800;margin-bottom:4px;">🖥️ Panel ConvertAR</div>
+          <div style="font-size:12px;color:var(--muted);">Gestioná todas las features desde acá, preview en vivo incluido</div>
+        </div>
+        <a href="https://convertar-app-production.up.railway.app/panel?secret=pintos2026" target="_blank"
+           style="background:var(--gold);color:#0e0e0e;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">
+          Abrir panel →
+        </a>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="tag tag-gold">⚡ Features</span>
+        <span class="tag tag-gold">🚚 Envío</span>
+        <span class="tag tag-gold">💰 Mejor Precio</span>
+        <span class="tag tag-gold">📦 Cuotas</span>
+        <span class="tag tag-gold">🏷 Tags</span>
+        <span class="tag tag-gold">⏱ Countdown</span>
+        <span class="tag tag-gold">❓ FAQ</span>
+        <span class="tag tag-gold">🏪 Categorías</span>
+        <span class="tag tag-blue">📊 Analytics</span>
+        <span class="tag tag-blue">📋 Snippet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVOS -->
+  <div class="section">
+    <div class="section-title">Archivos del proyecto</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">
+      📁 Ruta local: <code style="background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px;font-size:11px;">/Users/nicolaspintos/Library/Mobile Documents/com~apple~CloudDocs/MOTOR DE IA PINTOS HOME/convertar-app/</code>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="files-table">
+        <thead>
+          <tr>
+            <th>Archivo</th>
+            <th>Qué hace</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="file-name">server.js</div></td>
+            <td><div class="file-desc">Backend Express. Rutas: /track, /config/:id, /analytics/:id, /shops, /panel</div></td>
+            <td><span class="tag tag-green">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td><div class="file-name">snippet.js</div></td>
+            <td><div class="file-desc">JS que se inyecta en TN. Lee config del backend y aplica las 12 mejoras. Tiene fix de timing (waitForEl)</div></td>
+            <td><span class="tag tag-gold">⚠️ Testear</span></td>
+          </tr>
+          <tr>
+            <td><div class="file-name">panel.html</div></td>
+            <td><div class="file-desc">Panel de admin. Preview en vivo dual (producto + categoría). Guarda config en Supabase</div></td>
+            <td><span class="tag tag-green">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td><div class="file-name">manifest.json</div></td>
+            <td><div class="file-desc">PWA — se puede instalar el panel como app en el celular</div></td>
+            <td><span class="tag tag-green">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td><div class="file-name">package.json</div></td>
+            <td><div class="file-desc">Dependencias: express, cors, @supabase/supabase-js</div></td>
+            <td><span class="tag tag-green">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td><div class="file-name">Procfile</div></td>
+            <td><div class="file-desc"><code>web: node server.js</code> — necesario para Railway</div></td>
+            <td><span class="tag tag-green">✅ OK</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section">
+    <div class="section-title">Las 12 features del snippet</div>
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-num">1</div>
+        <div><div class="feature-name">💰 Precio tachado + % OFF</div><div class="feature-desc">Precio de lista tachado con pastilla verde de descuento en página de producto y listado</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">2</div>
+        <div><div class="feature-name">🏷 Mejor Precio (Transferencia)</div><div class="feature-desc">Chip rojo con precio descontado por pago en efectivo/transferencia. % configurable desde panel</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">3</div>
+        <div><div class="feature-name">📦 Cuotas sin interés</div><div class="feature-desc">Reemplaza el texto de cuotas con la config del panel (cantidad de cuotas personalizable)</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">4</div>
+        <div><div class="feature-name">🚚 Badge de envío</div><div class="feature-desc">Card glassmorphism con info de envío. Dos estilos: envío gratis o calcular por postal</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">5</div>
+        <div><div class="feature-name">🔥 Tags por producto</div><div class="feature-desc">Badges configurables por ID: Más vendido, Hot Days, Nuevo, Envío gratis</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">6</div>
+        <div><div class="feature-name">⏱ Countdown</div><div class="feature-desc">Temporizador regresivo de urgencia con fecha/hora de fin configurable</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">7</div>
+        <div><div class="feature-name">❓ FAQ</div><div class="feature-desc">Acordeón de preguntas frecuentes debajo de la descripción. Editables desde el panel</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">8</div>
+        <div><div class="feature-name">📱 Sticky bar mobile</div><div class="feature-desc">Barra fija inferior en celular con precio y botón "Comprar ahora"</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">9</div>
+        <div><div class="feature-name">⭐ Reviews verificadas</div><div class="feature-desc">Bloque de reseñas de compradores reales, cargadas desde el panel</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">10</div>
+        <div><div class="feature-name">🖼️ Hero Cuadros</div><div class="feature-desc">Banner + filtros en /cuadros-pintos-home. Pills: Todos, Set x3, Set x6, Personalizado</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">11</div>
+        <div><div class="feature-name">🪟 Hero Cortinas</div><div class="feature-desc">Banner + filtros por altura en /black-out. Pills: 150cm, 210cm, 240cm, 260cm, 300cm</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-num">12</div>
+        <div><div class="feature-name">🏪 Hero Genérico</div><div class="feature-desc">Banner configurable para cualquier categoría nueva que se agregue desde el panel</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RUTAS DEL BACKEND -->
+  <div class="section">
+    <div class="section-title">Rutas del backend (API)</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="files-table">
+        <thead>
+          <tr><th>Método</th><th>Ruta</th><th>Para qué</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-blue">GET</span></td>
+            <td><div class="file-name">/</div></td>
+            <td><div class="file-desc">Health check — verifica que el servidor esté online</div></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-blue">GET</span></td>
+            <td><div class="file-name">/panel?secret=</div></td>
+            <td><div class="file-desc">Panel de administración (protegido por ADMIN_SECRET)</div></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-blue">GET</span></td>
+            <td><div class="file-name">/snippet.js</div></td>
+            <td><div class="file-desc">Sirve el snippet JS para inyectar en Tienda Nube</div></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-green">POST</span></td>
+            <td><div class="file-name">/track</div></td>
+            <td><div class="file-desc">Recibe eventos del snippet: productView, addToCart, purchase</div></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-blue">GET</span></td>
+            <td><div class="file-name">/config/:shop_id</div></td>
+            <td><div class="file-desc">Devuelve la config JSON de una tienda (la lee el snippet)</div></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-green">POST</span></td>
+            <td><div class="file-name">/config/:shop_id</div></td>
+            <td><div class="file-desc">Guarda la config desde el panel (requiere ADMIN_SECRET)</div></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-blue">GET</span></td>
+            <td><div class="file-name">/analytics/:shop_id</div></td>
+            <td><div class="file-desc">Devuelve funnel de conversión (vistas, carritos, compras)</div></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-green">POST</span></td>
+            <td><div class="file-name">/shops</div></td>
+            <td><div class="file-desc">Registra una tienda nueva (para multi-tenant futuro)</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SNIPPET PARA TN -->
+  <div class="section">
+    <div class="section-title">Snippet para pegar en Tienda Nube</div>
+    <div class="card">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">
+        TN Admin → Configuración → Códigos externos → <strong style="color:var(--text);">Para la tienda</strong>
+      </div>
+      <div class="code-block"><span class="c">&lt;!-- ConvertAR v2.0 --&gt;</span>
+<span class="k">&lt;script</span> <span class="s">src</span>=<span class="s">"https://convertar-app-production.up.railway.app/snippet.js"</span> <span class="s">defer</span><span class="k">&gt;&lt;/script&gt;</span></div>
+      <button class="snippet-copy" onclick="navigator.clipboard.writeText('<\!-- ConvertAR v2.0 -->\n<script src=\"https://convertar-app-production.up.railway.app/snippet.js\" defer><\/script>');this.textContent='✅ Copiado!';setTimeout(()=>this.textContent='📋 Copiar snippet',2000)">📋 Copiar snippet</button>
+    </div>
+  </div>
+
+  <!-- PRÓXIMOS PASOS -->
+  <div class="section">
+    <div class="section-title">Próximos pasos para retomar</div>
+    <div class="card">
+      <ul class="steps-list">
+        <li>
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Testear el snippet nuevo en TN</div>
+            <div class="step-desc">Reemplazar el código viejo por la línea de arriba. Verificar en pintoshogar.com.ar que aparezcan precio tachado, badge de envío, cuotas y mejor precio. Si no funciona, abrir F12 → Consola y buscar errores. El selector clave es <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">#single-product</code> — si TN lo renombró, actualizarlo en snippet.js.</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Verificar las categorías en la tienda</div>
+            <div class="step-desc">Entrar a pintoshogar.com.ar/cuadros-pintos-home y a pintoshogar.com.ar/black-out para ver si aparecen el hero y los filtros. Ajustar los selectores del grid si es necesario (<code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">.js-product-table</code>, etc.).</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Agregar URLs de imágenes hero en el panel</div>
+            <div class="step-desc">En el panel → Categorías, pegar la URL de la imagen de fondo para cada categoría (se puede sacar de la CDN de TN o subir a Cloudinary gratis).</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div>
+            <div class="step-title">Multi-tenant: onboarding de nuevas tiendas</div>
+            <div class="step-desc">Cuando ConvertAR funcione bien para Pintos Home, crear un formulario de registro en <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">POST /shops</code>. Cada nueva tienda recibe su shop_id y su snippet personalizado.</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div>
+            <div class="step-title">Landing page del producto SaaS</div>
+            <div class="step-desc">Crear una página de ventas en la raíz del dominio para que otras tiendas puedan registrarse y usar ConvertAR.</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- LINKS RÁPIDOS -->
+  <div class="section">
+    <div class="section-title">Links rápidos</div>
+    <div class="card-grid">
+      <a href="https://convertar-app-production.up.railway.app/panel?secret=pintos2026" target="_blank" style="text-decoration:none;">
+        <div class="card card-sm" style="cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(212,168,90,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:20px;margin-bottom:8px;">🖥️</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px;">Panel ConvertAR</div>
+          <div style="font-size:11px;color:var(--muted);">convertar-app-production.up.railway.app</div>
+        </div>
+      </a>
+      <a href="https://github.com/Nicolas-arc/convertar-app" target="_blank" style="text-decoration:none;">
+        <div class="card card-sm" style="cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(212,168,90,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:20px;margin-bottom:8px;">🐙</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px;">GitHub Repo</div>
+          <div style="font-size:11px;color:var(--muted);">Nicolas-arc/convertar-app</div>
+        </div>
+      </a>
+      <a href="https://railway.app" target="_blank" style="text-decoration:none;">
+        <div class="card card-sm" style="cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(212,168,90,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:20px;margin-bottom:8px;">🚂</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px;">Railway</div>
+          <div style="font-size:11px;color:var(--muted);">Deploy y variables de entorno</div>
+        </div>
+      </a>
+      <a href="https://supabase.com/dashboard" target="_blank" style="text-decoration:none;">
+        <div class="card card-sm" style="cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(212,168,90,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:20px;margin-bottom:8px;">🗄️</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px;">Supabase</div>
+          <div style="font-size:11px;color:var(--muted);">Base de datos y SQL editor</div>
+        </div>
+      </a>
+      <a href="https://pintoshogar.com.ar" target="_blank" style="text-decoration:none;">
+        <div class="card card-sm" style="cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(212,168,90,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:20px;margin-bottom:8px;">🛒</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px;">Pintos Home</div>
+          <div style="font-size:11px;color:var(--muted);">La tienda donde se testea</div>
+        </div>
+      </a>
+      <a href="https://convertar-app-production.up.railway.app/" target="_blank" style="text-decoration:none;">
+        <div class="card card-sm" style="cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(212,168,90,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:20px;margin-bottom:8px;">💚</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px;">Health Check</div>
+          <div style="font-size:11px;color:var(--muted);">Verificar que Railway esté online</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:var(--muted);font-size:12px;margin-top:20px;padding-top:24px;border-top:1px solid var(--border);">
+    ConvertAR · Pintos Home · Mayo 2026 · Generado por Claude
+  </div>
+
+</div>
+</body>
+</html>
