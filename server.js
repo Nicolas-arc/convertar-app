@@ -9,6 +9,11 @@ const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 const path = require('path');
 
+// Polyfill WebSocket para Node < 22 (requerido por @supabase/supabase-js v2)
+if (typeof globalThis.WebSocket === 'undefined') {
+  globalThis.WebSocket = require('ws');
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
