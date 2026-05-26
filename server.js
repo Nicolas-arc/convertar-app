@@ -13,20 +13,35 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Supabase client (vars vienen de Railway environment)
+// Supabase client — acepta múltiples nombres de variable por compatibilidad
+const SUPA_URL = process.env.SUPABASE_URL;
+const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY
+               || process.env.SUPABASE_SERVICE_ROLE_KEY
+               || process.env.SUPABASE_KEY
+               || process.env.CLAVE_DE_SERVICIO_SUPABASE;
+
+console.log(`Node.js ${process.version}`);
+console.log('SUPABASE_URL:', SUPA_URL ? '✅ presente' : '❌ falta');
+console.log('SUPABASE_KEY:', SUPA_KEY ? '✅ presente' : '❌ falta');
+
 let supabase;
 try {
-  supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-  );
+  if (!SUPA_URL || !SUPA_KEY) throw new Error(`Faltan credenciales: URL=${!!SUPA_URL} KEY=${!!SUPA_KEY}`);
+  supabase = createClient(SUPA_URL, SUPA_KEY);
+  console.log('Supabase ✅ inicializado');
 } catch (e) {
-  console.error('Supabase init error:', e.message);
+  console.error('Supabase ❌ error:', e.message);
 }
 
 // ── Health check ─────────────────────────────────────
 app.get('/', (req, res) => {
-  res.json({ ok: true, app: 'ConvertAR', version: '1.0.0' });
+  res.json({
+    ok: true,
+    app: 'ConvertAR',
+    version: '1.0.0',
+    node: process.version,
+    supabase: !!supabase
+  });
 });
 
 // ── Panel de administración ───────────────────────────
