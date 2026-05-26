@@ -102,6 +102,8 @@ app.get('/config/:shop_id', async (req, res) => {
 // ── ANALYTICS — funnel por tienda ────────────────────
 // GET /analytics/:shop_id?days=7
 app.get('/analytics/:shop_id', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase no inicializado — verificar SUPABASE_URL y SUPABASE_SERVICE_KEY en Railway' });
+
   const { shop_id } = req.params;
   const days = parseInt(req.query.days) || 7;
 
