@@ -330,6 +330,8 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
     <div class="sidebar-item" onclick="showPage('categorias', this)">🏪 Categorías</div>
     <div class="sidebar-section">Datos</div>
     <div class="sidebar-item" onclick="showPage('analytics', this)">📊 Analytics</div>
+    <div class="sidebar-section">Landings</div>
+    <div class="sidebar-item" onclick="showPage('landings', this)">🚀 Mis Landings</div>
     <div class="sidebar-section">Setup</div>
     <div class="sidebar-item" onclick="showPage('snippet', this)">📋 Snippet</div>
   </div>
@@ -516,6 +518,20 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
           <li>Pegar el snippet y hacer clic en <strong style="color:var(--gold);">Guardar</strong></li>
           <li>Verificar en pintoshogar.com.ar que se apliquen los cambios</li>
         </ol>
+      </div>
+    </div>
+
+    <div class="page" id="page-landings">
+      <div class="page-title">🚀 Mis Landings</div>
+      <div class="page-sub">Landings de producto publicadas en tu app. Cada una tiene su propia URL pública.</div>
+      <div class="config-card" style="margin-bottom:10px">
+        <a id="btn-nueva-landing" href="#" target="_blank"
+          style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#0e0e0e;padding:9px 20px;border-radius:7px;font-size:13px;font-weight:700;text-decoration:none">
+          ＋ Nueva landing
+        </a>
+      </div>
+      <div id="landings-list">
+        <div style="color:var(--muted);font-size:13px">Cargando...</div>
       </div>
     </div>
 
@@ -1374,12 +1390,53 @@ function showPage(id, el) {
   document.querySelectorAll('.sidebar-item').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('page-' + id).classList.add('active');
   el.classList.add('active');
-  // Switch preview to match section
   if (id === 'categorias') {
     switchScreen('categoria', document.querySelector('.preview-tab:last-child'));
   } else if (currentScreen === 'categoria' && id !== 'categorias') {
     switchScreen('producto', document.querySelector('.preview-tab:first-child'));
   }
+  if (id === 'landings') loadLandings();
+}
+
+// ── Landings ──────────────────────────────────────
+function loadLandings() {
+  var btn = document.getElementById('btn-nueva-landing');
+  btn.href = API_URL + '/landings/new?secret=' + ADMIN_SECRET;
+
+  fetch(API_URL + '/api/landings?secret=' + ADMIN_SECRET)
+    .then(function(r) { return r.json(); })
+    .then(function(list) {
+      var el = document.getElementById('landings-list');
+      if (!list.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0">No hay landings todavía. Creá la primera.</div>';
+        return;
+      }
+      el.innerHTML = list.map(function(l) {
+        var fecha = new Date(l.updated_at).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+        var pubUrl = API_URL + '/l/' + l.slug;
+        var editUrl = API_URL + '/landings/new?secret=' + ADMIN_SECRET + '&slug=' + l.slug;
+        return '<div class="config-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">'
+          + '<div>'
+          + '<div style="font-size:14px;font-weight:700;margin-bottom:3px">' + (l.nombre || l.slug) + '</div>'
+          + '<div style="font-size:11px;color:var(--muted)">' + fecha + ' &nbsp;·&nbsp; <code style="color:var(--gold)">/l/' + l.slug + '</code></div>'
+          + '</div>'
+          + '<div style="display:flex;gap:8px;flex-shrink:0">'
+          + '<a href="' + pubUrl + '" target="_blank" style="background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px;text-decoration:none">🔗 Ver</a>'
+          + '<a href="' + editUrl + '" target="_blank" style="background:rgba(212,168,90,.12);border:1px solid rgba(212,168,90,.3);color:var(--gold);padding:6px 12px;border-radius:6px;font-size:12px;text-decoration:none">✏ Editar</a>'
+          + '<button onclick="deleteLanding(\'' + l.slug + '\')" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer">✕</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    })
+    .catch(function() {
+      document.getElementById('landings-list').innerHTML = '<div style="color:#ef4444;font-size:13px">Error al cargar landings</div>';
+    });
+}
+
+function deleteLanding(slug) {
+  if (!confirm('¿Eliminar la landing "' + slug + '"? Esta acción no se puede deshacer.')) return;
+  fetch(API_URL + '/api/landings/' + slug + '?secret=' + ADMIN_SECRET, { method: 'DELETE' })
+    .then(function() { loadLandings(); });
 }
 
 // ── Load config ──────────────────────────────────
