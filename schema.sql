@@ -70,6 +70,15 @@ INSERT INTO shops (id, name, url, email, plan, config) VALUES (
   }'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
 
+-- Tabla de landings generadas
+CREATE TABLE IF NOT EXISTS landings (
+  slug        TEXT PRIMARY KEY,
+  nombre      TEXT,
+  shop_id     TEXT,
+  html        TEXT NOT NULL,
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Vista útil: conversión por producto (últimos 30 días)
 CREATE OR REPLACE VIEW product_conversion AS
 SELECT

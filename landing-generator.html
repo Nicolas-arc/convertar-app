@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Landings — ConvertAR</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0f0f0f;color:#e8e8e8;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+    /* ── Header ── */
+    .top-bar{background:#141414;border-bottom:1px solid #252525;padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+    .logo{width:30px;height:30px;background:#d4a85a;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#0f0f0f;font-size:13px}
+    .top-bar h1{font-size:15px;color:#d4a85a;font-weight:700}
+    .top-bar .sep{color:#333;font-size:18px}
+    .top-bar .subtitle{font-size:13px;color:#555}
+    .top-bar .spacer{flex:1}
+    .btn-example{background:#252525;color:#aaa;border:1px solid #333;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+    .btn-example:hover{background:#333;color:#e8e8e8}
+    .btn-dl{background:#d4a85a;color:#0f0f0f;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
+    .btn-dl:hover{background:#e0b96a}
+
+    /* ── Workspace ── */
+    .workspace{display:flex;flex:1;overflow:hidden}
+
+    /* ── Form panel ── */
+    .form-panel{width:360px;min-width:360px;background:#111;overflow-y:auto;padding:16px;border-right:1px solid #1e1e1e}
+    .form-panel::-webkit-scrollbar{width:4px}
+    .form-panel::-webkit-scrollbar-track{background:#111}
+    .form-panel::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+    .sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#d4a85a;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #1e1e1e}
+    .sec-label:first-child{margin-top:0}
+
+    label{display:block;font-size:11px;color:#777;margin-bottom:3px;margin-top:10px}
+    input[type=text],input[type=url],input[type=number],textarea,select{
+      width:100%;background:#161616;border:1px solid #222;color:#e8e8e8;
+      padding:7px 10px;border-radius:6px;font-size:12px;font-family:inherit;
+      transition:border-color .15s;line-height:1.4
+    }
+    input:focus,textarea:focus{outline:none;border-color:#d4a85a44;box-shadow:0 0 0 2px #d4a85a11}
+    textarea{resize:vertical;min-height:56px}
+    input[type=color]{width:44px;height:30px;padding:2px;border-radius:5px;cursor:pointer;border:1px solid #222;background:#161616}
+
+    .row{display:flex;gap:8px}
+    .row>*{flex:1;min-width:0}
+
+    .card{background:#161616;border:1px solid #1e1e1e;border-radius:8px;padding:10px;margin-bottom:8px}
+    .card-title{font-size:10px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+
+    /* ── Preview panel ── */
+    .preview-panel{flex:1;display:flex;flex-direction:column;background:#0a0a0a;overflow:hidden}
+    .preview-bar{background:#141414;border-bottom:1px solid #1e1e1e;padding:7px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .preview-bar .label{font-size:11px;color:#555}
+    .url-pill{flex:1;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:16px;padding:3px 12px;font-size:11px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dev-btn{background:#1a1a1a;border:1px solid #252525;color:#666;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .15s}
+    .dev-btn.active{background:#d4a85a;color:#0f0f0f;border-color:#d4a85a;font-weight:700}
+    .preview-wrap{flex:1;display:flex;justify-content:center;overflow:hidden;background:#0a0a0a;padding:0}
+    iframe{border:none;width:100%;height:100%;transition:all .3s}
+    iframe.mobile-view{width:393px;border-left:1px solid #222;border-right:1px solid #222;background:#fff}
+
+    /* ── Image uploader ── */
+    .img-zone{border:1.5px dashed #2a2a2a;border-radius:8px;cursor:pointer;overflow:hidden;transition:border-color .2s;position:relative;background:#0d0d0d}
+    .img-zone:hover{border-color:#d4a85a66}
+    .img-zone.drag-over{border-color:#d4a85a;background:#1a1500}
+    .img-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 12px;gap:6px;color:#444}
+    .img-placeholder span{font-size:28px}
+    .img-placeholder p{font-size:11px;text-align:center;line-height:1.4}
+    .img-thumb{width:100%;height:110px;object-fit:cover;display:block}
+    .img-remove{position:absolute;top:5px;right:5px;background:#0f0f0f;border:1px solid #333;color:#aaa;border-radius:4px;font-size:10px;padding:2px 6px;cursor:pointer;display:none}
+    .img-zone:hover .img-remove{display:block}
+    .img-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+    .img-label{font-size:10px;color:#555;text-align:center;margin-top:4px}
+    .btn-save{background:#22c55e;color:#0f0f0f;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
+    .btn-save:hover{background:#16a34a}
+    .btn-save:disabled{opacity:.5;cursor:not-allowed}
+    /* Buscador TN */
+    .tn-search-wrap{background:#0d1a0d;border:1.5px solid #1a3a1a;border-radius:10px;padding:12px;margin-bottom:4px}
+    .tn-search-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#22c55e;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .tn-search-row{display:flex;gap:6px}
+    .tn-search-row input{flex:1;background:#111;border:1px solid #1e3a1e;color:#e8e8e8;padding:8px 10px;border-radius:6px;font-size:12px;font-family:inherit}
+    .tn-search-row input:focus{outline:none;border-color:#22c55e44}
+    .tn-search-btn{background:#22c55e;color:#0f0f0f;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+    .tn-search-btn:disabled{opacity:.5;cursor:not-allowed}
+    .tn-status{font-size:11px;margin-top:6px;min-height:16px}
+    .tn-variants{margin-top:8px;display:none}
+    .tn-variants select{width:100%;background:#111;border:1px solid #1e3a1e;color:#e8e8e8;padding:6px 8px;border-radius:6px;font-size:12px}
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="top-bar">
+  <div class="logo">C</div>
+  <h1>ConvertAR</h1>
+  <span class="sep">/</span>
+  <span class="subtitle">Generador de Landings</span>
+  <div class="spacer"></div>
+  <button class="btn-example" onclick="loadExample()">⚡ Cargar ejemplo</button>
+  <button class="btn-save" id="btn-save" onclick="saveLanding()">☁ Guardar en la app</button>
+  <button class="btn-dl" onclick="downloadLanding()">⬇ Descargar HTML</button>
+  <span id="save-msg" style="font-size:12px;display:none"></span>
+</div>
+
+<!-- ── WORKSPACE ── -->
+<div class="workspace">
+
+  <!-- FORM -->
+  <div class="form-panel">
+
+    <!-- BUSCADOR TIENDANUBE -->
+    <div class="tn-search-wrap">
+      <div class="tn-search-label">⚡ Importar desde Tiendanube</div>
+      <div class="tn-search-row">
+        <input type="text" id="tn-search-input" placeholder="Pegá la URL del producto o el ID numérico...">
+        <button class="tn-search-btn" id="tn-search-btn" onclick="searchTNProduct()">Buscar</button>
+      </div>
+      <div class="tn-status" id="tn-status"></div>
+      <div class="tn-variants" id="tn-variants-wrap">
+        <label style="font-size:11px;color:#555;margin-bottom:4px;display:block">Variante del checkout</label>
+        <select id="tn-variant-select" onchange="selectVariant()"></select>
+      </div>
+    </div>
+
+    <div class="sec-label">Producto</div>
+
+    <label>Nombre del producto</label>
+    <input type="text" id="f_nombre" placeholder="Cortina Blackout Premium" oninput="up()">
+
+    <label>Headline principal</label>
+    <input type="text" id="f_headline" placeholder="Dormí como nunca con nuestra cortina blackout" oninput="up()">
+
+    <label>Subheadline</label>
+    <input type="text" id="f_sub" placeholder="La solución definitiva para el descanso perfecto" oninput="up()">
+
+    <label>Descripción del producto</label>
+    <textarea id="f_desc" placeholder="Describe el producto, sus materiales, cómo funciona y para quién es ideal..." oninput="up()"></textarea>
+
+    <label>Texto del botón CTA</label>
+    <input type="text" id="f_cta" placeholder="Quiero mi cortina ahora" oninput="up()">
+
+    <div class="sec-label">Checkout Tiendanube</div>
+
+    <label>Dominio de tu tienda</label>
+    <input type="text" id="f_store" placeholder="pintoshome.com.ar" oninput="up()">
+
+    <div class="row">
+      <div>
+        <label>Product ID</label>
+        <input type="text" id="f_pid" placeholder="123456" oninput="up()">
+      </div>
+      <div>
+        <label>Variant ID</label>
+        <input type="text" id="f_vid" placeholder="789012" oninput="up()">
+      </div>
+    </div>
+
+    <div style="background:#1a1a0a;border:1px solid #2a2a10;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:#888;line-height:1.5">
+      💡 <strong style="color:#d4a85a">¿Dónde encuentro los IDs?</strong><br>
+      En Tiendanube → Productos → abrís el producto → mirás la URL:<br>
+      <span style="color:#666;font-family:monospace">/products/<span style="color:#d4a85a">123456</span>/variants/<span style="color:#d4a85a">789012</span></span>
+    </div>
+
+    <label style="margin-top:12px">URL de checkout generada</label>
+    <div id="checkout-url-preview" style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:6px;padding:7px 10px;font-size:10px;color:#555;font-family:monospace;word-break:break-all;min-height:32px;line-height:1.6">
+      Completá el dominio, Product ID y Variant ID...
+    </div>
+
+    <div class="sec-label" style="margin-top:20px">Imágenes</div>
+
+    <label>Imagen principal (hero)</label>
+    <div class="img-zone" id="zone-hero"
+      onclick="document.getElementById('file-hero').click()"
+      ondragover="dragOver(event,'zone-hero')"
+      ondragleave="dragLeave('zone-hero')"
+      ondrop="dropFile(event,'hero')">
+      <input type="file" id="file-hero" accept="image/*" style="display:none" onchange="loadFile(this,'hero')">
+      <div id="ph-hero" class="img-placeholder"><span>🖼</span><p>Arrastrá o hacé click<br>para subir</p></div>
+      <img id="thumb-hero" class="img-thumb" style="display:none">
+      <button class="img-remove" onclick="removeImg(event,'hero')">✕ quitar</button>
+    </div>
+    <label style="margin-top:6px">O pegá una URL de imagen</label>
+    <input type="url" id="f_img_url" placeholder="https://..." oninput="setImgFromUrl('hero');up()">
+
+    <label style="margin-top:12px">Imágenes de galería (opcional)</label>
+    <div class="img-grid">
+      <div>
+        <div class="img-zone" id="zone-g1"
+          onclick="document.getElementById('file-g1').click()"
+          ondragover="dragOver(event,'zone-g1')"
+          ondragleave="dragLeave('zone-g1')"
+          ondrop="dropFile(event,'g1')">
+          <input type="file" id="file-g1" accept="image/*" style="display:none" onchange="loadFile(this,'g1')">
+          <div id="ph-g1" class="img-placeholder"><span>＋</span><p>Foto 2</p></div>
+          <img id="thumb-g1" class="img-thumb" style="display:none">
+          <button class="img-remove" onclick="removeImg(event,'g1')">✕</button>
+        </div>
+      </div>
+      <div>
+        <div class="img-zone" id="zone-g2"
+          onclick="document.getElementById('file-g2').click()"
+          ondragover="dragOver(event,'zone-g2')"
+          ondragleave="dragLeave('zone-g2')"
+          ondrop="dropFile(event,'g2')">
+          <input type="file" id="file-g2" accept="image/*" style="display:none" onchange="loadFile(this,'g2')">
+          <div id="ph-g2" class="img-placeholder"><span>＋</span><p>Foto 3</p></div>
+          <img id="thumb-g2" class="img-thumb" style="display:none">
+          <button class="img-remove" onclick="removeImg(event,'g2')">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="img-grid">
+      <div class="img-label">Detalle / ambiente</div>
+      <div class="img-label">Detalle / ambiente</div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>Color principal</label>
+        <input type="color" id="f_color" value="#1a1a2e" oninput="up()">
+      </div>
+      <div>
+        <label>Color del botón</label>
+        <input type="color" id="f_btn" value="#e85d4a" oninput="up()">
+      </div>
+    </div>
+
+    <div class="sec-label">Precio</div>
+
+    <div class="row">
+      <div>
+        <label>Precio actual ($)</label>
+        <input type="text" id="f_precio" placeholder="29.990" oninput="up()">
+      </div>
+      <div>
+        <label>Precio antes ($) — opcional</label>
+        <input type="text" id="f_p_antes" placeholder="39.990" oninput="up()">
+      </div>
+    </div>
+
+    <label>Cuotas — opcional</label>
+    <input type="text" id="f_cuotas" placeholder="3 cuotas de $9.996 sin interés" oninput="up()">
+
+    <label>Garantía</label>
+    <input type="text" id="f_garantia" placeholder="30 días de garantía de devolución" oninput="up()">
+
+    <div class="sec-label">Beneficios</div>
+
+    <div class="card">
+      <div class="card-title">Beneficio 1</div>
+      <div class="row">
+        <div style="max-width:54px">
+          <label>Ícono</label>
+          <input type="text" id="f_b1i" placeholder="🌙" oninput="up()" style="text-align:center;font-size:18px;padding:4px">
+        </div>
+        <div>
+          <label>Título</label>
+          <input type="text" id="f_b1t" placeholder="Oscuridad total" oninput="up()">
+        </div>
+      </div>
+      <label>Descripción</label>
+      <textarea id="f_b1d" placeholder="Bloquea hasta el 99% de la luz exterior para un descanso profundo." oninput="up()"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Beneficio 2</div>
+      <div class="row">
+        <div style="max-width:54px">
+          <label>Ícono</label>
+          <input type="text" id="f_b2i" placeholder="🌡️" oninput="up()" style="text-align:center;font-size:18px;padding:4px">
+        </div>
+        <div>
+          <label>Título</label>
+          <input type="text" id="f_b2t" placeholder="Aislamiento térmico" oninput="up()">
+        </div>
+      </div>
+      <label>Descripción</label>
+      <textarea id="f_b2d" placeholder="Mantiene el frío o el calor en tu ambiente durante todo el año." oninput="up()"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Beneficio 3</div>
+      <div class="row">
+        <div style="max-width:54px">
+          <label>Ícono</label>
+          <input type="text" id="f_b3i" placeholder="✨" oninput="up()" style="text-align:center;font-size:18px;padding:4px">
+        </div>
+        <div>
+          <label>Título</label>
+          <input type="text" id="f_b3t" placeholder="Diseño premium" oninput="up()">
+        </div>
+      </div>
+      <label>Descripción</label>
+      <textarea id="f_b3d" placeholder="Terminaciones de alta calidad que combinan con cualquier decoración." oninput="up()"></textarea>
+    </div>
+
+    <div class="sec-label">Testimonios</div>
+
+    <div class="card">
+      <div class="card-title">Testimonio 1</div>
+      <div class="row">
+        <div>
+          <label>Nombre</label>
+          <input type="text" id="f_t1n" placeholder="María G." oninput="up()">
+        </div>
+        <div>
+          <label>Ciudad</label>
+          <input type="text" id="f_t1c" placeholder="Buenos Aires" oninput="up()">
+        </div>
+      </div>
+      <label>Comentario</label>
+      <textarea id="f_t1t" placeholder="Instalé la cortina hace un mes y el cambio fue increíble. Duermo mucho mejor." oninput="up()"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Testimonio 2</div>
+      <div class="row">
+        <div>
+          <label>Nombre</label>
+          <input type="text" id="f_t2n" placeholder="Carlos M." oninput="up()">
+        </div>
+        <div>
+          <label>Ciudad</label>
+          <input type="text" id="f_t2c" placeholder="Córdoba" oninput="up()">
+        </div>
+      </div>
+      <label>Comentario</label>
+      <textarea id="f_t2t" placeholder="Excelente calidad y llegó rapidísimo. Lo recomiendo 100%." oninput="up()"></textarea>
+    </div>
+
+    <div class="sec-label">Preguntas frecuentes</div>
+
+    <div class="card">
+      <label>Pregunta 1</label>
+      <input type="text" id="f_q1" placeholder="¿En cuánto tiempo llega?" oninput="up()">
+      <label style="margin-top:8px">Respuesta</label>
+      <textarea id="f_a1" placeholder="Entregamos en 3 a 5 días hábiles a todo el país." oninput="up()"></textarea>
+    </div>
+
+    <div class="card">
+      <label>Pregunta 2</label>
+      <input type="text" id="f_q2" placeholder="¿Hacen medidas personalizadas?" oninput="up()">
+      <label style="margin-top:8px">Respuesta</label>
+      <textarea id="f_a2" placeholder="Sí, fabricamos a medida. Solo indicás el ancho y alto al hacer el pedido." oninput="up()"></textarea>
+    </div>
+
+    <div class="card">
+      <label>Pregunta 3</label>
+      <input type="text" id="f_q3" placeholder="¿Qué métodos de pago aceptan?" oninput="up()">
+      <label style="margin-top:8px">Respuesta</label>
+      <textarea id="f_a3" placeholder="Aceptamos tarjetas de crédito, débito, transferencia y Mercado Pago." oninput="up()"></textarea>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-panel">
+    <div class="preview-bar">
+      <span class="label">Vista previa</span>
+      <div class="url-pill" id="url-pill">tu-tienda.com/landing-producto</div>
+      <button class="dev-btn active" id="btn-desk" onclick="setDevice('desktop')">🖥 Desktop</button>
+      <button class="dev-btn" id="btn-mob" onclick="setDevice('mobile')">📱 Móvil</button>
+    </div>
+    <div class="preview-wrap">
+      <iframe id="preview"></iframe>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Image storage ─────────────────────────────────
+const imgs = { hero: null, g1: null, g2: null };
+
+function dragOver(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('drag-over');
+}
+function dragLeave(zoneId) {
+  document.getElementById(zoneId).classList.remove('drag-over');
+}
+function dropFile(e, key) {
+  e.preventDefault();
+  const zoneId = 'zone-' + key;
+  document.getElementById(zoneId).classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) readImgFile(file, key);
+}
+function loadFile(input, key) {
+  if (input.files[0]) readImgFile(input.files[0], key);
+}
+function readImgFile(file, key) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    imgs[key] = e.target.result;
+    showThumb(key, e.target.result);
+    up();
+  };
+  reader.readAsDataURL(file);
+}
+function setImgFromUrl(key) {
+  const url = document.getElementById('f_img_url').value.trim();
+  imgs[key] = url || null;
+  if (url) showThumb(key, url);
+  else clearThumb(key);
+}
+function showThumb(key, src) {
+  document.getElementById('ph-' + key).style.display = 'none';
+  const thumb = document.getElementById('thumb-' + key);
+  thumb.src = src;
+  thumb.style.display = 'block';
+}
+function clearThumb(key) {
+  imgs[key] = null;
+  document.getElementById('ph-' + key).style.display = 'flex';
+  const thumb = document.getElementById('thumb-' + key);
+  thumb.style.display = 'none';
+  thumb.src = '';
+  const fileInput = document.getElementById('file-' + key);
+  if (fileInput) fileInput.value = '';
+}
+function removeImg(e, key) {
+  e.stopPropagation();
+  clearThumb(key);
+  if (key === 'hero') document.getElementById('f_img_url').value = '';
+  up();
+}
+
+// ── Helpers ──────────────────────────────────────
+const g = id => document.getElementById(id).value.trim();
+
+function safeUrl(url) {
+  if (!url) return '#';
+  return (url.startsWith('http://') || url.startsWith('https://')) ? url : '#';
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ── Device toggle ─────────────────────────────────
+function setDevice(d) {
+  const fr = document.getElementById('preview');
+  const db = document.getElementById('btn-desk');
+  const mb = document.getElementById('btn-mob');
+  if (d === 'mobile') {
+    fr.className = 'mobile-view';
+    mb.className = 'dev-btn active';
+    db.className = 'dev-btn';
+  } else {
+    fr.className = '';
+    db.className = 'dev-btn active';
+    mb.className = 'dev-btn';
+  }
+}
+
+// ── Live preview ──────────────────────────────────
+function up() { updatePreview(); }
+
+function buildCheckoutUrl() {
+  const store = g('f_store').replace(/https?:\/\//,'').replace(/\/$/,'');
+  const pid   = g('f_pid');
+  const vid   = g('f_vid');
+  if (!store || !pid || !vid) return null;
+  return `https://${store}/checkout/v3/start?items[0][product_id]=${pid}&items[0][variant_id]=${vid}&items[0][quantity]=1`;
+}
+
+function updatePreview() {
+  const nombre = g('f_nombre');
+  if (nombre) {
+    document.getElementById('url-pill').textContent =
+      'tu-tienda.com/landing-' + nombre.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  }
+  const url = buildCheckoutUrl();
+  const urlEl = document.getElementById('checkout-url-preview');
+  if (url) {
+    urlEl.style.color = '#6dbf6d';
+    urlEl.textContent = url;
+  } else {
+    urlEl.style.color = '#555';
+    urlEl.textContent = 'Completá el dominio, Product ID y Variant ID...';
+  }
+  const html = generateLanding();
+  document.getElementById('preview').srcdoc = html;
+}
+
+// ── Download ──────────────────────────────────────
+function downloadLanding() {
+  const html = generateLanding();
+  const nombre = g('f_nombre') || 'landing';
+  const slug = nombre.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'landing-' + slug + '.html';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// ── Example data ──────────────────────────────────
+function loadExample() {
+  const set = (id, val) => { document.getElementById(id).value = val; };
+  set('f_nombre',   'Cortina Blackout Premium');
+  set('f_headline', 'Dormí como nunca. Despertate descansado.');
+  set('f_sub',      'La cortina que bloquea el 99% de la luz, regula la temperatura y transforma tu habitación en un refugio de descanso real.');
+  set('f_desc',     'Nuestra Cortina Blackout Premium está fabricada con tela de triple capa importada. Ideal para dormitorios, bebés, trabajadores nocturnos y cualquier persona que quiera descansar de verdad. Disponible en todos los tamaños y colores.');
+  set('f_cta',      'Quiero mi cortina ahora');
+  set('f_store',    'pintoshome.com.ar');
+  set('f_pid',      '123456');
+  set('f_vid',      '789012');
+  set('f_img',      '');
+  set('f_color',    '#1a1a2e');
+  set('f_btn',      '#e85d4a');
+  set('f_precio',   '29.990');
+  set('f_p_antes',  '42.000');
+  set('f_cuotas',   '3 cuotas de $9.996 sin interés');
+  set('f_garantia', '30 días de garantía de devolución');
+  set('f_b1i', '🌙'); set('f_b1t', 'Oscuridad total');
+  set('f_b1d', 'Bloquea hasta el 99% de la luz solar. Perfecta para turno noche, bebés y personas sensibles a la luz.');
+  set('f_b2i', '🌡️'); set('f_b2t', 'Aislamiento térmico');
+  set('f_b2d', 'Reduce hasta un 40% la transferencia de calor. Tu cuarto más fresco en verano y más cálido en invierno.');
+  set('f_b3i', '✨'); set('f_b3t', 'Diseño premium');
+  set('f_b3d', 'Tela importada de alta calidad con terminaciones perfectas. Combina con cualquier decoración.');
+  set('f_t1n', 'María G.'); set('f_t1c', 'Buenos Aires');
+  set('f_t1t', 'Compré la cortina hace dos meses y fue la mejor decisión. Mi bebé duerme la siesta sin problema aunque afuera haya sol pleno. Calidad increíble.');
+  set('f_t2n', 'Carlos M.'); set('f_t2c', 'Córdoba');
+  set('f_t2t', 'Excelente producto. Llegó en 4 días y la instalación fue facilísima. Realmente bloquea toda la luz, no es marketing. Lo recomiendo 100%.');
+  set('f_q1', '¿En cuánto tiempo llega?');
+  set('f_a1', 'Despachamos en 24hs hábiles. La entrega demora entre 3 y 5 días hábiles a todo el país con seguimiento online.');
+  set('f_q2', '¿Hacen medidas personalizadas?');
+  set('f_a2', 'Sí, fabricamos a medida sin costo adicional. Al hacer el pedido indicás el ancho y alto exacto de tu ventana.');
+  set('f_q3', '¿Qué métodos de pago aceptan?');
+  set('f_a3', 'Tarjeta de crédito (hasta 12 cuotas), débito, transferencia bancaria y Mercado Pago.');
+  updatePreview();
+}
+
+// ── Landing template ──────────────────────────────
+function generateLanding() {
+  const color    = g('f_color') || '#1a1a2e';
+  const btnColor = g('f_btn')   || '#e85d4a';
+  const nombre   = esc(g('f_nombre'))   || 'Mi Producto';
+  const headline = esc(g('f_headline')) || 'El mejor producto para tu hogar';
+  const sub      = esc(g('f_sub'))      || '';
+  const desc     = esc(g('f_desc'))     || '';
+  const cta      = esc(g('f_cta'))      || 'Comprar ahora';
+  const link     = buildCheckoutUrl() || '#';
+  const img      = imgs.hero || null;
+  const imgG1    = imgs.g1   || null;
+  const imgG2    = imgs.g2   || null;
+  const precio   = esc(g('f_precio'))   || '0';
+  const pAntes   = g('f_p_antes');
+  const cuotas   = g('f_cuotas');
+  const garantia = esc(g('f_garantia')) || '';
+
+  const b1i = g('f_b1i')||'⭐'; const b1t = esc(g('f_b1t'))||'Beneficio 1'; const b1d = esc(g('f_b1d'))||'';
+  const b2i = g('f_b2i')||'⭐'; const b2t = esc(g('f_b2t'))||'Beneficio 2'; const b2d = esc(g('f_b2d'))||'';
+  const b3i = g('f_b3i')||'⭐'; const b3t = esc(g('f_b3t'))||'Beneficio 3'; const b3d = esc(g('f_b3d'))||'';
+
+  const t1n = esc(g('f_t1n'))||'Cliente'; const t1c = esc(g('f_t1c'))||''; const t1t = esc(g('f_t1t'))||'';
+  const t2n = esc(g('f_t2n'))||'Cliente'; const t2c = esc(g('f_t2c'))||''; const t2t = esc(g('f_t2t'))||'';
+
+  const q1 = esc(g('f_q1'))||'Pregunta 1'; const a1 = esc(g('f_a1'))||'';
+  const q2 = esc(g('f_q2'))||'Pregunta 2'; const a2 = esc(g('f_a2'))||'';
+  const q3 = esc(g('f_q3'))||'Pregunta 3'; const a3 = esc(g('f_a3'))||'';
+
+  const heroImg  = img  ? `<img src="${img}"  alt="${nombre}" class="hero-img">` : '';
+  const descImg  = img  ? `<img src="${img}"  alt="${nombre}" style="width:380px;max-width:100%;border-radius:18px;box-shadow:0 16px 48px rgba(0,0,0,.12)">` : '';
+  const galleryHtml = (imgG1 || imgG2) ? `
+<div class="section-bg">
+  <div class="wrap">
+    <h2>Miralo de cerca</h2>
+    <p class="sub">Calidad que se ve en cada detalle</p>
+    <div style="display:grid;grid-template-columns:${imgG1 && imgG2 ? '1fr 1fr' : '1fr'};gap:20px;max-width:800px;margin:0 auto">
+      ${imgG1 ? `<img src="${imgG1}" alt="${nombre}" style="width:100%;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.1)">` : ''}
+      ${imgG2 ? `<img src="${imgG2}" alt="${nombre}" style="width:100%;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.1)">` : ''}
+    </div>
+  </div>
+</div>` : '';
+  const antesHtml = pAntes ? `<div class="p-antes">$ ${esc(pAntes)}</div>` : '';
+  const cuotasHtml= cuotas ? `<div class="cuotas">${esc(cuotas)}</div>` : '';
+  const garanTrust= garantia ? `<span>🛡 ${garantia}</span>` : '';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${nombre}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#1a1a1a;background:#fff;-webkit-font-smoothing:antialiased}
+a{text-decoration:none}
+
+/* Sticky nav */
+.nav{position:sticky;top:0;z-index:99;background:${color};color:#fff;padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+.nav-brand{font-weight:800;font-size:16px;letter-spacing:-.3px}
+.btn{background:${btnColor};color:#fff;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;border:none;cursor:pointer;display:inline-block;transition:opacity .2s}
+.btn:hover{opacity:.88}
+.btn-lg{background:${btnColor};color:#fff;padding:15px 40px;border-radius:50px;font-weight:800;font-size:17px;border:none;cursor:pointer;display:inline-block;transition:opacity .2s;letter-spacing:-.2px}
+.btn-lg:hover{opacity:.88}
+
+/* Hero */
+.hero{background:${color};color:#fff;padding:72px 24px;display:flex;justify-content:center;gap:52px;align-items:center;flex-wrap:wrap}
+.hero-text{max-width:500px}
+.hero-text h1{font-size:44px;font-weight:900;line-height:1.1;margin-bottom:18px;letter-spacing:-1px}
+.hero-text p{font-size:18px;opacity:.82;margin-bottom:36px;line-height:1.65}
+.hero-img{width:320px;max-width:100%;border-radius:20px;box-shadow:0 32px 80px rgba(0,0,0,.35)}
+
+/* Trust bar */
+.trust{background:#f7f7f7;border-bottom:1px solid #ebebeb;padding:13px 24px;display:flex;justify-content:center;gap:28px;flex-wrap:wrap;font-size:13px;color:#555}
+.trust span{display:flex;align-items:center;gap:5px}
+
+/* Layout */
+.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+section{padding:72px 0}
+.section-bg{background:#f8f8f8;padding:72px 24px}
+.section-bg .wrap{max-width:980px;margin:0 auto}
+
+h2{font-size:34px;font-weight:900;margin-bottom:10px;letter-spacing:-.5px;color:#111;text-align:center}
+.sub{text-align:center;color:#777;font-size:16px;margin-bottom:52px;line-height:1.5}
+
+/* Benefits */
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.bcard{text-align:center;padding:36px 24px;background:#fff;border-radius:18px;box-shadow:0 2px 20px rgba(0,0,0,.06)}
+.bcard .ico{font-size:52px;margin-bottom:18px;line-height:1}
+.bcard h3{font-size:18px;font-weight:800;margin-bottom:8px;color:#111}
+.bcard p{color:#777;font-size:14px;line-height:1.65}
+
+/* Description */
+.desc-wrap{display:flex;gap:52px;align-items:center;flex-wrap:wrap}
+.desc-wrap .desc-text h2{text-align:left;margin-bottom:18px}
+.desc-wrap .desc-text p{color:#555;line-height:1.85;font-size:16px}
+
+/* Price */
+.price-box{background:${color};color:#fff;padding:72px 24px;text-align:center}
+.price-box h2{color:#fff;margin-bottom:20px}
+.p-antes{font-size:22px;opacity:.5;text-decoration:line-through;margin-bottom:6px}
+.p-actual{font-size:64px;font-weight:900;line-height:1;margin-bottom:10px;letter-spacing:-2px}
+.cuotas{font-size:16px;opacity:.75;margin-bottom:28px}
+.garantia-note{font-size:13px;opacity:.6;margin-top:20px}
+
+/* Testimonials */
+.tgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:52px}
+.tcard{background:#fff;border-radius:18px;padding:30px;box-shadow:0 2px 20px rgba(0,0,0,.07)}
+.stars{color:#f5c518;font-size:20px;margin-bottom:14px;letter-spacing:1px}
+.tcard blockquote{color:#333;font-size:15px;line-height:1.75;margin-bottom:18px;font-style:italic}
+.tcard .tname{font-weight:800;color:#111;font-size:14px}
+.tcard .tcity{font-size:13px;color:#aaa}
+
+/* FAQ */
+.faq{max-width:700px;margin:52px auto 0}
+details{border-bottom:1px solid #eee}
+details summary{padding:18px 0;font-size:16px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:#111}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:'+';font-size:26px;color:#bbb;font-weight:300;line-height:1}
+details[open] summary::after{content:'−'}
+details p{padding:0 0 20px;color:#666;line-height:1.75;font-size:15px}
+
+/* Final CTA */
+.final{text-align:center;padding:88px 24px;background:#fff}
+.final h2{font-size:38px;margin-bottom:14px}
+.final p{color:#777;margin-bottom:36px;font-size:16px}
+
+/* Footer */
+footer{background:#111;color:#666;text-align:center;padding:28px 24px;font-size:13px}
+
+@media(max-width:700px){
+  .hero-text h1{font-size:30px}
+  .benefits{grid-template-columns:1fr}
+  .tgrid{grid-template-columns:1fr}
+  .btn-lg{font-size:15px;padding:14px 30px}
+  .p-actual{font-size:48px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">${nombre}</div>
+  <a href="${link}" class="btn">${cta}</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-text">
+    <h1>${headline}</h1>
+    <p>${sub}</p>
+    <a href="${link}" class="btn-lg">${cta}</a>
+  </div>
+  ${heroImg}
+</div>
+
+<!-- TRUST BAR -->
+<div class="trust">
+  <span>✅ Envío a todo el país</span>
+  <span>🔒 Compra 100% segura</span>
+  ${garanTrust}
+  <span>⭐ 4.9/5 — +1.000 reseñas</span>
+</div>
+
+<!-- BENEFITS -->
+<div class="wrap">
+  <section>
+    <h2>¿Por qué elegir ${nombre}?</h2>
+    <p class="sub">Todo lo que necesitás para tomar la mejor decisión</p>
+    <div class="benefits">
+      <div class="bcard"><div class="ico">${b1i}</div><h3>${b1t}</h3><p>${b1d}</p></div>
+      <div class="bcard"><div class="ico">${b2i}</div><h3>${b2t}</h3><p>${b2d}</p></div>
+      <div class="bcard"><div class="ico">${b3i}</div><h3>${b3t}</h3><p>${b3d}</p></div>
+    </div>
+  </section>
+</div>
+
+${galleryHtml}
+
+<!-- DESCRIPTION -->
+<div class="section-bg">
+  <div class="wrap">
+    <div class="desc-wrap">
+      ${descImg}
+      <div class="desc-text" style="flex:1;min-width:260px">
+        <h2 style="text-align:left">Todo lo que necesitás saber</h2>
+        <p>${desc}</p>
+        <br><br>
+        <a href="${link}" class="btn-lg">${cta}</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICE -->
+<div class="price-box">
+  <h2>Llevalo hoy</h2>
+  ${antesHtml}
+  <div class="p-actual">$${precio}</div>
+  ${cuotasHtml}
+  <a href="${link}" class="btn-lg">${cta}</a>
+  ${garantia ? `<div class="garantia-note">🛡 ${garantia}</div>` : ''}
+</div>
+
+<!-- TESTIMONIALS -->
+<div class="section-bg">
+  <div class="wrap">
+    <h2>Lo que dicen nuestros clientes</h2>
+    <p class="sub">Experiencias reales de personas reales en todo el país</p>
+    <div class="tgrid">
+      <div class="tcard">
+        <div class="stars">★★★★★</div>
+        <blockquote>"${t1t}"</blockquote>
+        <div class="tname">${t1n}</div>
+        <div class="tcity">${t1c}</div>
+      </div>
+      <div class="tcard">
+        <div class="stars">★★★★★</div>
+        <blockquote>"${t2t}"</blockquote>
+        <div class="tname">${t2n}</div>
+        <div class="tcity">${t2c}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="wrap">
+  <section>
+    <h2>Preguntas frecuentes</h2>
+    <div class="faq">
+      <details><summary>${q1}</summary><p>${a1}</p></details>
+      <details><summary>${q2}</summary><p>${a2}</p></details>
+      <details><summary>${q3}</summary><p>${a3}</p></details>
+    </div>
+  </section>
+</div>
+
+<!-- FINAL CTA -->
+<div class="final">
+  <h2>¿Listo para transformar tu hogar?</h2>
+  <p>Sumate a más de 1.000 clientes satisfechos en todo el país</p>
+  <a href="${link}" class="btn-lg">${cta}</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Pintos Home — Todos los derechos reservados</p>
+</footer>
+
+</body>
+</html>`;
+}
+
+// ── Tiendanube product search ─────────────────────
+let tnVariants = [];
+
+async function searchTNProduct() {
+  const q = document.getElementById('tn-search-input').value.trim();
+  if (!q) return;
+
+  const secret = new URLSearchParams(window.location.search).get('secret') || '';
+  const btn    = document.getElementById('tn-search-btn');
+  const status = document.getElementById('tn-status');
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  status.style.color = '#888';
+  status.textContent = 'Buscando en Tiendanube...';
+
+  try {
+    const res  = await fetch(`/api/tn/product?q=${encodeURIComponent(q)}&secret=${encodeURIComponent(secret)}`);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Producto no encontrado');
+
+    // Rellenar campos básicos
+    setField('f_nombre',   data.nombre);
+    setField('f_headline', data.nombre);
+    setField('f_desc',     data.descripcion);
+    setField('f_precio',   data.precio);
+    setField('f_p_antes',  data.precio_antes || '');
+    setField('f_pid',      data.product_id);
+    setField('f_vid',      data.variant_id);
+
+    // Imágenes
+    if (data.imagenes && data.imagenes.length > 0) {
+      imgs.hero = data.imagenes[0];
+      if (data.imagenes[0]) showThumb('hero', data.imagenes[0]);
+      if (data.imagenes[1]) { imgs.g1 = data.imagenes[1]; showThumb('g1', data.imagenes[1]); }
+      if (data.imagenes[2]) { imgs.g2 = data.imagenes[2]; showThumb('g2', data.imagenes[2]); }
+      document.getElementById('f_img_url').value = data.imagenes[0];
+    }
+
+    // Variantes
+    tnVariants = data.variants || [];
+    const wrap = document.getElementById('tn-variants-wrap');
+    const sel  = document.getElementById('tn-variant-select');
+    if (tnVariants.length > 1) {
+      sel.innerHTML = tnVariants.map(v =>
+        `<option value="${v.id}" data-precio="${v.precio}">${v.label} — $${Number(v.precio).toLocaleString('es-AR')} (stock: ${v.stock})</option>`
+      ).join('');
+      wrap.style.display = 'block';
+    } else {
+      wrap.style.display = 'none';
+    }
+
+    status.style.color = '#22c55e';
+    status.textContent = `✓ "${data.nombre}" importado — ${data.imagenes.length} imagen(es), ${tnVariants.length} variante(s)`;
+    up();
+
+  } catch(err) {
+    status.style.color = '#ef4444';
+    status.textContent = '✕ ' + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Buscar';
+  }
+}
+
+function selectVariant() {
+  const sel = document.getElementById('tn-variant-select');
+  const opt = sel.selectedOptions[0];
+  if (!opt) return;
+  setField('f_vid', opt.value);
+  const precio = Number(opt.dataset.precio).toLocaleString('es-AR');
+  setField('f_precio', precio);
+  up();
+}
+
+function setField(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined && val !== null) el.value = val;
+}
+
+// ── Save to app ───────────────────────────────────
+async function saveLanding() {
+  const nombre = g('f_nombre');
+  if (!nombre) { alert('Completá el nombre del producto primero.'); return; }
+
+  const secret = new URLSearchParams(window.location.search).get('secret') || '';
+  const slug = nombre.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const html = generateLanding();
+  const shop_id = g('f_store').replace(/https?:\/\//,'').replace(/\/$/,'') || 'unknown';
+
+  const btn = document.getElementById('btn-save');
+  const msg = document.getElementById('save-msg');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch('/api/landings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret, slug, html, nombre, shop_id })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al guardar');
+    btn.textContent = '✓ Guardada';
+    btn.style.background = '#16a34a';
+    msg.style.display = 'inline';
+    msg.style.color = '#22c55e';
+    msg.textContent = `Publicada en: ${window.location.origin}/l/${slug}`;
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '☁ Guardar en la app';
+      btn.style.background = '';
+    }, 3000);
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = '☁ Guardar en la app';
+    msg.style.display = 'inline';
+    msg.style.color = '#ef4444';
+    msg.textContent = err.message;
+  }
+}
+
+// ── Init ──────────────────────────────────────────
+document.getElementById('tn-search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchTNProduct();
+});
+updatePreview();
+</script>
+</body>
+</html>

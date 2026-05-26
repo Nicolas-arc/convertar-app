@@ -250,6 +250,179 @@ app.post('/shops', async (req, res) => {
   res.json({ shop_id: id, message: 'Tienda registrada OK', data });
 });
 
+// ── TIENDANUBE API PROXY ──────────────────────────
+// GET /api/tn/product?q=URL_o_ID_o_nombre
+// Busca un producto en TN y devuelve datos limpios para el generador
+app.get('/api/tn/product', async (req, res) => {
+  const secret = req.query.secret || req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  const q = (req.query.q || '').trim();
+  if (!q) return res.status(400).json({ error: 'Falta el parámetro q' });
+
+  const TN_TOKEN    = process.env.TN_TOKEN;
+  const TN_STORE_ID = process.env.TN_STORE_ID;
+  const TN_BASE     = `https://api.tiendanube.com/v1/${TN_STORE_ID}`;
+  const TN_HEADERS  = {
+    'Authentication': `bearer ${TN_TOKEN}`,
+    'User-Agent': 'ConvertAR (nicolas@pintoshome.com)',
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    let productId = null;
+
+    // Detectar si es un ID numérico directo
+    if (/^\d+$/.test(q)) {
+      productId = q;
+    }
+    // Detectar si es una URL con ID numérico (ej: /admin/products/edit/101373538)
+    else {
+      const matchId = q.match(/\/(\d{7,})/);
+      if (matchId) {
+        productId = matchId[1];
+      }
+    }
+
+    let product;
+
+    if (productId) {
+      // Buscar por ID directo
+      const r = await fetch(`${TN_BASE}/products/${productId}`, { headers: TN_HEADERS });
+      if (!r.ok) return res.status(404).json({ error: 'Producto no encontrado' });
+      product = await r.json();
+    } else {
+      // Buscar por handle (slug de URL) o nombre
+      const handle = q.split('/').pop().split('?')[0].toLowerCase().trim();
+      const r = await fetch(`${TN_BASE}/products?handle=${encodeURIComponent(handle)}&per_page=1`, { headers: TN_HEADERS });
+      const list = await r.json();
+      if (!list || !list[0]) {
+        // Intento por nombre
+        const r2 = await fetch(`${TN_BASE}/products?q=${encodeURIComponent(q)}&per_page=1`, { headers: TN_HEADERS });
+        const list2 = await r2.json();
+        if (!list2 || !list2[0]) return res.status(404).json({ error: 'Producto no encontrado' });
+        productId = list2[0].id;
+        const r3 = await fetch(`${TN_BASE}/products/${productId}`, { headers: TN_HEADERS });
+        product = await r3.json();
+      } else {
+        productId = list[0].id;
+        const r3 = await fetch(`${TN_BASE}/products/${productId}`, { headers: TN_HEADERS });
+        product = await r3.json();
+      }
+    }
+
+    // Obtener imágenes
+    const imgRes  = await fetch(`${TN_BASE}/products/${product.id}/images`, { headers: TN_HEADERS });
+    const images  = imgRes.ok ? await imgRes.json() : [];
+
+    // Extraer variante principal (la más barata visible)
+    const variants = (product.variants || []).filter(v => v.visible !== false);
+    const mainVariant = variants[0] || {};
+
+    const precio      = mainVariant.promotional_price || mainVariant.price || '';
+    const precioAntes = mainVariant.promotional_price ? mainVariant.price : (mainVariant.compare_at_price !== mainVariant.price ? mainVariant.compare_at_price : null);
+
+    // Limpiar HTML de la descripción
+    const desc = (product.description?.es || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 600);
+
+    res.json({
+      product_id:   String(product.id),
+      variant_id:   String(mainVariant.id || ''),
+      nombre:        product.name?.es || '',
+      descripcion:   desc,
+      precio:        precio ? Number(precio).toLocaleString('es-AR') : '',
+      precio_antes:  precioAntes ? Number(precioAntes).toLocaleString('es-AR') : '',
+      stock:         mainVariant.stock || 0,
+      variants:      variants.map(v => ({
+        id:      String(v.id),
+        label:   v.values?.[0]?.es || 'Default',
+        precio:  v.promotional_price || v.price,
+        stock:   v.stock
+      })),
+      imagenes:      images.slice(0, 4).map(img => img.src || img.url || '').filter(Boolean)
+    });
+
+  } catch (err) {
+    console.error('TN API error:', err);
+    res.status(500).json({ error: 'Error al conectar con Tiendanube' });
+  }
+});
+
+// ── LANDINGS — generador ──────────────────────────
+// GET /landings/new?secret=X
+app.get('/landings/new', (req, res) => {
+  const secret = req.query.secret || req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).send('No autorizado');
+  }
+  res.sendFile(path.join(__dirname, 'landing-generator.html'));
+});
+
+// POST /api/landings — guardar landing
+app.post('/api/landings', async (req, res) => {
+  const { secret, slug, html, nombre, shop_id } = req.body;
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  if (!slug || !html) {
+    return res.status(400).json({ error: 'slug y html son requeridos' });
+  }
+  const { error } = await supabase.from('landings').upsert({
+    slug, html, nombre, shop_id,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'slug' });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, url: `/l/${slug}` });
+});
+
+// GET /api/landings — listar landings
+app.get('/api/landings', async (req, res) => {
+  const secret = req.query.secret || req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  const { data, error } = await supabase
+    .from('landings')
+    .select('slug, nombre, shop_id, updated_at')
+    .order('updated_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// DELETE /api/landings/:slug — eliminar landing
+app.delete('/api/landings/:slug', async (req, res) => {
+  const secret = req.query.secret || req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  const { error } = await supabase.from('landings').delete().eq('slug', req.params.slug);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// GET /l/:slug — servir landing pública
+app.get('/l/:slug', async (req, res) => {
+  const { data, error } = await supabase
+    .from('landings')
+    .select('html')
+    .eq('slug', req.params.slug)
+    .single();
+  if (error || !data) return res.status(404).send('Landing no encontrada');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.send(data.html);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ ConvertAR backend corriendo en puerto ${PORT}`);
