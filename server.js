@@ -456,6 +456,68 @@ app.get('/l/:slug', async (req, res) => {
   res.send(data.html);
 });
 
+// ── RECENT ORDERS — social proof popup ───────────────
+// GET /api/recent-orders   (público, cacheable 2 min)
+app.get('/api/recent-orders', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=120');
+
+  const TN_TOKEN    = process.env.TN_TOKEN;
+  const TN_STORE_ID = process.env.TN_STORE_ID;
+
+  if (!TN_TOKEN || !TN_STORE_ID) {
+    return res.status(503).json({ error: 'TN credentials not configured' });
+  }
+
+  const TN_HEADERS = {
+    'Authentication': `bearer ${TN_TOKEN}`,
+    'User-Agent': 'ConvertAR (nicolas@pintoshome.com)',
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    const r = await fetch(
+      `https://api.tiendanube.com/v1/${TN_STORE_ID}/orders?per_page=20&payment_status=paid`,
+      { headers: TN_HEADERS }
+    );
+
+    if (!r.ok) {
+      const body = await r.text();
+      console.error('TN orders error:', r.status, body);
+      return res.status(r.status).json({ error: `TN API error: ${r.status}` });
+    }
+
+    const orders = await r.json();
+    const now = Date.now();
+
+    const result = (Array.isArray(orders) ? orders : []).map(order => {
+      const customer  = order.customer || {};
+      const firstName = (customer.name || '').split(' ')[0] || 'Cliente';
+      const city      = (customer.default_address && customer.default_address.city) || '';
+
+      const prod        = (order.products || [])[0] || {};
+      const productName = (prod.name && (prod.name.es || Object.values(prod.name)[0])) || prod.name || '';
+      const productImg  = (prod.image && (prod.image.src || prod.image.url)) || null;
+
+      const createdAt  = new Date(order.created_at).getTime();
+      const minutesAgo = Math.max(1, Math.round((now - createdAt) / 60000));
+
+      return {
+        nombre:   firstName,
+        ciudad:   city,
+        producto: productName,
+        imagen:   productImg,
+        min:      minutesAgo
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('recent-orders error:', err);
+    res.status(500).json({ error: 'Error fetching orders' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ ConvertAR backend corriendo en puerto ${PORT}`);
