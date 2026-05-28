@@ -8,7 +8,7 @@
     {icon:'\uD83D\uDCB3',titulo:'6 cuotas sin inter\u00e9s',detalle:'Con todas las tarjetas'},
     {icon:'\uD83C\uDFE6',titulo:'10% OFF con transferencia',detalle:'Mejor precio al momento de pagar'},
     {icon:'\uD83D\uDE9A',titulo:'Env\u00edo gratis',detalle:'En compras desde $69.999'},
-    {icon:'\uD83C\uDF81',titulo:'Arm\u00e1 tu combo',detalle:'Black Out + Voile con descuento especial'}
+    {icon:'\uD83C\uDF81',titulo:'Arm\u00e1 tu combo',detalle:'Black Out + Voile + Cuadros con descuento especial'}
   ];
   var _promos=null;
 
