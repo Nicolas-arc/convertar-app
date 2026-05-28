@@ -1,63 +1,68 @@
 /* ============================================================
-   ConvertAR · Llevá más & Ahorrá v1
+   ConvertAR \u00B7 Llev\u00E1 m\u00E1s & Ahorr\u00E1 v2
    convertar-app-production.up.railway.app/static/llevas-mas.js
    ============================================================ */
 (function () {
   if (!window.LS || !window.LS.product) return;
 
-  /* Inyectar estilos una sola vez */
+  /* Ocultar nativo con CSS injection (m\u00E1s robusto que inline) */
+  var HIDE_CSS = '.js-bulk-discount-table,.js-bulk-discount-container,[data-store="product-bulk-discount"],.bulk-discount,.product-bulk-discount,.js-product-promotions,.product-promotions-bulk,.bulk-discount-table{display:none!important}';
+  function ocultarNativo() {
+    if (document.getElementById('ph-ma-hide')) return;
+    var s = document.createElement('style'); s.id = 'ph-ma-hide';
+    s.textContent = HIDE_CSS; document.head.appendChild(s);
+  }
+
+  /* Inyectar estilos del widget una sola vez */
   if (!document.getElementById('ph-ma-styles')) {
-    var st = document.createElement('style');
-    st.id = 'ph-ma-styles';
+    var st = document.createElement('style'); st.id = 'ph-ma-styles';
     st.textContent = '#ph-mas-ahorra{margin:12px 0 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.ph-ma-titulo{text-align:center;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:10px;display:flex;align-items:center;gap:8px}.ph-ma-titulo::before,.ph-ma-titulo::after{content:"";flex:1;height:1px;background:#e8e8e8}.ph-ma-cards{display:flex;flex-direction:column;gap:8px}.ph-ma-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;user-select:none}.ph-ma-card:hover{border-color:#aaa}.ph-ma-card.ph-ma-sel{border-color:#111;background:#fafafa}.ph-ma-radio{width:18px;height:18px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color .15s}.ph-ma-card.ph-ma-sel .ph-ma-radio{border-color:#111}.ph-ma-dot{width:8px;height:8px;border-radius:50%;background:#111;opacity:0;transition:opacity .15s}.ph-ma-card.ph-ma-sel .ph-ma-dot{opacity:1}.ph-ma-info{flex:1;min-width:0}.ph-ma-r1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.ph-ma-lbl{font-size:13px;font-weight:700;color:#111}.ph-ma-pct{font-size:11px;font-weight:700;color:#c0392b;background:#fff5f5;border:1px solid rgba(192,57,43,.2);border-radius:4px;padding:1px 6px;white-space:nowrap}.ph-ma-best{font-size:10px;font-weight:800;color:#fff;background:#111;border-radius:4px;padding:2px 7px;letter-spacing:.5px;text-transform:uppercase;margin-left:auto;white-space:nowrap}.ph-ma-r2{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}.ph-ma-ahorra{font-size:11px;color:#228b3a;font-weight:600}.ph-ma-unit{font-size:11px;color:#999}.ph-ma-precio{text-align:right;flex-shrink:0}.ph-ma-total{font-size:16px;font-weight:800;color:#111;display:block;white-space:nowrap}.ph-ma-tach{font-size:11px;color:#ccc;text-decoration:line-through;display:block;text-align:right;white-space:nowrap}';
     document.head.appendChild(st);
   }
 
   function ars(n) { return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 
-  function getTiers() {
+  function getTiersFromLS() {
     var promos = window.LS && window.LS.product && window.LS.product.promotions;
-    if (Array.isArray(promos) && promos.length) {
-      var t1 = promos
-        .filter(function(p) { return p.min_quantity && p.discount_percentage; })
-        .map(function(p) { return { qty: parseInt(p.min_quantity), pct: parseFloat(p.discount_percentage) }; })
-        .filter(function(t) { return t.qty > 1 && t.pct > 0; })
-        .sort(function(a, b) { return a.qty - b.qty; });
-      if (t1.length) return t1;
-    }
-    var selsTbl = ['.js-bulk-discount-table','[data-store="product-bulk-discount"] table','.bulk-discount-table','.product-bulk-discount table','.js-bulk-discount-container table'];
-    for (var i = 0; i < selsTbl.length; i++) {
-      var tbl = document.querySelector(selsTbl[i]);
-      if (!tbl) continue;
-      var t2 = [];
+    if (!Array.isArray(promos) || !promos.length) return [];
+    var t = promos.map(function(p) {
+      var qty = parseInt(p.min_quantity || p.quantity || p.min_qty || 0);
+      var pct = parseFloat(p.discount_percentage || p.percentage || p.discount || 0);
+      return {qty: qty, pct: pct};
+    }).filter(function(t) { return t.qty > 1 && t.pct > 0; })
+      .sort(function(a,b){return a.qty-b.qty;});
+    return t;
+  }
+
+  function getTiersFromDOM() {
+    var sels = ['.js-bulk-discount-table','[data-store="product-bulk-discount"] table','.bulk-discount-table','.product-bulk-discount table','.js-bulk-discount-container table'];
+    for (var i = 0; i < sels.length; i++) {
+      var tbl = document.querySelector(sels[i]); if (!tbl) continue;
+      var t = [];
       tbl.querySelectorAll('tr').forEach(function(row) {
-        var celdas = row.querySelectorAll('td');
-        if (celdas.length < 2) return;
+        var celdas = row.querySelectorAll('td'); if (celdas.length < 2) return;
         var qm = celdas[0].textContent.match(/\d+/);
-        var pm = celdas[1].textContent.match(/\d+/);
-        if (qm && pm) { var q=parseInt(qm[0]),p=parseInt(pm[0]); if(q>1&&p>0) t2.push({qty:q,pct:p}); }
+        var pm = celdas[1].textContent.match(/(\d+)\s*%/) || celdas[1].textContent.match(/\d+/);
+        if (qm && pm) { var q=parseInt(qm[0]),p=parseInt(pm[1]||pm[0]); if(q>1&&p>0&&p<100) t.push({qty:q,pct:p}); }
       });
-      if (t2.length) return t2.sort(function(a,b){return a.qty-b.qty;});
+      if (t.length) return t.sort(function(a,b){return a.qty-b.qty;});
     }
     return [];
   }
 
-  function ocultarNativo() {
-    ['.js-bulk-discount-table','.js-bulk-discount-container','[data-store="product-bulk-discount"]','.bulk-discount','.product-bulk-discount','.js-product-promotions','.product-promotions-bulk'].forEach(function(sel) {
-      var el = document.querySelector(sel);
-      if (el) el.style.setProperty('display','none','important');
-    });
+  function getTiers() {
+    var t = getTiersFromLS(); return t.length ? t : getTiersFromDOM();
   }
 
   function renderWidget(precio) {
     var tiers = getTiers();
     if (!tiers.length) return;
-    ocultarNativo();
+    ocultarNativo();  /* siempre ocultar si encontramos tiers */
     var old = document.getElementById('ph-mas-ahorra'); if (old) old.remove();
     var opciones = [{qty:1,pct:0}].concat(tiers);
     var bestPct = Math.max.apply(null, tiers.map(function(t){return t.pct;}));
     var wrap = document.createElement('div'); wrap.id = 'ph-mas-ahorra';
-    var titulo = document.createElement('div'); titulo.className = 'ph-ma-titulo'; titulo.textContent = 'Llevá más & Ahorrá';
+    var titulo = document.createElement('div'); titulo.className = 'ph-ma-titulo'; titulo.textContent = 'Llev\u00e1 m\u00e1s & Ahorr\u00e1';
     wrap.appendChild(titulo);
     var cardsEl = document.createElement('div'); cardsEl.className = 'ph-ma-cards';
     opciones.forEach(function(op, idx) {
@@ -67,11 +72,11 @@
       var dot=document.createElement('div'); dot.className='ph-ma-dot'; radio.appendChild(dot);
       var info=document.createElement('div'); info.className='ph-ma-info';
       var r1=document.createElement('div'); r1.className='ph-ma-r1';
-      var lbl=document.createElement('span'); lbl.className='ph-ma-lbl'; lbl.textContent='Llevá '+op.qty; r1.appendChild(lbl);
-      if(op.pct>0){var pctEl=document.createElement('span');pctEl.className='ph-ma-pct';pctEl.textContent=op.pct+'% OFF 🔥';r1.appendChild(pctEl);}
+      var lbl=document.createElement('span'); lbl.className='ph-ma-lbl'; lbl.textContent='Llev\u00e1 '+op.qty; r1.appendChild(lbl);
+      if(op.pct>0){var pctEl=document.createElement('span');pctEl.className='ph-ma-pct';pctEl.textContent=op.pct+'% OFF \uD83D\uDD25';r1.appendChild(pctEl);}
       if(esBest){var best=document.createElement('span');best.className='ph-ma-best';best.textContent='Mayor ahorro';r1.appendChild(best);}
       info.appendChild(r1);
-      if(ahorro>0||op.qty>1){var r2=document.createElement('div');r2.className='ph-ma-r2';if(ahorro>0){var ahorraEl=document.createElement('span');ahorraEl.className='ph-ma-ahorra';ahorraEl.textContent='Ahorrás '+ars(ahorro);r2.appendChild(ahorraEl);}if(op.qty>1){var unitEl=document.createElement('span');unitEl.className='ph-ma-unit';unitEl.textContent=ars(pUnit)+' c/u';r2.appendChild(unitEl);}info.appendChild(r2);}
+      if(ahorro>0||op.qty>1){var r2=document.createElement('div');r2.className='ph-ma-r2';if(ahorro>0){var ahorraEl=document.createElement('span');ahorraEl.className='ph-ma-ahorra';ahorraEl.textContent='Ahorr\u00e1s '+ars(ahorro);r2.appendChild(ahorraEl);}if(op.qty>1){var unitEl=document.createElement('span');unitEl.className='ph-ma-unit';unitEl.textContent=ars(pUnit)+' c/u';r2.appendChild(unitEl);}info.appendChild(r2);}
       var precioWrap=document.createElement('div'); precioWrap.className='ph-ma-precio';
       var totalEl=document.createElement('span'); totalEl.className='ph-ma-total'; totalEl.textContent=ars(total); precioWrap.appendChild(totalEl);
       if(ahorro>0){var tachEl=document.createElement('span');tachEl.className='ph-ma-tach';tachEl.textContent=ars(totalSin);precioWrap.appendChild(tachEl);}
@@ -85,15 +90,29 @@
       cardsEl.appendChild(card);
     });
     wrap.appendChild(cardsEl);
-    var ancla=document.getElementById('cva-cuotas-badge')||document.querySelector('[data-pintos-badge="cuotas"]')||document.querySelector('[data-pintos-badge="transfer"]')||document.querySelector('[data-pintos-badge="envios"]');
-    if(ancla) ancla.insertAdjacentElement('afterend', wrap);
+    /* Buscar anchor con m\u00E1s fallbacks */
+    var ancla = document.getElementById('cva-cuotas-badge') ||
+                document.querySelector('[data-pintos-badge="cuotas"]') ||
+                document.querySelector('[data-pintos-badge="transfer"]') ||
+                document.querySelector('[data-pintos-badge="envios"]') ||
+                document.getElementById('price_display') ||
+                document.querySelector('.js-price-display');
+    if (ancla) {
+      ancla.insertAdjacentElement('afterend', wrap);
+    } else {
+      var btn = document.querySelector('.js-add-to-cart,[data-store="buy-button"],.buy-now,.js-buy-button');
+      if (btn && btn.parentNode) btn.parentNode.insertBefore(wrap, btn);
+    }
   }
 
   function init() {
+    /* Ocultar nativo de inmediato aunque no tengamos tiers a\u00FAn */
+    var hideSel = HIDE_CSS.split('{')[0];
+    /* esperar precio */
     var elapsed=0;
     var iv=setInterval(function(){
       var el=document.querySelector('[data-product-price]');
-      if(el){clearInterval(iv);var precio=parseFloat(el.getAttribute('data-product-price'))/100;if(precio>0)setTimeout(function(){renderWidget(precio);},700);return;}
+      if(el){clearInterval(iv);var precio=parseFloat(el.getAttribute('data-product-price'))/100;if(precio>0)setTimeout(function(){renderWidget(precio);},800);return;}
       elapsed+=100;if(elapsed>=8000)clearInterval(iv);
     },100);
     if(LS.registerOnChangeVariant){LS.registerOnChangeVariant(function(variant){var p=variant&&variant.price?variant.price/100:0;if(p>0)setTimeout(function(){renderWidget(p);},450);});}
