@@ -524,7 +524,8 @@ app.get('/api/recent-orders', async (req, res) => {
 const DEFAULT_PROMOS = [
   { icon: '💳', titulo: '6 cuotas sin interés',         detalle: 'Con todas las tarjetas' },
   { icon: '🏦', titulo: '10% OFF con transferencia',    detalle: 'Mejor precio al momento de pagar' },
-  { icon: '🚚', titulo: 'Envío gratis',                 detalle: 'En compras desde $69.999' }
+  { icon: '🚚', titulo: 'Envío gratis',                 detalle: 'En compras desde $69.999' },
+  { icon: '🎁', titulo: 'Armá tu combo',                detalle: 'Black Out + Voile con descuento especial' }
 ];
 
 app.get('/api/promos/:shop_id', async (req, res) => {
