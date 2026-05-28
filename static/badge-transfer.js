@@ -1,5 +1,5 @@
 /* ============================================================
-   ConvertAR · Badge Transferencia (Mejor Precio)
+   ConvertAR \u00B7 Badge Transferencia (Mejor Precio)
    convertar-app-production.up.railway.app/static/badge-transfer.js
    ============================================================ */
 (function () {
@@ -29,9 +29,27 @@
     return wrap;
   }
 
+  /* Ocultar elementos nativos de TN que duplican info ya mostrada por nuestros badges */
+  function ocultarNativosProducto() {
+    if (document.getElementById('ph-tr-hide')) return;
+    var s2 = document.createElement('style'); s2.id = 'ph-tr-hide';
+    s2.textContent = [
+      /* precio con metodo de pago: "$71.999,10 con Transferencia o deposito" */
+      '.js-product-payment-info','.product-payment-info',
+      '[data-store="product-payment-methods"]','[data-store="product-payment-info"]',
+      '.js-payment-discount','.payment-discount',
+      /* precio sin impuestos */
+      '[data-store="product-price-no-taxes"]','.js-price-no-taxes','.product-price-no-taxes',
+      /* texto "Lleva mas y paga menos" suelto (no la tabla, eso lo oculta llevas-mas.js) */
+      '.js-product-promotions-legend','.product-promotions-legend'
+    ].join(',') + '{display:none!important}';
+    document.head.appendChild(s2);
+  }
+
   function inyectarEnProducto() {
     if (_priceObs) _priceObs.disconnect();
     clearTimeout(window._pintosT);
+    ocultarNativosProducto();
     var viejoBadge = document.getElementById('pintos-mp-prod'); if (viejoBadge) viejoBadge.remove();
     var viejoTachado = document.getElementById('pintos-tachado-prod'); if (viejoTachado) viejoTachado.remove();
     var precio = 0;
