@@ -33,7 +33,7 @@
   function ocultarNativosCSS() {
     if (document.getElementById('ph-tr-hide')) return;
     var s2 = document.createElement('style'); s2.id = 'ph-tr-hide';
-    s2.textContent = '.js-product-payment-info,.product-payment-info,[data-store="product-payment-methods"],[data-store="product-payment-info"],.js-payment-discount,.payment-discount,.js-product-promotions-legend,.product-promotions-legend{display:none!important}';
+    s2.textContent = '.js-product-payment-info,.product-payment-info,[data-store="product-payment-methods"],[data-store="product-payment-info"],.js-payment-discount,.payment-discount,.js-product-promotions-legend,.product-promotions-legend,.payment-discount-price-product-container{display:none!important}';
     document.head.appendChild(s2);
   }
 
