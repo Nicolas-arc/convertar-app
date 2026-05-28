@@ -33,7 +33,7 @@
   function ocultarNativosCSS() {
     if (document.getElementById('ph-tr-hide')) return;
     var s2 = document.createElement('style'); s2.id = 'ph-tr-hide';
-    s2.textContent = '.js-product-payment-info,.product-payment-info,[data-store="product-payment-methods"],[data-store="product-payment-info"],.js-payment-discount,.payment-discount,[data-store="product-price-no-taxes"],.js-price-no-taxes,.product-price-no-taxes,.js-product-promotions-legend,.product-promotions-legend{display:none!important}';
+    s2.textContent = '.js-product-payment-info,.product-payment-info,[data-store="product-payment-methods"],[data-store="product-payment-info"],.js-payment-discount,.payment-discount,.js-product-promotions-legend,.product-promotions-legend{display:none!important}';
     document.head.appendChild(s2);
   }
 
@@ -49,7 +49,6 @@
       if (!t) return;
       if (/con Transferencia/i.test(t) ||
           /con Dep\u00F3sito/i.test(t) ||
-          /^Precio sin impuesto/i.test(t) ||
           /lleva m.+s y paga menos/i.test(t)) {
         el.style.setProperty('display','none','important');
       }
