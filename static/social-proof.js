@@ -66,10 +66,10 @@
     return 'hace '+(rm>0 ? h+'h '+rm+'min' : h+'h');
   }
 
-  /* sessionStorage: persiste mientras navega, se resetea en nueva sesion */
+  /* localStorage: persiste mientras navega, se resetea en nueva sesion */
   var STORE_KEY='ph_sp_idx';
-  function getIdx(){try{return parseInt(sessionStorage.getItem(STORE_KEY)||'0',10)||0;}catch(e){return 0;}}
-  function setIdx(i){try{sessionStorage.setItem(STORE_KEY,String(i));}catch(e){}}
+  function getIdx(){try{return parseInt(localStorage.getItem(STORE_KEY)||'0',10)||0;}catch(e){return 0;}}
+  function setIdx(i){try{localStorage.setItem(STORE_KEY,String(i));}catch(e){}}
 
   /* dismissed: solo para esta pagina (se limpia al navegar) */
   var dismissed = false;
