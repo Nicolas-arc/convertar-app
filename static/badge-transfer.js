@@ -29,21 +29,37 @@
     return wrap;
   }
 
-  /* Ocultar elementos nativos de TN que duplican info ya mostrada por nuestros badges */
-  function ocultarNativosProducto() {
+  /* Ocultar elementos nativos de TN por selector CSS (cubre themes conocidos) */
+  function ocultarNativosCSS() {
     if (document.getElementById('ph-tr-hide')) return;
     var s2 = document.createElement('style'); s2.id = 'ph-tr-hide';
-    s2.textContent = [
-      /* precio con metodo de pago: "$71.999,10 con Transferencia o deposito" */
-      '.js-product-payment-info','.product-payment-info',
-      '[data-store="product-payment-methods"]','[data-store="product-payment-info"]',
-      '.js-payment-discount','.payment-discount',
-      /* precio sin impuestos */
-      '[data-store="product-price-no-taxes"]','.js-price-no-taxes','.product-price-no-taxes',
-      /* texto "Lleva mas y paga menos" suelto (no la tabla, eso lo oculta llevas-mas.js) */
-      '.js-product-promotions-legend','.product-promotions-legend'
-    ].join(',') + '{display:none!important}';
+    s2.textContent = '.js-product-payment-info,.product-payment-info,[data-store="product-payment-methods"],[data-store="product-payment-info"],.js-payment-discount,.payment-discount,[data-store="product-price-no-taxes"],.js-price-no-taxes,.product-price-no-taxes,.js-product-promotions-legend,.product-promotions-legend{display:none!important}';
     document.head.appendChild(s2);
+  }
+
+  /* Fallback: buscar por contenido de texto cuando el selector no matchea */
+  function ocultarNativosPorTexto() {
+    var nodo = document.getElementById('single-product') ||
+               document.querySelector('.js-product-detail,[data-store="product"],main') ||
+               document.body;
+    nodo.querySelectorAll('p,span,div,li,small').forEach(function(el) {
+      if (el.children.length > 0) return;
+      if (el.closest('[data-pintos-badge]') || el.id === 'pintos-mp-prod' || el.id === 'cva-cuotas-badge') return;
+      var t = el.textContent.trim();
+      if (!t) return;
+      if (/con Transferencia/i.test(t) ||
+          /con Dep\u00F3sito/i.test(t) ||
+          /^Precio sin impuesto/i.test(t) ||
+          /lleva m.+s y paga menos/i.test(t)) {
+        el.style.setProperty('display','none','important');
+      }
+    });
+  }
+
+  function ocultarNativosProducto() {
+    ocultarNativosCSS();
+    setTimeout(ocultarNativosPorTexto, 600);
+    setTimeout(ocultarNativosPorTexto, 1500); /* segunda pasada por si TN los agrega tarde */
   }
 
   function inyectarEnProducto() {

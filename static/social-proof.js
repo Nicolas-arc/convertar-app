@@ -9,12 +9,15 @@
   var PRODUCTOS=['Combo Home | Black Out Lino + Voile | 210cm x 130cm','Set x3 Cuadros Decorativo Lienzo MDF','Cortina Black Out x 1 Pa\u00f1o 240cm x 130cm','Combo Black Out + Voile + 3 Cuadros Cosmopolita','Agarraderas De Cortinas x2 Black','Cortina Voile + 3 Cuadros (2 Pa\u00f1os 210cm)','Cortina Black Out x 1 Pa\u00f1o 260cm x 130cm','Set x3 Cuadros 40x35 | Trilog\u00eda Aura Azul','Funda Acolchado Microfibra 120gm Premium','Combo Home | Black Out Lino + Voile | 210cm x 130cm','Set x3 Cuadros 40x35 | Trilog\u00eda Home Frequency','Cortina Voile + 3 Cuadros (2 Pa\u00f1os 210cm)','Set x3 Cuadros Decorativo Lienzo MDF','Juego Cortinas Tropical + 3 Cuadros Aura Rosa','Set x6 Cuadros 30x20 Instinto Superior','Set x3 Cuadro Personalizado 40x35 Pinterest'];
 
   function rand(a){return a[Math.floor(Math.random()*a.length)];}
-  function calcMin(i){return 3+i*8;}
+  /* LOOP=23: paso 0=3min ... paso 22=179min (2h59). Al paso 23 reinicia en 3min */
+  var LOOP=23;
+  function calcMin(i){return 3+(i%LOOP)*8;}
   function fmtMin(m){if(m<60)return 'hace '+m+' min';var h=Math.floor(m/60),rm=m%60;return 'hace '+(rm>0?h+'h '+rm+'min':h+'h');}
 
   var KEY='ph_sp_idx';
   function getIdx(){try{return parseInt(localStorage.getItem(KEY)||'0',10)||0;}catch(e){return 0;}}
-  function saveIdx(i){try{localStorage.setItem(KEY,String(i));}catch(e){}}
+  /* Guardar siempre dentro del rango 0..LOOP-1 para que el reset sea automatico */
+  function saveIdx(i){try{localStorage.setItem(KEY,String(i%LOOP));}catch(e){}}
 
   /* Reservar el indice al cargar: cada pesta\u00f1a toma uno distinto */
   var pageIdx=getIdx();
