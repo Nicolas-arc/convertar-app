@@ -83,7 +83,7 @@ app.get('/snippet.js', (req, res) => {
 app.use('/static', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=300'); // 5 min — cambios se ven en max 5 min
-  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   next();
 }, express.static(path.join(__dirname, 'static')));
 
