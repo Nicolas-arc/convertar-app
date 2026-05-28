@@ -80,12 +80,13 @@ app.get('/snippet.js', (req, res) => {
 // ── CDN propio — scripts de ConvertAR ─────────────────
 // GET /static/badge-transfer.js, /static/badge-cuotas.js, etc.
 // GTM carga cada script con: <script src="URL/static/ARCHIVO.js" async></script>
-app.use('/static', (req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, max-age=300'); // 5 min — cambios se ven en max 5 min
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  next();
-}, express.static(path.join(__dirname, 'static')));
+app.use('/static', express.static(path.join(__dirname, 'static'), {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  }
+}));
 
 // ── Manifest PWA ──────────────────────────────────────
 app.get('/manifest.json', (req, res) => {
