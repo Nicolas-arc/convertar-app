@@ -1,5 +1,5 @@
 /* ============================================================
-   ConvertAR · Social Proof Popup v2
+   ConvertAR - Social Proof Popup v2
    convertar-app-production.up.railway.app/static/social-proof.js
    ============================================================ */
 (function(){
@@ -9,15 +9,38 @@
     document.head.appendChild(st);
   }
 
-  var NOMBRES=['María','Carlos','Facundo','Valentina','Diego','Ana','Sofía','Martín','Laura','Pablo','Florencia','Nicolás','Camila','Lucía','Roberto','Jimena','Fernando','Gabriela','Santiago','Paola'];
-  var CIUDADES=['Buenos Aires','Córdoba','Rosario','Mendoza','La Plata','Mar del Plata','Salta','Santa Fe','Neuquén','Tucumán','Bahía Blanca','Posadas','San Juan','Resistencia','Corrientes','Paraná','Formosa','Jujuy','Catamarca','San Luis'];
+  var NOMBRES=[
+    'Mar\u00eda','Carlos','Facundo','Valentina','Diego',
+    'Ana','Sof\u00eda','Mart\u00edn','Laura','Pablo',
+    'Florencia','Nicol\u00e1s','Camila','Luc\u00eda','Roberto',
+    'Jimena','Fernando','Gabriela','Santiago','Paola'
+  ];
+  var CIUDADES=[
+    'Buenos Aires','C\u00f3rdoba','Rosario','Mendoza','La Plata',
+    'Mar del Plata','Salta','Santa Fe','Neuqu\u00e9n','Tucum\u00e1n',
+    'Bah\u00eda Blanca','Posadas','San Juan','Resistencia','Corrientes',
+    'Paran\u00e1','Formosa','Jujuy','Catamarca','San Luis'
+  ];
 
   /* TODO Fase 3: reemplazar PRODUCTOS con fetch a /api/recent-orders?shop=pintoshogar */
-  var PRODUCTOS=['Combo Home Black Out + Voile','Cortinas Black Out 210cm','Cortinas Black Out 220cm','Cortinas Black Out 240cm','Cortinas Black Out 260cm','Cortinas Black Out 280cm','Cuadros Decorativos x3','Cortinas Voile 210cm','Set Ropa de Cama Queen','Combo Black Out 3m','Cortinas Black Out 150cm','Cuadros Decorativos x6'];
+  var PRODUCTOS=[
+    'Combo Home Black Out + Voile',
+    'Cortinas Black Out 210cm',
+    'Cortinas Black Out 220cm',
+    'Cortinas Black Out 240cm',
+    'Cortinas Black Out 260cm',
+    'Cortinas Black Out 280cm',
+    'Cuadros Decorativos x3',
+    'Cortinas Voile 210cm',
+    'Set Ropa de Cama Queen',
+    'Combo Black Out 3m',
+    'Cortinas Black Out 150cm',
+    'Cuadros Decorativos x6'
+  ];
 
   function rand(a){return a[Math.floor(Math.random()*a.length)];}
 
-  /* 20 compras — tiempos de 3 en 3: 3, 6, 9 ... 60 min */
+  /* 20 compras - tiempos de 3 en 3: 3, 6, 9 ... 60 min */
   var pool=[];
   for(var i=0;i<20;i++){pool.push({nombre:NOMBRES[i],ciudad:rand(CIUDADES),producto:rand(PRODUCTOS),min:(i+1)*3});}
 
@@ -38,11 +61,11 @@
     var c=pool[idx++];
     var card=document.createElement('div'); card.className='ph-sp-card'; cardEl=card;
     card.addEventListener('click',function(){clearTimeout(tVis);clearTimeout(tNext);cerrar(function(){tNext=setTimeout(mostrar,PAUSA);});});
-    var icon=document.createElement('span'); icon.className='ph-sp-icon'; icon.textContent='🛍️';
+    var icon=document.createElement('span'); icon.className='ph-sp-icon'; icon.textContent='\uD83D\uDED2';
     var body=document.createElement('div'); body.className='ph-sp-body';
     var nom=document.createElement('div'); nom.className='ph-sp-nombre'; nom.textContent=c.nombre+' de '+c.ciudad;
     var prod=document.createElement('div'); prod.className='ph-sp-prod'; prod.textContent=c.producto;
-    var tiem=document.createElement('div'); tiem.className='ph-sp-tiempo'; tiem.textContent='compró hace '+c.min+' min';
+    var tiem=document.createElement('div'); tiem.className='ph-sp-tiempo'; tiem.textContent='compr\u00f3 hace '+c.min+' min';
     var prog=document.createElement('div'); prog.className='ph-sp-progress';
     var bar=document.createElement('div'); bar.className='ph-sp-bar'; bar.style.animationDuration=DURACION+'ms'; prog.appendChild(bar);
     body.appendChild(nom); body.appendChild(prod); body.appendChild(tiem); body.appendChild(prog);
