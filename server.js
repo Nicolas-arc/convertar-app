@@ -77,6 +77,16 @@ app.get('/snippet.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'snippet.js'));
 });
 
+// ── CDN propio — scripts de ConvertAR ─────────────────
+// GET /static/badge-transfer.js, /static/badge-cuotas.js, etc.
+// GTM carga cada script con: <script src="URL/static/ARCHIVO.js" async></script>
+app.use('/static', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=300'); // 5 min — cambios se ven en max 5 min
+  res.setHeader('Content-Type', 'application/javascript');
+  next();
+}, express.static(path.join(__dirname, 'static')));
+
 // ── Manifest PWA ──────────────────────────────────────
 app.get('/manifest.json', (req, res) => {
   res.setHeader('Content-Type', 'application/manifest+json');
