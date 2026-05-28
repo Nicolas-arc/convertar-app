@@ -518,6 +518,40 @@ app.get('/api/recent-orders', async (req, res) => {
   }
 });
 
+// ── PROMOS — popup de promociones flotante ─────────────
+// GET /api/promos/:shop_id  (público, cacheable 5 min)
+// POST /api/promos/:shop_id (requiere ADMIN_SECRET)
+const DEFAULT_PROMOS = [
+  { icon: '💳', titulo: '6 cuotas sin interés',         detalle: 'Con todas las tarjetas' },
+  { icon: '🏦', titulo: '10% OFF con transferencia',    detalle: 'Mejor precio al momento de pagar' },
+  { icon: '🚚', titulo: 'Envío gratis',                 detalle: 'En compras desde $69.999' }
+];
+
+app.get('/api/promos/:shop_id', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  if (!supabase) return res.json(DEFAULT_PROMOS);
+  const { data, error } = await supabase
+    .from('shops').select('config').eq('id', req.params.shop_id).single();
+  const promos = (!error && data?.config?.promos) ? data.config.promos : DEFAULT_PROMOS;
+  res.json(promos);
+});
+
+app.post('/api/promos/:shop_id', async (req, res) => {
+  const { promos, secret } = req.body;
+  if (secret !== process.env.ADMIN_SECRET) return res.status(401).json({ error: 'No autorizado' });
+  if (!Array.isArray(promos))              return res.status(400).json({ error: 'promos debe ser un array' });
+  if (!supabase)                           return res.status(503).json({ error: 'DB no disponible' });
+  const { data: cur } = await supabase.from('shops').select('config').eq('id', req.params.shop_id).single();
+  const config = { ...(cur?.config || {}), promos };
+  const { error } = await supabase.from('shops').upsert(
+    { id: req.params.shop_id, name: req.params.shop_id, url: 'https://pintoshogar.com.ar', config, updated_at: new Date().toISOString() },
+    { onConflict: 'id' }
+  );
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ ConvertAR backend corriendo en puerto ${PORT}`);

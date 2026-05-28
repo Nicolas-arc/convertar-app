@@ -326,6 +326,8 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
     <div class="sidebar-item" onclick="showPage('tags', this)">🏷 Tags</div>
     <div class="sidebar-item" onclick="showPage('countdown', this)">⏱ Countdown</div>
     <div class="sidebar-item" onclick="showPage('faq', this)">❓ FAQ</div>
+    <div class="sidebar-section">Sitewide</div>
+    <div class="sidebar-item" onclick="showPage('promos', this)">🎁 Promociones</div>
     <div class="sidebar-section">Categorías</div>
     <div class="sidebar-item" onclick="showPage('categorias', this)">🏪 Categorías</div>
     <div class="sidebar-section">Datos</div>
@@ -462,6 +464,18 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
         <div class="faq-list" id="faq-list"></div>
         <button class="btn-add" onclick="addFaqRow()">+ Agregar pregunta</button>
       </div>
+    </div>
+
+    <!-- PROMOCIONES SITEWIDE -->
+    <div class="page" id="page-promos">
+      <div class="page-title">🎁 Promociones del día</div>
+      <div class="page-sub">Aparecen en el popup "Ver promos hoy" que flota en toda la tienda. Editá y guardá — los cambios se reflejan al instante.</div>
+      <div class="config-card">
+        <div id="promos-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
+        <button class="btn-add" onclick="addPromoRow()">+ Agregar promoción</button>
+      </div>
+      <button class="nav-save" id="btn-save-promos" style="width:100%;margin-top:4px" onclick="savePromos()">Guardar promociones</button>
+      <div id="promos-status" style="font-size:12px;color:var(--green);margin-top:8px;min-height:18px;text-align:center"></div>
     </div>
 
     <!-- CATEGORÍAS -->
@@ -1396,6 +1410,7 @@ function showPage(id, el) {
     switchScreen('producto', document.querySelector('.preview-tab:first-child'));
   }
   if (id === 'landings') loadLandings();
+  if (id === 'promos')   loadPromos();
 }
 
 // ── Landings ──────────────────────────────────────
@@ -1519,6 +1534,100 @@ function renderAll() {
 }
 
 loadConfig();
+
+// ── Promociones ──────────────────────────────────────
+var _promos = null;
+
+function loadPromos() {
+  fetch(API_URL + '/api/promos/' + SHOP_ID)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _promos = Array.isArray(data) ? data : [];
+      renderPromosList(_promos);
+    })
+    .catch(function() {
+      _promos = [];
+      renderPromosList(_promos);
+    });
+}
+
+function renderPromosList(promos) {
+  var el = document.getElementById('promos-list');
+  el.innerHTML = '';
+  promos.forEach(function(p, i) {
+    el.appendChild(buildPromoRow(p, i));
+  });
+}
+
+function buildPromoRow(p, i) {
+  var row = document.createElement('div');
+  row.className = 'faq-row';
+  row.dataset.idx = i;
+  row.innerHTML =
+    '<div style="display:flex;gap:8px;align-items:flex-start">'
+    + '<input class="form-input" placeholder="🔥" style="width:60px;text-align:center;font-size:20px;padding:6px 4px" value="' + esc(p.icon||'') + '" data-field="icon">'
+    + '<div style="flex:1;display:flex;flex-direction:column;gap:6px">'
+    +   '<input class="form-input" placeholder="Título (ej: 6 cuotas sin interés)" value="' + esc(p.titulo||'') + '" data-field="titulo">'
+    +   '<input class="form-input" placeholder="Detalle (ej: Con todas las tarjetas)" value="' + esc(p.detalle||'') + '" data-field="detalle">'
+    + '</div>'
+    + '<button class="faq-del" onclick="removePromoRow(' + i + ')">✕</button>'
+    + '</div>';
+  return row;
+}
+
+function esc(str) { return str.replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function addPromoRow() {
+  if (!_promos) _promos = [];
+  _promos.push({ icon: '✨', titulo: '', detalle: '' });
+  renderPromosList(_promos);
+}
+
+function removePromoRow(idx) {
+  if (!_promos) return;
+  _promos.splice(idx, 1);
+  renderPromosList(_promos);
+}
+
+function collectPromos() {
+  var rows = document.querySelectorAll('#promos-list .faq-row');
+  var result = [];
+  rows.forEach(function(row) {
+    var icon   = (row.querySelector('[data-field="icon"]')   || {}).value || '';
+    var titulo = (row.querySelector('[data-field="titulo"]') || {}).value || '';
+    var detalle= (row.querySelector('[data-field="detalle"]')|| {}).value || '';
+    if (titulo) result.push({ icon: icon, titulo: titulo, detalle: detalle });
+  });
+  return result;
+}
+
+function savePromos() {
+  var btn = document.getElementById('btn-save-promos');
+  var status = document.getElementById('promos-status');
+  var promos = collectPromos();
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  fetch(API_URL + '/api/promos/' + SHOP_ID, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ promos: promos, secret: ADMIN_SECRET })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.ok) {
+      _promos = promos;
+      btn.textContent = '✅ Guardado';
+      status.textContent = '✅ Promociones guardadas. Se reflejan en la tienda en ~5 min.';
+      setTimeout(function() { btn.textContent = 'Guardar promociones'; btn.disabled = false; status.textContent = ''; }, 3000);
+    } else {
+      btn.textContent = 'Error'; btn.disabled = false;
+      status.style.color = 'var(--red)'; status.textContent = '❌ ' + (d.error || 'Error al guardar');
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Error — reintentar'; btn.disabled = false;
+    status.style.color = 'var(--red)'; status.textContent = '❌ No se pudo conectar al servidor';
+  });
+}
 </script>
 </body>
 </html>
