@@ -328,6 +328,7 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
     <div class="sidebar-item" onclick="showPage('faq', this)">❓ FAQ</div>
     <div class="sidebar-section">Sitewide</div>
     <div class="sidebar-item" onclick="showPage('promos', this)">🎁 Promociones</div>
+    <div class="sidebar-item" onclick="showPage('whatsapp', this)">💬 WhatsApp</div>
     <div class="sidebar-section">Categorías</div>
     <div class="sidebar-item" onclick="showPage('categorias', this)">🏪 Categorías</div>
     <div class="sidebar-section">Datos</div>
@@ -476,6 +477,31 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
       </div>
       <button class="nav-save" id="btn-save-promos" style="width:100%;margin-top:4px" onclick="savePromos()">Guardar promociones</button>
       <div id="promos-status" style="font-size:12px;color:var(--green);margin-top:8px;min-height:18px;text-align:center"></div>
+    </div>
+
+    <!-- WHATSAPP -->
+    <div class="page" id="page-whatsapp">
+      <div class="page-title">💬 WhatsApp</div>
+      <div class="page-sub">Número y mensajes para el botón flotante y el botón de consulta en producto.</div>
+      <div class="config-card">
+        <div class="form-group">
+          <label class="form-label">Número (con código de país, sin +)</label>
+          <input type="text" class="form-input" id="wa-number" placeholder="5492235551148" oninput="markDirty()">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Ejemplo: 5492235551148 (54 = Argentina, 9 = móvil, 223 = área, 5551148 = número)</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mensaje del botón flotante</label>
+          <input type="text" class="form-input" id="wa-message-float" placeholder="Hola! Quiero hacer una consulta sobre sus productos." oninput="markDirty()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Texto del botón en producto</label>
+          <input type="text" class="form-input" id="wa-btn-text" placeholder="Tenés una consulta? Escribinos" oninput="markDirty()">
+        </div>
+        <div style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.2);border-radius:8px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6;">
+          💡 El mismo número se usa en el botón flotante (abajo a la derecha) y en el botón verde dentro de cada producto.
+        </div>
+      </div>
+      <button class="nav-save" style="width:100%;margin-top:4px" onclick="saveConfig()">Guardar</button>
     </div>
 
     <!-- CATEGORÍAS -->
@@ -1373,6 +1399,12 @@ function saveConfig() {
     texto:    document.getElementById('cd-texto').value.trim()
   };
 
+  config.whatsapp = {
+    number:       document.getElementById('wa-number').value.trim() || '5492235551148',
+    message_float: document.getElementById('wa-message-float').value.trim() || 'Hola! Quiero hacer una consulta sobre sus productos.',
+    btn_text:     document.getElementById('wa-btn-text').value.trim() || 'Tenés una consulta? Escribínos'
+  };
+
   // Sincronizar categorías desde DOM
   syncCat();
 
@@ -1519,6 +1551,13 @@ function loadConfig() {
     });
 }
 
+function renderWhatsApp() {
+  var wa = config.whatsapp || {};
+  document.getElementById('wa-number').value        = wa.number        || '5492235551148';
+  document.getElementById('wa-message-float').value = wa.message_float || 'Hola! Quiero hacer una consulta sobre sus productos.';
+  document.getElementById('wa-btn-text').value      = wa.btn_text      || 'Tenés una consulta? Escribínos';
+}
+
 function renderAll() {
   renderFeatures();
   renderEnvio();
@@ -1528,6 +1567,7 @@ function renderAll() {
   renderFAQ();
   renderTags();
   renderCategorias();
+  renderWhatsApp();
   renderSnippet();
   loadAnalytics();
   updatePreview();

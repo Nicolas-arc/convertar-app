@@ -3,7 +3,12 @@
    convertar-app-production.up.railway.app/static/badge-transfer.js
    ============================================================ */
 (function () {
-  var DESC = 0.10;
+  var API  = 'https://convertar-app-production.up.railway.app';
+  var SHOP = 'pintoshogar';
+  var DESC = 0.10; /* default \u2014 sobreescrito por config */
+  /* Shared config promise: si otro script ya lo pidi\u00F3, reusar */
+  window.__CVA_CFG_P = window.__CVA_CFG_P ||
+    fetch(API + '/config/' + SHOP).then(function(r){ return r.json(); }).catch(function(){ return {}; });
   var _priceObs = null;
   function ars(n) { return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
   function parsePrecio(txt) { if (!txt) return 0; var n = txt.replace(/[^0-9]/g, ''); return n ? parseInt(n, 10) : 0; }
@@ -130,5 +135,12 @@
       if (listRoot) { new MutationObserver(function() { clearTimeout(window._pintosT); window._pintosT = setTimeout(inyectarEnListado, 400); }).observe(listRoot, {childList:true,subtree:true}); }
     }
   }
-  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { setTimeout(init, 300); }
+  function start() {
+    window.__CVA_CFG_P.then(function(cfg) {
+      var mp = (cfg && cfg.mejor_precio) || {};
+      if (mp.descuento_pct) DESC = mp.descuento_pct / 100;
+      init();
+    });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', start); } else { setTimeout(start, 0); }
 })();

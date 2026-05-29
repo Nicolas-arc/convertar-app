@@ -98,5 +98,17 @@
     overlay.appendChild(modal);document.body.appendChild(overlay);
   }
 
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+  function start(){
+    window.__CVA_CFG_P=window.__CVA_CFG_P||
+      fetch(API+'/config/'+SHOP_ID).then(function(r){return r.json();}).catch(function(){return{};});
+    window.__CVA_CFG_P.then(function(cfg){
+      var wa=(cfg&&cfg.whatsapp)||{};
+      if(wa.number){WA=wa.number;}
+      if(wa.message_float){WA_MSG=wa.message_float;}
+      /* actualizar href del bot\u00F3n flotante con el n\u00FAmero del config */
+      waBtn.href='https://wa.me/'+WA+'?text='+encodeURIComponent(WA_MSG);
+      init();
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}else{start();}
 })();
