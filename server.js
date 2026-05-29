@@ -284,6 +284,54 @@ app.post('/shops', async (req, res) => {
 });
 
 // ── TIENDANUBE API PROXY ──────────────────────────
+
+// GET /api/tn/products?page=1&q=busqueda — lista paginada para el panel
+app.get('/api/tn/products', async (req, res) => {
+  const secret = req.query.secret || req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) return res.status(401).json({ error: 'No autorizado' });
+
+  const TN_TOKEN    = process.env.TN_TOKEN;
+  const TN_STORE_ID = process.env.TN_STORE_ID;
+  if (!TN_TOKEN || !TN_STORE_ID) return res.status(503).json({ error: 'TN_TOKEN o TN_STORE_ID no configurados en Railway' });
+
+  const page  = parseInt(req.query.page) || 1;
+  const q     = (req.query.q || '').trim();
+  const TN_BASE = `https://api.tiendanube.com/v1/${TN_STORE_ID}`;
+  const TN_HEADERS = {
+    'Authentication': `bearer ${TN_TOKEN}`,
+    'User-Agent': 'ConvertAR (nicolas@pintoshome.com)'
+  };
+
+  try {
+    let url = `${TN_BASE}/products?per_page=24&page=${page}&fields=id,name,handle,variants,images`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
+
+    const r = await fetch(url, { headers: TN_HEADERS });
+    if (!r.ok) {
+      const txt = await r.text();
+      return res.status(r.status).json({ error: `TN API error ${r.status}`, detail: txt.slice(0, 200) });
+    }
+    const list = await r.json();
+
+    const products = (list || []).map(p => {
+      const variant = (p.variants || [])[0] || {};
+      const price   = variant.promotional_price || variant.price || 0;
+      const img     = (p.images || [])[0];
+      const imgUrl  = img ? (img.src || '') : '';
+      const name    = p.name ? (p.name.es || p.name.pt || Object.values(p.name)[0] || '') : '';
+      return { id: p.id, name, handle: p.handle, price, img: imgUrl };
+    });
+
+    // Total pages via Link header
+    const link  = r.headers.get('link') || '';
+    const hasNext = link.includes('rel="next"');
+
+    res.json({ products, page, hasNext });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/tn/product?q=URL_o_ID_o_nombre
 // Busca un producto en TN y devuelve datos limpios para el generador
 app.get('/api/tn/product', async (req, res) => {
