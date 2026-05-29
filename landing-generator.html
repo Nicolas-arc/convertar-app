@@ -85,6 +85,11 @@
     .tn-status{font-size:11px;margin-top:6px;min-height:16px}
     .tn-variants{margin-top:8px;display:none}
     .tn-variants select{width:100%;background:#111;border:1px solid #1e3a1e;color:#e8e8e8;padding:6px 8px;border-radius:6px;font-size:12px}
+    /* CTA type toggle */
+    .cta-toggle{display:flex;gap:6px;margin-bottom:14px}
+    .cta-toggle-btn{flex:1;padding:8px 10px;border-radius:6px;border:1.5px solid #252525;background:#161616;color:#666;font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+    .cta-toggle-btn.active{border-color:#d4a85a;color:#d4a85a;background:#1a1500}
+    .cta-toggle-btn:hover:not(.active){border-color:#333;color:#aaa}
   </style>
 </head>
 <body>
@@ -139,31 +144,52 @@
     <label>Texto del botón CTA</label>
     <input type="text" id="f_cta" placeholder="Quiero mi cortina ahora" oninput="up()">
 
-    <div class="sec-label">Checkout Tiendanube</div>
+    <div class="sec-label">CTA / Destino del botón</div>
 
-    <label>Dominio de tu tienda</label>
-    <input type="text" id="f_store" placeholder="pintoshome.com.ar" oninput="up()">
+    <div class="cta-toggle">
+      <div class="cta-toggle-btn active" id="btn-cta-tn" onclick="setCTAType('tn')">🛒 Checkout TN</div>
+      <div class="cta-toggle-btn" id="btn-cta-wa" onclick="setCTAType('wa')">💬 WhatsApp</div>
+    </div>
 
-    <div class="row">
-      <div>
-        <label>Product ID</label>
-        <input type="text" id="f_pid" placeholder="123456" oninput="up()">
+    <!-- Campos TN -->
+    <div id="cta-tn-fields">
+      <label>Dominio de tu tienda</label>
+      <input type="text" id="f_store" placeholder="pintoshome.com.ar" oninput="up()">
+
+      <div class="row">
+        <div>
+          <label>Product ID</label>
+          <input type="text" id="f_pid" placeholder="123456" oninput="up()">
+        </div>
+        <div>
+          <label>Variant ID</label>
+          <input type="text" id="f_vid" placeholder="789012" oninput="up()">
+        </div>
       </div>
-      <div>
-        <label>Variant ID</label>
-        <input type="text" id="f_vid" placeholder="789012" oninput="up()">
+
+      <div style="background:#1a1a0a;border:1px solid #2a2a10;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:#888;line-height:1.5">
+        💡 <strong style="color:#d4a85a">¿Dónde encuentro los IDs?</strong><br>
+        En Tiendanube → Productos → abrís el producto → mirás la URL:<br>
+        <span style="color:#666;font-family:monospace">/products/<span style="color:#d4a85a">123456</span>/variants/<span style="color:#d4a85a">789012</span></span>
       </div>
     </div>
 
-    <div style="background:#1a1a0a;border:1px solid #2a2a10;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:#888;line-height:1.5">
-      💡 <strong style="color:#d4a85a">¿Dónde encuentro los IDs?</strong><br>
-      En Tiendanube → Productos → abrís el producto → mirás la URL:<br>
-      <span style="color:#666;font-family:monospace">/products/<span style="color:#d4a85a">123456</span>/variants/<span style="color:#d4a85a">789012</span></span>
+    <!-- Campos WhatsApp -->
+    <div id="cta-wa-fields" style="display:none">
+      <label>Número de WhatsApp <span style="color:#555">(formato internacional, sin + ni espacios)</span></label>
+      <input type="text" id="f_wa_number" placeholder="5492235551148" oninput="up()">
+
+      <label style="margin-top:10px">Mensaje pre-cargado <span style="color:#555">(opcional)</span></label>
+      <input type="text" id="f_wa_msg" placeholder="Hola! Quiero consultar sobre este producto." oninput="up()">
+
+      <div style="background:#0d1a1a;border:1px solid #0a3030;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:#888;line-height:1.5">
+        💡 El botón abrirá <strong style="color:#25d366">wa.me/NUMERO</strong> con el mensaje pre-cargado en WhatsApp
+      </div>
     </div>
 
-    <label style="margin-top:12px">URL de checkout generada</label>
+    <label style="margin-top:12px">URL del CTA generada</label>
     <div id="checkout-url-preview" style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:6px;padding:7px 10px;font-size:10px;color:#555;font-family:monospace;word-break:break-all;min-height:32px;line-height:1.6">
-      Completá el dominio, Product ID y Variant ID...
+      Completá los campos para ver la URL...
     </div>
 
     <div class="sec-label" style="margin-top:20px">Imágenes</div>
@@ -427,6 +453,17 @@ function removeImg(e, key) {
   up();
 }
 
+// ── CTA type toggle ───────────────────────────────
+let _ctaType = 'tn';
+function setCTAType(type) {
+  _ctaType = type;
+  document.getElementById('cta-tn-fields').style.display = type === 'tn' ? '' : 'none';
+  document.getElementById('cta-wa-fields').style.display = type === 'wa' ? '' : 'none';
+  document.getElementById('btn-cta-tn').className = 'cta-toggle-btn' + (type === 'tn' ? ' active' : '');
+  document.getElementById('btn-cta-wa').className = 'cta-toggle-btn' + (type === 'wa' ? ' active' : '');
+  up();
+}
+
 // ── Helpers ──────────────────────────────────────
 const g = id => document.getElementById(id).value.trim();
 
@@ -462,7 +499,14 @@ function setDevice(d) {
 // ── Live preview ──────────────────────────────────
 function up() { updatePreview(); }
 
-function buildCheckoutUrl() {
+function buildCtaUrl() {
+  if (_ctaType === 'wa') {
+    const num = g('f_wa_number').replace(/\D/g,'');
+    const msg = g('f_wa_msg');
+    if (!num) return null;
+    return 'https://wa.me/' + num + (msg ? '?text=' + encodeURIComponent(msg) : '');
+  }
+  // TN checkout
   const store = g('f_store').replace(/https?:\/\//,'').replace(/\/$/,'');
   const pid   = g('f_pid');
   const vid   = g('f_vid');
@@ -476,14 +520,16 @@ function updatePreview() {
     document.getElementById('url-pill').textContent =
       'tu-tienda.com/landing-' + nombre.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
   }
-  const url = buildCheckoutUrl();
+  const url = buildCtaUrl();
   const urlEl = document.getElementById('checkout-url-preview');
   if (url) {
-    urlEl.style.color = '#6dbf6d';
+    urlEl.style.color = _ctaType === 'wa' ? '#25d366' : '#6dbf6d';
     urlEl.textContent = url;
   } else {
     urlEl.style.color = '#555';
-    urlEl.textContent = 'Completá el dominio, Product ID y Variant ID...';
+    urlEl.textContent = _ctaType === 'wa'
+      ? 'Ingresá el número de WhatsApp...'
+      : 'Completá el dominio, Product ID y Variant ID...';
   }
   const html = generateLanding();
   document.getElementById('preview').srcdoc = html;
@@ -548,7 +594,7 @@ function generateLanding() {
   const sub      = esc(g('f_sub'))      || '';
   const desc     = esc(g('f_desc'))     || '';
   const cta      = esc(g('f_cta'))      || 'Comprar ahora';
-  const link     = buildCheckoutUrl() || '#';
+  const link     = buildCtaUrl() || '#';
   const img      = imgs.hero || null;
   const imgG1    = imgs.g1   || null;
   const imgG2    = imgs.g2   || null;
