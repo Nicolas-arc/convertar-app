@@ -531,21 +531,39 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 
     <!-- SNIPPET -->
     <div class="page" id="page-snippet">
-      <div class="page-title">📋 Snippet</div>
-      <div class="page-sub">Pegá esto en TN → Configuración → Códigos externos → <strong>Para la tienda</strong>.</div>
-      <div class="config-card">
-        <div style="font-size:12px;color:var(--green);margin-bottom:10px;">✅ Snippet cargado desde Railway — siempre actualizado</div>
+      <div class="page-title">📋 Setup GTM</div>
+      <div class="page-sub">Un solo tag en GTM reemplaza todos los CVA individuales. Desde el panel controlás qué features están activas — sin tocar GTM nunca más.</div>
+
+      <div class="config-card" style="border-color:rgba(212,168,90,.3);">
+        <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:var(--gold);">⚡ Tag único (reemplaza todos los CVA)</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Creá un nuevo tag en GTM → HTML personalizado → All Pages:</div>
         <div class="snippet-box" id="snippet-preview"></div>
-        <button class="copy-btn" onclick="copySnippet()">📋 Copiar snippet</button>
+        <button class="copy-btn" onclick="copySnippet()">📋 Copiar</button>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.8;">
+          <strong style="color:var(--text);">Pasos:</strong><br>
+          1. GTM → <strong style="color:var(--text);">Nueva etiqueta → HTML personalizado</strong><br>
+          2. Nombre: <strong style="color:var(--text);">CVA - Loader</strong><br>
+          3. Pegar el código · Activador: <strong style="color:var(--text);">All Pages</strong><br>
+          4. <strong style="color:var(--gold);">Enviar versión</strong><br>
+          5. Pausar / eliminar los 7 tags CVA individuales anteriores
+        </div>
       </div>
+
       <div class="config-card" style="margin-top:10px;">
-        <div style="font-size:12px;font-weight:700;margin-bottom:8px;">Cómo instalarlo en Tienda Nube</div>
-        <ol style="font-size:12px;color:var(--muted);padding-left:18px;line-height:2;">
-          <li>En TN admin: <strong style="color:var(--text);">Configuración → Códigos externos</strong></li>
-          <li>Ir a <strong style="color:var(--text);">Para la tienda</strong> (no "Para la página de inicio")</li>
-          <li>Pegar el snippet y hacer clic en <strong style="color:var(--gold);">Guardar</strong></li>
-          <li>Verificar en pintoshogar.com.ar que se apliquen los cambios</li>
-        </ol>
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">Scripts que carga el Loader</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);">
+          <div>💰 badge-transfer.js · <span style="color:var(--text);">Mejor Precio / Transferencia</span></div>
+          <div>📦 badge-cuotas.js · <span style="color:var(--text);">Cuotas sin interés</span></div>
+          <div>💬 badge-whatsapp.js · <span style="color:var(--text);">Botón WhatsApp en producto</span></div>
+          <div>👥 social-proof.js · <span style="color:var(--text);">Social Proof (compraron recién)</span></div>
+          <div>🔥 floating-buttons.js · <span style="color:var(--text);">Botón flotante + Promos</span></div>
+          <div>🎁 llevas-mas.js · <span style="color:var(--text);">Llevá más & Ahorrá</span></div>
+          <div>🪟 filtros-blackout.js · <span style="color:var(--text);">Filtros categoría Black Out</span></div>
+          <div>🏷 badge-tags.js · <span style="color:var(--text);">Tags por producto</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);background:rgba(212,168,90,.06);border:1px solid rgba(212,168,90,.2);border-radius:7px;padding:9px;line-height:1.6;">
+          💡 Para desactivar un script, usá los toggles en <strong style="color:var(--text);">⚡ Features</strong> y guardá — no hace falta tocar GTM.
+        </div>
       </div>
     </div>
 
@@ -1444,7 +1462,7 @@ function loadAnalytics() {
 
 // ── Snippet ──────────────────────────────────────
 function renderSnippet() {
-  var code = '<!-- ConvertAR v2.0 - pintoshogar -->\n<script src="https://convertar-app-production.up.railway.app/snippet.js" defer><\/script>';
+  var code = '<script src="https://convertar-app-production.up.railway.app/static/loader.js" async><\/script>';
   document.getElementById('snippet-preview').textContent = code;
 }
 function copySnippet() {
