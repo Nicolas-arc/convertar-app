@@ -283,6 +283,25 @@ app.post('/shops', async (req, res) => {
   res.json({ shop_id: id, message: 'Tienda registrada OK', data });
 });
 
+// ── TN CONNECTION TEST ───────────────────────────
+app.get('/api/tn/test', async (req, res) => {
+  const secret = req.query.secret || req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) return res.status(401).json({ error: 'No autorizado' });
+  const token   = process.env.TN_TOKEN    || '';
+  const storeId = process.env.TN_STORE_ID || '';
+  const tokenPreview = token ? token.slice(0,8) + '...' + token.slice(-4) : 'NO CONFIGURADO';
+  if (!token || !storeId) return res.json({ ok: false, tokenPreview, storeId: storeId || 'NO CONFIGURADO', error: 'Variables no configuradas' });
+  try {
+    const r = await fetch(`https://api.tiendanube.com/v1/${storeId}/store`, {
+      headers: { 'Authentication': `bearer ${token}`, 'User-Agent': 'ConvertAR (nicolas@pintoshome.com)' }
+    });
+    const body = await r.text();
+    res.json({ ok: r.ok, status: r.status, tokenPreview, storeId, response: body.slice(0,200) });
+  } catch(e) {
+    res.json({ ok: false, tokenPreview, storeId, error: e.message });
+  }
+});
+
 // ── TIENDANUBE API PROXY ──────────────────────────
 
 // GET /api/tn/products?page=1&q=busqueda — lista paginada para el panel
