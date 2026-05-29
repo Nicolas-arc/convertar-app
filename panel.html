@@ -416,7 +416,7 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
     <!-- TAGS -->
     <div class="page" id="page-tags">
       <div class="page-title">🏷 Tags por producto</div>
-      <div class="page-sub">Asigná badges a productos. Pegá la URL del producto de TN admin y el ID se detecta solo. Después clickeá los badges que querés activar.</div>
+      <div class="page-sub">Pegá la URL de TN <strong style="color:var(--gold)">admin</strong> (no la del cliente) y el ID se detecta solo. La URL admin tiene el formato: <span style="color:var(--gold);font-family:monospace;">/admin/products/<u>12345678</u>/edit</span></div>
       <div class="config-card">
         <div id="tags-list"></div>
         <button class="btn-add" onclick="addTagRow()">+ Agregar producto</button>
@@ -1224,48 +1224,45 @@ function extractProductId(val) {
   return null; /* no se pudo extraer localmente */
 }
 
-function resolveProductUrl(input, idInput) {
+function resolveProductUrl(input) {
   var val = input.value.trim();
   if (!val) return;
 
   /* Si ya es un número puro, ok */
   if (/^\d+$/.test(val)) return;
 
-  /* Intentar extraer localmente (admin URLs) */
+  /* Intentar extraer ID de URL admin: /admin/products/12345678/edit */
   var local = extractProductId(val);
-  if (local) { input.value = local; flashGreen(input); markDirty(); return; }
-
-  /* Si parece una URL de frontend, consultar al servidor */
-  if (val.indexOf('pintoshogar') !== -1 || val.indexOf('/productos/') !== -1 || val.indexOf('http') !== -1) {
-    input.disabled = true;
-    input.value = 'Buscando...';
-    fetch(API_URL + '/api/tn/product?q=' + encodeURIComponent(val))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (d && d.id) {
-          input.value = String(d.id);
-          flashGreen(input);
-          /* Mostrar nombre del producto debajo */
-          var nameEl = input.closest('div') ? input.closest('div[style]').querySelector('.prd-name') : null;
-          if (!nameEl) {
-            nameEl = document.createElement('div');
-            nameEl.className = 'prd-name';
-            nameEl.style.cssText = 'font-size:11px;color:var(--green);margin-top:2px;';
-            input.parentNode.insertAdjacentElement('afterend', nameEl);
-          }
-          var nombre = (d.name && (d.name.es || d.name.pt || Object.values(d.name)[0])) || '';
-          nameEl.textContent = nombre ? '✓ ' + nombre : '✓ Producto encontrado';
-        } else {
-          input.value = val;
-          input.style.borderColor = 'rgba(239,68,68,.6)';
-          setTimeout(function(){ input.style.borderColor=''; }, 2000);
-        }
-      })
-      .catch(function(){
-        input.value = val;
-      })
-      .finally(function(){ input.disabled = false; markDirty(); });
+  if (local) {
+    input.value = local;
+    flashGreen(input);
+    markDirty();
+    /* Mostrar hint debajo */
+    showInputHint(input, '✓ ID detectado', 'var(--green)');
+    return;
   }
+
+  /* URL de frontend (pintoshogar.com.ar/productos/...) — no tiene el ID */
+  if (val.indexOf('/productos/') !== -1 || (val.indexOf('pintoshogar') !== -1 && val.indexOf('/admin/') === -1)) {
+    input.style.borderColor = 'rgba(239,68,68,.6)';
+    setTimeout(function(){ input.style.borderColor=''; }, 3000);
+    showInputHint(input,
+      '⚠ Usá la URL del admin, no la del cliente. En TN admin: hacé click en el producto → copiá la URL de la barra (/admin/products/12345678/edit)',
+      'var(--red)');
+    return;
+  }
+}
+
+function showInputHint(input, msg, color) {
+  var row = input.closest('div[style]');
+  if (!row) return;
+  var old = row.querySelector('.prd-hint');
+  if (old) old.remove();
+  var hint = document.createElement('div');
+  hint.className = 'prd-hint';
+  hint.style.cssText = 'font-size:11px;color:' + color + ';margin-top:4px;line-height:1.4;';
+  hint.textContent = msg;
+  input.parentNode.insertAdjacentElement('afterend', hint);
 }
 
 function flashGreen(el) {
