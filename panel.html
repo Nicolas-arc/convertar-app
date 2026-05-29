@@ -1203,7 +1203,56 @@ function extractProductId(val) {
   /* URL numérica suelta */
   m = val.match(/\b(\d{7,12})\b/);
   if (m) return m[1];
-  return val.trim();
+  return null; /* no se pudo extraer localmente */
+}
+
+function resolveProductUrl(input, idInput) {
+  var val = input.value.trim();
+  if (!val) return;
+
+  /* Si ya es un número puro, ok */
+  if (/^\d+$/.test(val)) return;
+
+  /* Intentar extraer localmente (admin URLs) */
+  var local = extractProductId(val);
+  if (local) { input.value = local; flashGreen(input); markDirty(); return; }
+
+  /* Si parece una URL de frontend, consultar al servidor */
+  if (val.indexOf('pintoshogar') !== -1 || val.indexOf('/productos/') !== -1 || val.indexOf('http') !== -1) {
+    input.disabled = true;
+    input.value = 'Buscando...';
+    fetch(API_URL + '/api/tn/product?q=' + encodeURIComponent(val))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.id) {
+          input.value = String(d.id);
+          flashGreen(input);
+          /* Mostrar nombre del producto debajo */
+          var nameEl = input.closest('div') ? input.closest('div[style]').querySelector('.prd-name') : null;
+          if (!nameEl) {
+            nameEl = document.createElement('div');
+            nameEl.className = 'prd-name';
+            nameEl.style.cssText = 'font-size:11px;color:var(--green);margin-top:2px;';
+            input.parentNode.insertAdjacentElement('afterend', nameEl);
+          }
+          var nombre = (d.name && (d.name.es || d.name.pt || Object.values(d.name)[0])) || '';
+          nameEl.textContent = nombre ? '✓ ' + nombre : '✓ Producto encontrado';
+        } else {
+          input.value = val;
+          input.style.borderColor = 'rgba(239,68,68,.6)';
+          setTimeout(function(){ input.style.borderColor=''; }, 2000);
+        }
+      })
+      .catch(function(){
+        input.value = val;
+      })
+      .finally(function(){ input.disabled = false; markDirty(); });
+  }
+}
+
+function flashGreen(el) {
+  el.style.borderColor = 'rgba(34,197,94,.6)';
+  setTimeout(function(){ el.style.borderColor = ''; }, 1800);
 }
 
 function makeTagRow(pid, tags) {
@@ -1223,26 +1272,12 @@ function makeTagRow(pid, tags) {
   idInput.style.cssText = 'flex:1;';
   idInput.placeholder = 'ID o pegá la URL del producto de TN admin';
   idInput.value = pid;
-  idInput.addEventListener('input', function(){
-    var extracted = extractProductId(this.value);
-    if (/^\d+$/.test(extracted) && extracted !== this.value) {
-      this.value = extracted;
-      this.style.borderColor = 'rgba(34,197,94,.5)';
-      setTimeout(function(){ idInput.style.borderColor=''; }, 1500);
-    }
-    markDirty();
-  });
   idInput.addEventListener('paste', function(){
     var self = this;
-    setTimeout(function(){
-      var extracted = extractProductId(self.value);
-      if (/^\d+$/.test(extracted)) {
-        self.value = extracted;
-        self.style.borderColor = 'rgba(34,197,94,.5)';
-        setTimeout(function(){ self.style.borderColor=''; }, 1500);
-      }
-      markDirty();
-    }, 10);
+    setTimeout(function(){ resolveProductUrl(self); }, 30);
+  });
+  idInput.addEventListener('blur', function(){
+    resolveProductUrl(this);
   });
 
   var delBtn = document.createElement('button');
