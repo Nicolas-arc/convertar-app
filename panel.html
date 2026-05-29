@@ -416,22 +416,10 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
     <!-- TAGS -->
     <div class="page" id="page-tags">
       <div class="page-title">🏷 Tags por producto</div>
-      <div class="page-sub">Asigná badges a productos por ID de TN. El preview muestra cómo quedarían.</div>
+      <div class="page-sub">Asigná badges a productos. Pegá la URL del producto de TN admin y el ID se detecta solo. Después clickeá los badges que querés activar.</div>
       <div class="config-card">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">
-          ID del producto: abrí el producto en TN admin → mirá la URL → <strong style="color:var(--gold)">/admin/products/<u>123456</u>/edit</strong>
-        </div>
         <div id="tags-list"></div>
         <button class="btn-add" onclick="addTagRow()">+ Agregar producto</button>
-      </div>
-      <div class="config-card" style="margin-top:10px;">
-        <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--muted);">Tags disponibles</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <span style="background:#1a1a1a;color:#d4a85a;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px;">🔥 MÁS VENDIDO</span>
-          <span style="background:linear-gradient(135deg,#c62828,#e53935);color:white;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px;">⚡ HOT DAYS</span>
-          <span style="background:#0d47a1;color:white;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px;">✨ NUEVO</span>
-          <span style="background:#1b5e20;color:white;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px;">🚚 ENVÍO GRATIS</span>
-        </div>
       </div>
     </div>
 
@@ -1198,18 +1186,97 @@ function renderTags() {
   var list = document.getElementById('tags-list');
   list.innerHTML = '';
   Object.entries(config.tags || {}).forEach(function(e) {
-    list.appendChild(makeTagRow(e[0], e[1].join(',')));
+    list.appendChild(makeTagRow(e[0], e[1]));
   });
 }
+var TAG_DEFS = [
+  { key: 'mas_vendido', label: '🔥 MÁS VENDIDO',  bg: '#1a1a1a', color: '#d4a85a' },
+  { key: 'hot_days',    label: '⚡ HOT DAYS',      bg: 'linear-gradient(135deg,#c62828,#e53935)', color: '#fff' },
+  { key: 'nuevo',       label: '✨ NUEVO',          bg: '#0d47a1', color: '#fff' },
+  { key: 'envio_free',  label: '🚚 ENVÍO GRATIS',  bg: '#1b5e20', color: '#fff' }
+];
+
+function extractProductId(val) {
+  /* TN admin: /admin/products/12345678/edit  */
+  var m = val.match(/\/products\/(\d+)/);
+  if (m) return m[1];
+  /* URL numérica suelta */
+  m = val.match(/\b(\d{7,12})\b/);
+  if (m) return m[1];
+  return val.trim();
+}
+
 function makeTagRow(pid, tags) {
+  var activeTags = typeof tags === 'string'
+    ? tags.split(',').map(function(t){ return t.trim(); }).filter(Boolean)
+    : (Array.isArray(tags) ? tags : []);
+
   var div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:7px;margin-bottom:7px;';
-  div.innerHTML =
-    '<input class="form-input" style="flex:0 0 130px;" placeholder="ID producto" value="' + escHtml(pid) + '" oninput="markDirty()">' +
-    '<input class="form-input" placeholder="mas_vendido, hot_days..." value="' + escHtml(tags) + '" oninput="markDirty();updatePreview()">' +
-    '<button class="faq-del" onclick="this.parentElement.remove();markDirty()">✕</button>';
+  div.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:9px;padding:12px;';
+
+  /* row 1: ID input + delete */
+  var row1 = document.createElement('div');
+  row1.style.cssText = 'display:flex;gap:7px;align-items:center;';
+
+  var idInput = document.createElement('input');
+  idInput.className = 'form-input';
+  idInput.style.cssText = 'flex:1;';
+  idInput.placeholder = 'ID o pegá la URL del producto de TN admin';
+  idInput.value = pid;
+  idInput.addEventListener('input', function(){
+    var extracted = extractProductId(this.value);
+    if (/^\d+$/.test(extracted) && extracted !== this.value) {
+      this.value = extracted;
+      this.style.borderColor = 'rgba(34,197,94,.5)';
+      setTimeout(function(){ idInput.style.borderColor=''; }, 1500);
+    }
+    markDirty();
+  });
+  idInput.addEventListener('paste', function(){
+    var self = this;
+    setTimeout(function(){
+      var extracted = extractProductId(self.value);
+      if (/^\d+$/.test(extracted)) {
+        self.value = extracted;
+        self.style.borderColor = 'rgba(34,197,94,.5)';
+        setTimeout(function(){ self.style.borderColor=''; }, 1500);
+      }
+      markDirty();
+    }, 10);
+  });
+
+  var delBtn = document.createElement('button');
+  delBtn.className = 'faq-del';
+  delBtn.textContent = '✕';
+  delBtn.onclick = function(){ div.remove(); markDirty(); };
+
+  row1.appendChild(idInput);
+  row1.appendChild(delBtn);
+
+  /* row 2: tag chips (toggle) */
+  var row2 = document.createElement('div');
+  row2.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+
+  TAG_DEFS.forEach(function(td){
+    var chip = document.createElement('button');
+    var isOn = activeTags.indexOf(td.key) !== -1;
+    chip.dataset.tagKey = td.key;
+    chip.style.cssText = 'border:none;border-radius:5px;padding:5px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:opacity .15s;opacity:' + (isOn ? '1' : '0.3') + ';background:' + td.bg + ';color:' + td.color + ';';
+    chip.textContent = td.label;
+    chip.onclick = function(e){
+      e.preventDefault();
+      var on = chip.style.opacity === '1';
+      chip.style.opacity = on ? '0.3' : '1';
+      markDirty(); updatePreview();
+    };
+    row2.appendChild(chip);
+  });
+
+  div.appendChild(row1);
+  div.appendChild(row2);
   return div;
 }
+
 function addTagRow() {
   document.getElementById('tags-list').appendChild(makeTagRow('', ''));
 }
@@ -1368,13 +1435,18 @@ function saveConfig() {
     if (q) config.faq.push({ q: q, a: a });
   });
 
-  // Leer tags
+  // Leer tags (nuevo formato con chips)
   config.tags = {};
   document.querySelectorAll('#tags-list > div').forEach(function(row) {
-    var inputs = row.querySelectorAll('input');
-    var pid  = inputs[0].value.trim();
-    var tags = inputs[1].value.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
-    if (pid) config.tags[pid] = tags;
+    var idInput = row.querySelector('input');
+    if (!idInput) return;
+    var pid = idInput.value.trim();
+    if (!pid) return;
+    var activeTags = [];
+    row.querySelectorAll('button[data-tag-key]').forEach(function(chip) {
+      if (chip.style.opacity === '1') activeTags.push(chip.dataset.tagKey);
+    });
+    config.tags[pid] = activeTags;
   });
 
   config.envio = {
