@@ -55,48 +55,50 @@
   }
 
   function inject(cfg) {
-    if (!window.LS || !window.LS.product) return;
+    console.log('[CVA-Tags] inject start');
+    if (!window.LS || !window.LS.product) { console.log('[CVA-Tags] abort: no LS.product'); return; }
 
     var pid = getProductId();
+    console.log('[CVA-Tags] pid:', pid);
     if (!pid) return;
 
     var tagsMap = cfg.tags || {};
     var activeTags = tagsMap[pid] || [];
-    if (!activeTags.length) return;
+    console.log('[CVA-Tags] activeTags:', activeTags);
+    if (!activeTags.length) { console.log('[CVA-Tags] abort: no tags for this product'); return; }
 
-    /* Esperar a que TN termine de renderizar:
-       usamos el badge de Mejor Precio como se\u00F1al de que el DOM est\u00E1 listo.
-       Si no aparece en 8s, intentamos igual con el h1. */
     var elapsed = 0;
     var iv = setInterval(function() {
       elapsed += 100;
-      var ready = document.getElementById('pintos-mp-prod') ||
-                  document.querySelector('[data-pintos-badge]') ||
-                  elapsed >= 3000; /* fallback: intentar a los 3s pase lo que pase */
+      var mpEl   = document.getElementById('pintos-mp-prod');
+      var bdgEl  = document.querySelector('[data-pintos-badge]');
+      var ready  = mpEl || bdgEl || elapsed >= 3000;
       if (ready) {
         clearInterval(iv);
+        console.log('[CVA-Tags] ready! mp=', !!mpEl, 'bdg=', !!bdgEl, 'elapsed=', elapsed);
         doInsert(activeTags);
-        /* Observar si TN borra el wrap y re-inyectarlo */
+        console.log('[CVA-Tags] after doInsert, wrap in DOM:', !!document.getElementById('cva-tags-wrap'));
         var anchor = findAnchor();
         if (anchor && anchor.parentNode) {
           var obs = new MutationObserver(function() {
             if (!document.getElementById('cva-tags-wrap')) {
+              console.log('[CVA-Tags] wrap removed, re-injecting');
               doInsert(activeTags);
             }
           });
           obs.observe(anchor.parentNode, { childList: true, subtree: false });
-          /* dejar de observar despu\u00E9s de 10s */
           setTimeout(function() { obs.disconnect(); }, 10000);
         }
       }
-      if (elapsed >= 8000) clearInterval(iv);
+      if (elapsed >= 8000) { console.log('[CVA-Tags] timeout'); clearInterval(iv); }
     }, 100);
   }
 
   function init() {
     window.__CVA_CFG_P.then(function(cfg) {
+      console.log('[CVA-Tags] config loaded, features.tags=', cfg && cfg.features && cfg.features.tags);
       var f = (cfg && cfg.features) || {};
-      if (f.tags === false) return; /* feature desactivada */
+      if (f.tags === false) { console.log('[CVA-Tags] feature disabled'); return; }
       inject(cfg);
     });
   }
