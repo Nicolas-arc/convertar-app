@@ -22,6 +22,13 @@
     return null;
   }
 
+  function findAnchor() {
+    return document.querySelector('.js-item-name') ||
+           document.querySelector('h1[itemprop="name"]') ||
+           document.querySelector('.product-title') ||
+           document.querySelector('h1');
+  }
+
   function inject(cfg) {
     if (!window.LS || !window.LS.product) return;
     if (document.getElementById('cva-tags-wrap')) return;
@@ -48,16 +55,25 @@
 
     if (!wrap.children.length) return;
 
-    /* Anclar: antes del t\u00EDtulo del producto */
-    var anchor =
-      document.querySelector('.js-item-name') ||
-      document.querySelector('h1[itemprop="name"]') ||
-      document.querySelector('.product-title') ||
-      document.querySelector('h1');
-
+    /* Anclar con reintentos: espera hasta 8s a que el t\u00EDtulo est\u00E9 en el DOM */
+    var anchor = findAnchor();
     if (anchor) {
       anchor.insertAdjacentElement('beforebegin', wrap);
+      return;
     }
+    var elapsed = 0;
+    var iv = setInterval(function() {
+      anchor = findAnchor();
+      elapsed += 100;
+      if (anchor) {
+        clearInterval(iv);
+        if (!document.getElementById('cva-tags-wrap')) {
+          anchor.insertAdjacentElement('beforebegin', wrap);
+        }
+      } else if (elapsed >= 8000) {
+        clearInterval(iv);
+      }
+    }, 100);
   }
 
   function init() {
@@ -71,6 +87,6 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    setTimeout(init, 400);
+    setTimeout(init, 200);
   }
 })();
