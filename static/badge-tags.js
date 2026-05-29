@@ -24,26 +24,16 @@
 
   function findAnchor() {
     return document.querySelector('.js-item-name') ||
+           document.querySelector('.js-product-name') ||
            document.querySelector('h1[itemprop="name"]') ||
            document.querySelector('.product-title') ||
            document.querySelector('h1');
   }
 
-  function inject(cfg) {
-    if (!window.LS || !window.LS.product) return;
-    if (document.getElementById('cva-tags-wrap')) return;
-
-    var pid = getProductId();
-    if (!pid) return;
-
-    var tagsMap = cfg.tags || {};
-    var activeTags = tagsMap[pid] || [];
-    if (!activeTags.length) return;
-
+  function buildWrap(activeTags) {
     var wrap = document.createElement('div');
     wrap.id = 'cva-tags-wrap';
     wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;';
-
     activeTags.forEach(function(key) {
       var def = TAG_STYLES[key];
       if (!def) return;
@@ -52,27 +42,54 @@
       chip.textContent = def.txt;
       wrap.appendChild(chip);
     });
+    return wrap.children.length ? wrap : null;
+  }
 
-    if (!wrap.children.length) return;
-
-    /* Anclar con reintentos: espera hasta 8s a que el t\u00EDtulo est\u00E9 en el DOM */
+  function doInsert(activeTags) {
+    if (document.getElementById('cva-tags-wrap')) return;
     var anchor = findAnchor();
-    if (anchor) {
-      anchor.insertAdjacentElement('beforebegin', wrap);
-      return;
-    }
+    if (!anchor) return;
+    var wrap = buildWrap(activeTags);
+    if (!wrap) return;
+    anchor.insertAdjacentElement('beforebegin', wrap);
+  }
+
+  function inject(cfg) {
+    if (!window.LS || !window.LS.product) return;
+
+    var pid = getProductId();
+    if (!pid) return;
+
+    var tagsMap = cfg.tags || {};
+    var activeTags = tagsMap[pid] || [];
+    if (!activeTags.length) return;
+
+    /* Esperar a que TN termine de renderizar:
+       usamos el badge de Mejor Precio como se\u00F1al de que el DOM est\u00E1 listo.
+       Si no aparece en 8s, intentamos igual con el h1. */
     var elapsed = 0;
     var iv = setInterval(function() {
-      anchor = findAnchor();
       elapsed += 100;
-      if (anchor) {
+      var ready = document.getElementById('pintos-mp-prod') ||
+                  document.querySelector('[data-pintos-badge]') ||
+                  elapsed >= 3000; /* fallback: intentar a los 3s pase lo que pase */
+      if (ready) {
         clearInterval(iv);
-        if (!document.getElementById('cva-tags-wrap')) {
-          anchor.insertAdjacentElement('beforebegin', wrap);
+        doInsert(activeTags);
+        /* Observar si TN borra el wrap y re-inyectarlo */
+        var anchor = findAnchor();
+        if (anchor && anchor.parentNode) {
+          var obs = new MutationObserver(function() {
+            if (!document.getElementById('cva-tags-wrap')) {
+              doInsert(activeTags);
+            }
+          });
+          obs.observe(anchor.parentNode, { childList: true, subtree: false });
+          /* dejar de observar despu\u00E9s de 10s */
+          setTimeout(function() { obs.disconnect(); }, 10000);
         }
-      } else if (elapsed >= 8000) {
-        clearInterval(iv);
       }
+      if (elapsed >= 8000) clearInterval(iv);
     }, 100);
   }
 
@@ -87,6 +104,6 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    setTimeout(init, 200);
+    setTimeout(init, 300);
   }
 })();
