@@ -81,17 +81,14 @@ app.get('/snippet.js', (req, res) => {
 // GET /static/badge-transfer.js, /static/badge-cuotas.js, etc.
 // GTM carga cada script con: <script src="URL/static/ARCHIVO.js" async></script>
 app.use('/static', express.static(path.join(__dirname, 'static'), {
-  setHeaders: (res) => {
+  setHeaders: (res, filePath) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 'public, max-age=300');
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    }
   }
 }));
-
-// ── Preview pages (HTML en /static) ──────────────────
-app.get('/static/:file.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'static', req.params.file + '.html'));
-});
 
 // ── Manifest PWA ──────────────────────────────────────
 app.get('/manifest.json', (req, res) => {
