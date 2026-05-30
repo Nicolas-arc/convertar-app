@@ -26,7 +26,8 @@
       { key: 'floating_buttons',file: 'floating-buttons.js' },
       { key: 'llevas_mas',      file: 'llevas-mas.js'       },
       { key: 'filtros',         file: 'filtros-blackout.js' },
-      { key: 'tags',            file: 'badge-tags.js'       }
+      { key: 'tags',            file: 'badge-tags.js'       },
+      { key: 'crosssell',       file: 'cross-sell.js'       }
     ];
 
     SCRIPTS.forEach(function(s){

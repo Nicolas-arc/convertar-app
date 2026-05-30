@@ -344,6 +344,7 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
     <div class="sidebar-item" onclick="showPage('tags', this)">🏷 Tags</div>
     <div class="sidebar-item" onclick="showPage('countdown', this)">⏱ Countdown</div>
     <div class="sidebar-item" onclick="showPage('faq', this)">❓ FAQ</div>
+    <div class="sidebar-item" onclick="showPage('crosssell', this)">🛒 Cross-Sell</div>
     <div class="sidebar-section">Sitewide</div>
     <div class="sidebar-item" onclick="showPage('promos', this)">🎁 Promociones</div>
     <div class="sidebar-item" onclick="showPage('whatsapp', this)">💬 WhatsApp</div>
@@ -489,6 +490,69 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
       </div>
     </div>
 
+    <!-- CROSS-SELL -->
+    <div class="page" id="page-crosssell">
+      <div class="page-title">🛒 Cross-Sell</div>
+      <div class="page-sub">Cuando el cliente hace clic en "Agregar al carrito", aparece un popup con productos complementarios. También podés mostrar una sección en la página del producto.</div>
+
+      <!-- General -->
+      <div class="config-card" style="margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label" style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:13px;font-weight:500;color:var(--text);">
+            <label class="toggle"><input type="checkbox" id="cs-enabled" onchange="markDirty()"><span class="toggle-slider"></span></label>
+            Activar Cross-Sell
+          </label>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">Título del popup</label>
+          <input type="text" class="form-input" id="cs-headline" placeholder="🔥 ¡Completá tu combo antes de pagar!" oninput="markDirty()">
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Sección en página de producto</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label" style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:13px;font-weight:500;color:var(--text);">
+              <label class="toggle"><input type="checkbox" id="cs-show-page" onchange="markDirty()"><span class="toggle-slider"></span></label>
+              Mostrar sección en página de producto
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Título de la sección</label>
+            <input type="text" class="form-input" id="cs-page-title" placeholder="Completá tu combo y ahorrá" oninput="markDirty()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Urgencia -->
+      <div class="config-card" style="margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">⚡ Urgencia</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label" style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:13px;font-weight:500;color:var(--text);">
+            <label class="toggle"><input type="checkbox" id="cs-fire" onchange="markDirty()"><span class="toggle-slider"></span></label>
+            Mostrar 🔥 en imagen del producto
+          </label>
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label" style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:13px;font-weight:500;color:var(--text);">
+            <label class="toggle"><input type="checkbox" id="cs-timer-on" onchange="markDirty();document.getElementById('cs-timer-row').style.display=this.checked?'block':'none'"><span class="toggle-slider"></span></label>
+            Temporizador de urgencia
+          </label>
+        </div>
+        <div id="cs-timer-row" style="display:none">
+          <div class="form-group">
+            <label class="form-label">Minutos para expirar precio especial</label>
+            <input type="number" class="form-input" id="cs-timer-min" min="1" max="60" value="10" style="width:100px" oninput="markDirty()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Reglas -->
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 2px">Reglas de Cross-Sell</div>
+      <div id="cs-rules-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
+      <button class="btn-add" onclick="addCSRule()">+ Agregar regla</button>
+      <button class="nav-save" style="width:100%;margin-top:10px" onclick="saveConfig()">Guardar Cross-Sell</button>
+      <div id="cs-status" style="font-size:12px;color:var(--green);margin-top:8px;min-height:16px;text-align:center"></div>
+    </div>
+
     <!-- PROMOCIONES SITEWIDE -->
     <div class="page" id="page-promos">
       <div class="page-title">🎁 Promociones del día</div>
@@ -594,6 +658,7 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
           <div>🎁 llevas-mas.js · <span style="color:var(--text);">Llevá más & Ahorrá</span></div>
           <div>🪟 filtros-blackout.js · <span style="color:var(--text);">Filtros categoría Black Out</span></div>
           <div>🏷 badge-tags.js · <span style="color:var(--text);">Tags por producto</span></div>
+          <div>🛒 cross-sell.js · <span style="color:var(--text);">Cross-Sell popup al agregar al carrito</span></div>
         </div>
         <div style="margin-top:10px;font-size:11px;color:var(--muted);background:rgba(212,168,90,.06);border:1px solid rgba(212,168,90,.2);border-radius:7px;padding:9px;line-height:1.6;">
           💡 Para desactivar un script, usá los toggles en <strong style="color:var(--text);">⚡ Features</strong> y guardá — no hace falta tocar GTM.
@@ -1142,7 +1207,8 @@ var featureDefs = [
   { key: 'faq',               label: 'FAQ de objeciones',           icon: '❓', desc: 'Acordeón de preguntas frecuentes debajo de la descripción.' },
   { key: 'hero_categorias',   label: 'Hero de Categorías',          icon: '🏪', desc: 'Banner hero con filtros en páginas de cuadros, cortinas y más.' },
   { key: 'sticky_bar',        label: 'Sticky bar mobile',           icon: '📱', desc: 'Barra fija inferior en celular con precio y botón Comprar.' },
-  { key: 'reviews',           label: 'Reseñas verificadas',         icon: '⭐', desc: 'Bloque de reviews de compradores reales.' }
+  { key: 'reviews',           label: 'Reseñas verificadas',         icon: '⭐', desc: 'Bloque de reviews de compradores reales.' },
+  { key: 'crosssell',         label: 'Cross-Sell popup',            icon: '🛒', desc: 'Popup de productos complementarios al agregar al carrito.' }
 ];
 
 function renderFeatures() {
@@ -1605,6 +1671,8 @@ function saveConfig() {
     btn_text:     document.getElementById('wa-btn-text').value.trim() || 'Tenés una consulta? Escribínos'
   };
 
+  config.crosssell = collectCrossSell();
+
   // Sincronizar categorías desde DOM
   syncCat();
 
@@ -1641,9 +1709,10 @@ function showPage(id, el) {
   } else if (currentScreen === 'categoria' && id !== 'categorias') {
     switchScreen('producto', document.querySelector('.preview-tab:first-child'));
   }
-  if (id === 'landings') loadLandings();
-  if (id === 'promos')   loadPromos();
-  if (id === 'tags')     loadProductGrid('', 1);
+  if (id === 'landings')   loadLandings();
+  if (id === 'promos')     loadPromos();
+  if (id === 'tags')       loadProductGrid('', 1);
+  if (id === 'crosssell')  preloadCSProductCache();
 }
 
 // ── Landings ──────────────────────────────────────
@@ -1705,6 +1774,7 @@ var defaultConfig = {
     { q: '¿En cuántos días recibo mi pedido?', a: 'GBA: 2-4 días hábiles. Interior del país: 5-10 días hábiles.' },
     { q: '¿Puedo elegir el largo de la cortina?', a: 'Sí, tenemos opciones de 150cm, 210cm, 240cm, 260cm y 300cm de largo.' }
   ],
+  crosssell: { enabled: false, popup_headline: '🔥 ¡Completá tu combo antes de pagar!', show_on_product_page: true, product_page_title: 'Completá tu combo y ahorrá', urgency: { show_fire: true, show_timer: false, timer_minutes: 10 }, rules: [] },
   reviews: [],
   categorias: {
     '/cuadros-pintos-home': {
@@ -1769,6 +1839,7 @@ function renderAll() {
   renderTags();
   renderCategorias();
   renderWhatsApp();
+  renderCrossSell();
   renderSnippet();
   loadAnalytics();
   updatePreview();
@@ -1840,6 +1911,321 @@ function collectPromos() {
     if (titulo) result.push({ icon: icon, titulo: titulo, detalle: detalle });
   });
   return result;
+}
+
+// ── Cross-Sell ──────────────────────────────────────
+var _csRules = []; // [{id, trigger_ids:[], offers:[]}]
+var _csProdCache = {}; // pid → {id,name,img,price,variants}
+
+function renderCrossSell() {
+  var cs = config.crosssell || {};
+  document.getElementById('cs-enabled').checked   = !!cs.enabled;
+  document.getElementById('cs-headline').value    = cs.popup_headline || '🔥 ¡Completá tu combo antes de pagar!';
+  document.getElementById('cs-show-page').checked = !!cs.show_on_product_page;
+  document.getElementById('cs-page-title').value  = cs.product_page_title || 'Completá tu combo y ahorrá';
+  var urg = cs.urgency || {};
+  document.getElementById('cs-fire').checked    = urg.show_fire !== false;
+  document.getElementById('cs-timer-on').checked = !!urg.show_timer;
+  document.getElementById('cs-timer-min').value   = urg.timer_minutes || 10;
+  document.getElementById('cs-timer-row').style.display = urg.show_timer ? 'block' : 'none';
+  _csRules = JSON.parse(JSON.stringify(cs.rules || []));
+  renderCSRules();
+}
+
+function collectCrossSell() {
+  var rules = JSON.parse(JSON.stringify(_csRules));
+  return {
+    enabled: document.getElementById('cs-enabled').checked,
+    popup_headline: document.getElementById('cs-headline').value.trim() || '🔥 ¡Completá tu combo antes de pagar!',
+    show_on_product_page: document.getElementById('cs-show-page').checked,
+    product_page_title: document.getElementById('cs-page-title').value.trim() || 'Completá tu combo y ahorrá',
+    urgency: {
+      show_fire:     document.getElementById('cs-fire').checked,
+      show_timer:    document.getElementById('cs-timer-on').checked,
+      timer_minutes: parseInt(document.getElementById('cs-timer-min').value) || 10
+    },
+    rules: rules
+  };
+}
+
+/* ── Rule builders ── */
+function addCSRule() {
+  var rule = { id: 'rule_' + Date.now(), trigger_ids: [], offers: [] };
+  _csRules.push(rule);
+  renderCSRules();
+  markDirty();
+}
+
+function removeCSRule(ruleIdx) {
+  _csRules.splice(ruleIdx, 1);
+  renderCSRules();
+  markDirty();
+}
+
+function addCSOffer(ruleIdx) {
+  _csRules[ruleIdx].offers.push({ product_id: '', name: '', img: '', price: 0, discount_pct: 10, badge: '', variants: [] });
+  renderCSRules();
+  markDirty();
+}
+
+function removeCSOffer(ruleIdx, offerIdx) {
+  _csRules[ruleIdx].offers.splice(offerIdx, 1);
+  renderCSRules();
+  markDirty();
+}
+
+function renderCSRules() {
+  var list = document.getElementById('cs-rules-list');
+  list.innerHTML = '';
+  _csRules.forEach(function(rule, ri) {
+    list.appendChild(buildCSRuleCard(rule, ri));
+  });
+}
+
+function buildCSRuleCard(rule, ri) {
+  var card = document.createElement('div');
+  card.className = 'config-card';
+  card.style.cssText = 'position:relative;padding-bottom:12px';
+
+  /* header */
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px';
+  hdr.innerHTML = '<div style="font-size:12px;font-weight:800;color:var(--gold)">Regla ' + (ri+1) + '</div>'
+    + '<button onclick="removeCSRule('+ri+')" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer">Eliminar</button>';
+  card.appendChild(hdr);
+
+  /* trigger */
+  var trigLabel = document.createElement('div');
+  trigLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px';
+  trigLabel.textContent = 'Producto trigger (cuando lo agregan al carrito)';
+  card.appendChild(trigLabel);
+
+  var trigWrap = document.createElement('div');
+  trigWrap.id = 'cs-trig-wrap-' + ri;
+  /* show selected triggers */
+  (rule.trigger_ids || []).forEach(function(pid) {
+    trigWrap.appendChild(buildCSProductChip(pid, _csProdCache[pid], function() {
+      rule.trigger_ids = rule.trigger_ids.filter(function(x){ return x !== pid; });
+      renderCSRules(); markDirty();
+    }));
+  });
+  card.appendChild(trigWrap);
+
+  /* trigger search */
+  card.appendChild(buildCSProductSearch('Buscar producto trigger...', function(prod) {
+    var pid = String(prod.id);
+    if (rule.trigger_ids.indexOf(pid) === -1) {
+      _csProdCache[pid] = prod;
+      rule.trigger_ids.push(pid);
+    }
+    renderCSRules(); markDirty();
+  }));
+
+  /* offers */
+  var sepEl = document.createElement('div');
+  sepEl.style.cssText = 'border-top:1px solid var(--border);margin:12px 0 10px';
+  card.appendChild(sepEl);
+
+  var offLabel = document.createElement('div');
+  offLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px';
+  offLabel.textContent = 'Ofertas de cross-sell';
+  card.appendChild(offLabel);
+
+  rule.offers.forEach(function(offer, oi) {
+    card.appendChild(buildCSOfferRow(offer, ri, oi));
+  });
+
+  var addOff = document.createElement('button');
+  addOff.className = 'btn-add';
+  addOff.style.cssText = 'margin-top:6px;font-size:11px;padding:7px 12px';
+  addOff.textContent = '+ Agregar oferta';
+  addOff.onclick = function() { addCSOffer(ri); };
+  card.appendChild(addOff);
+
+  return card;
+}
+
+function buildCSOfferRow(offer, ri, oi) {
+  var row = document.createElement('div');
+  row.style.cssText = 'background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px';
+
+  /* product selected display */
+  var prodWrap = document.createElement('div');
+  prodWrap.style.cssText = 'margin-bottom:8px';
+  if (offer.product_id) {
+    var chipDiv = buildCSProductChip(offer.product_id, offer, function() {
+      offer.product_id = ''; offer.name = ''; offer.img = ''; offer.price = 0; offer.variants = [];
+      renderCSRules(); markDirty();
+    });
+    prodWrap.appendChild(chipDiv);
+  } else {
+    var noSel = document.createElement('div');
+    noSel.style.cssText = 'font-size:11px;color:var(--muted);margin-bottom:6px';
+    noSel.textContent = 'Sin producto seleccionado';
+    prodWrap.appendChild(noSel);
+  }
+  row.appendChild(prodWrap);
+
+  if (!offer.product_id) {
+    /* search box */
+    row.appendChild(buildCSProductSearch('Buscar producto a ofrecer...', function(prod) {
+      offer.product_id = String(prod.id);
+      offer.name       = prod.name || '';
+      offer.img        = prod.img  || '';
+      offer.price      = prod.price || 0;
+      offer.variants   = (prod.variants || []).map(function(v) {
+        return { id: String(v.id), label: v.values ? v.values.join(' / ') : (v.name||''), price: v.price || prod.price, img: (prod.images && prod.images[0] && prod.images[0].src) || prod.img || '' };
+      });
+      _csProdCache[offer.product_id] = prod;
+      renderCSRules(); markDirty();
+    }));
+  }
+
+  /* discount + badge */
+  var fields = document.createElement('div');
+  fields.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px';
+
+  var discWrap = document.createElement('div');
+  discWrap.innerHTML = '<div class="form-label" style="font-size:10px;margin-bottom:4px">Descuento %</div>';
+  var discIn = document.createElement('input');
+  discIn.type='number'; discIn.min=0; discIn.max=80;
+  discIn.className='form-input'; discIn.style.cssText='padding:7px 10px;font-size:12px';
+  discIn.value = offer.discount_pct || 0;
+  discIn.oninput = function() { offer.discount_pct = parseInt(this.value)||0; markDirty(); };
+  discWrap.appendChild(discIn);
+  fields.appendChild(discWrap);
+
+  var badgeWrap = document.createElement('div');
+  badgeWrap.innerHTML = '<div class="form-label" style="font-size:10px;margin-bottom:4px">Badge (ej: "¡Lo más pedido!")</div>';
+  var badgeIn = document.createElement('input');
+  badgeIn.type='text'; badgeIn.className='form-input'; badgeIn.style.cssText='padding:7px 10px;font-size:12px';
+  badgeIn.value = offer.badge || '';
+  badgeIn.placeholder = 'Opcional';
+  badgeIn.oninput = function() { offer.badge = this.value; markDirty(); };
+  badgeWrap.appendChild(badgeIn);
+  fields.appendChild(badgeWrap);
+
+  row.appendChild(fields);
+
+  /* remove button */
+  var delBtn = document.createElement('button');
+  delBtn.style.cssText = 'margin-top:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;width:100%';
+  delBtn.textContent = '✕ Quitar oferta';
+  delBtn.onclick = function() { removeCSOffer(ri, oi); };
+  row.appendChild(delBtn);
+
+  return row;
+}
+
+function buildCSProductChip(pid, prod, onRemove) {
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(212,168,90,.08);border:1px solid rgba(212,168,90,.2);border-radius:8px;padding:6px 8px;margin-bottom:6px';
+  var img = document.createElement('img');
+  img.style.cssText = 'width:32px;height:32px;border-radius:6px;object-fit:cover;background:#333';
+  img.src = (prod && prod.img) || '';
+  img.onerror = function(){ this.style.display='none'; };
+  var name = document.createElement('span');
+  name.style.cssText = 'flex:1;font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  name.textContent = (prod && prod.name) ? prod.name : ('ID: ' + pid);
+  var price = document.createElement('span');
+  price.style.cssText = 'font-size:11px;color:var(--muted);margin-right:4px';
+  price.textContent = (prod && prod.price) ? '$' + Math.round(prod.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
+  var rem = document.createElement('button');
+  rem.style.cssText = 'background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;line-height:1';
+  rem.textContent = '✕';
+  rem.onclick = onRemove;
+  wrap.appendChild(img); wrap.appendChild(name); wrap.appendChild(price); wrap.appendChild(rem);
+  return wrap;
+}
+
+function preloadCSProductCache() {
+  /* Collect all product IDs used in rules that aren't cached yet */
+  var idsNeeded = [];
+  _csRules.forEach(function(rule) {
+    (rule.trigger_ids || []).forEach(function(pid) { if (!_csProdCache[pid]) idsNeeded.push(pid); });
+    (rule.offers || []).forEach(function(o) { if (o.product_id && !_csProdCache[o.product_id]) idsNeeded.push(o.product_id); });
+  });
+  if (!idsNeeded.length) return;
+  /* Fetch first page and hope most are there; for now just reload renders */
+  fetch(API_URL + '/api/tn/products?secret=' + encodeURIComponent(ADMIN_SECRET) + '&page=1')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      (d.products || []).forEach(function(p){ _csProdCache[String(p.id)] = p; });
+      renderCSRules();
+    }).catch(function(){});
+}
+
+function buildCSProductSearch(placeholder, onSelect) {
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;margin-bottom:4px';
+
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px';
+
+  var input = document.createElement('input');
+  input.type = 'text'; input.className = 'form-input';
+  input.placeholder = placeholder;
+  input.style.cssText = 'flex:1;font-size:12px;padding:7px 10px';
+
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn'; btn.style.cssText = 'margin:0;padding:7px 12px;font-size:12px';
+  btn.textContent = 'Buscar';
+
+  var results = document.createElement('div');
+  results.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#1a1a1a;border:1px solid var(--border);border-radius:8px;z-index:100;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+
+  function doSearch() {
+    var q = input.value.trim();
+    results.style.display = 'block';
+    results.innerHTML = '<div style="padding:10px;font-size:11px;color:var(--muted)">Buscando...</div>';
+    var url = API_URL + '/api/tn/products?secret=' + encodeURIComponent(ADMIN_SECRET) + '&page=1' + (q ? '&q=' + encodeURIComponent(q) : '');
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var prods = d.products || [];
+        if (!prods.length) {
+          results.innerHTML = '<div style="padding:10px;font-size:11px;color:var(--muted)">Sin resultados</div>';
+          return;
+        }
+        results.innerHTML = '';
+        prods.forEach(function(p) {
+          var item = document.createElement('div');
+          item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s';
+          item.onmouseover = function(){ this.style.background='rgba(255,255,255,.05)'; };
+          item.onmouseout  = function(){ this.style.background=''; };
+          var img = document.createElement('img');
+          img.src = p.img || ''; img.style.cssText='width:28px;height:28px;border-radius:5px;object-fit:cover;background:#333';
+          img.onerror=function(){this.style.display='none';};
+          var lbl = document.createElement('div');
+          lbl.style.cssText='flex:1;min-width:0';
+          lbl.innerHTML='<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name||'')+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">'+(p.price?'$'+Math.round(p.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'')+'</div>';
+          item.appendChild(img); item.appendChild(lbl);
+          item.onclick = function() {
+            results.style.display = 'none';
+            input.value = '';
+            _csProdCache[String(p.id)] = p;
+            onSelect(p);
+          };
+          results.appendChild(item);
+        });
+      })
+      .catch(function(){
+        results.innerHTML = '<div style="padding:10px;font-size:11px;color:var(--red)">Error al buscar</div>';
+      });
+  }
+
+  btn.onclick = doSearch;
+  input.onkeydown = function(e){ if(e.key==='Enter') doSearch(); };
+
+  /* close on outside click */
+  document.addEventListener('click', function(e){
+    if (!wrap.contains(e.target)) results.style.display='none';
+  });
+
+  row.appendChild(input); row.appendChild(btn);
+  wrap.appendChild(row); wrap.appendChild(results);
+  return wrap;
 }
 
 function savePromos() {
