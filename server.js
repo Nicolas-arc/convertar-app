@@ -88,6 +88,11 @@ app.use('/static', express.static(path.join(__dirname, 'static'), {
   }
 }));
 
+// ── Preview pages (HTML en /static) ──────────────────
+app.get('/static/:file.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'static', req.params.file + '.html'));
+});
+
 // ── Manifest PWA ──────────────────────────────────────
 app.get('/manifest.json', (req, res) => {
   res.setHeader('Content-Type', 'application/manifest+json');
