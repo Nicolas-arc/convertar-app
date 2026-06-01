@@ -175,7 +175,8 @@
           {key:'todos',        label:'Todos',        sub:'Ver todo'},
           {key:'x3',           label:'Set x3',       sub:'40x35 · Envío gratis'},
           {key:'x6',           label:'Set x6',       sub:'30x20 · Envío gratis'},
-          {key:'personalizado',label:'Personalizado',sub:'Creá tu galería'}
+          {key:'personalizado',label:'Personalizado',sub:'Creá tu galería'},
+          {key:'combos',       label:'Combo Home',   sub:'Cortinas · Cuadros · Fundas', url:'https://www.pintoshogar.com.ar/black-out/combos-home/', extraClass:'pill-combos'}
         ];
       }
     }
