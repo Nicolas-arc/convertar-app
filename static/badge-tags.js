@@ -78,17 +78,20 @@
         console.log('[CVA-Tags] ready! mp=', !!mpEl, 'bdg=', !!bdgEl, 'elapsed=', elapsed);
         doInsert(activeTags);
         console.log('[CVA-Tags] after doInsert, wrap in DOM:', !!document.getElementById('cva-tags-wrap'));
-        var anchor = findAnchor();
-        if (anchor && anchor.parentNode) {
-          var obs = new MutationObserver(function() {
-            if (!document.getElementById('cva-tags-wrap')) {
-              console.log('[CVA-Tags] wrap removed, re-injecting');
-              doInsert(activeTags);
-            }
-          });
-          obs.observe(anchor.parentNode, { childList: true, subtree: false });
-          setTimeout(function() { obs.disconnect(); }, 10000);
-        }
+
+        /* Observar el body completo — TN puede re-renderizar secciones
+           enteras, no solo el padre inmediato del anchor              */
+        var reinjectCount = 0;
+        var obs = new MutationObserver(function() {
+          if (!document.getElementById('cva-tags-wrap')) {
+            reinjectCount++;
+            console.log('[CVA-Tags] wrap removed, re-injecting #'+reinjectCount);
+            doInsert(activeTags);
+          }
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+        /* Desconectar después de 60s para no consumir recursos */
+        setTimeout(function() { obs.disconnect(); }, 60000);
       }
       if (elapsed >= 8000) { console.log('[CVA-Tags] timeout'); clearInterval(iv); }
     }, 100);
