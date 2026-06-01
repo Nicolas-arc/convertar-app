@@ -321,63 +321,67 @@
   /* ════════════════════════════════════════
      CART
   ════════════════════════════════════════ */
-  function addCrossSell(pid, vid, onOk, onErr) {
-    if (!pid) { onOk && onOk(); return; }
-    var body = 'add_to_cart='+pid+'&product_id='+pid+(vid?'&variation_id='+vid+'&variant_id='+vid:'')+'&quantity=1';
-    /* TN Argentina usa /carrito/agregar; también probamos /cart/add como fallback */
-    function tryAdd(url, fallback) {
-      fetch(url, {
+  /* Abre el drawer del carrito de TN sin redirigir */
+  function openCartDrawer() {
+    /* Evolución: dispara el evento nativo de TN para abrir el mini-cart */
+    document.dispatchEvent(new CustomEvent('cart:open', { bubbles: true }));
+    /* Fallback: click en el ícono del carrito */
+    setTimeout(function() {
+      var btn = document.querySelector(
+        '[data-js="cart-widget"] a, [data-store="cart"] a, ' +
+        '.js-cart-widget a, a[href*="carrito"], a[href*="/cart"]'
+      );
+      if (btn) btn.click();
+    }, 150);
+  }
+
+  function tnCartAdd(pid, vid, qty, onOk, onErr) {
+    if (!pid) { if (onOk) onOk(); return; }
+    qty = qty || '1';
+    var body = 'add_to_cart=' + pid + (vid ? '&variation_id=' + vid : '') + '&quantity=' + qty;
+    var urls = ['/carrito/agregar', '/cart/add'];
+    function tryNext(i) {
+      if (i >= urls.length) { if (onErr) onErr(); return; }
+      fetch(urls[i], {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
         body: body
       }).then(function(r) {
-        console.log('[CVA-CS] addCrossSell', url, 'status:', r.status, 'ok:', r.ok);
-        if (r.ok) { onOk && onOk(); }
-        else if (fallback) { tryAdd(fallback, null); }
-        else { onErr && onErr(); }
+        console.log('[CVA-CS] tnCartAdd', urls[i], 'status:', r.status);
+        if (r.ok || r.status === 200 || r.status === 302) { if (onOk) onOk(); }
+        else { tryNext(i + 1); }
       }).catch(function(e) {
-        console.log('[CVA-CS] addCrossSell error:', e);
-        if (fallback) { tryAdd(fallback, null); }
-        else { onErr && onErr(); }
+        console.log('[CVA-CS] tnCartAdd error at', urls[i], e);
+        tryNext(i + 1);
       });
     }
-    tryAdd('/carrito/agregar', '/cart/add');
+    tryNext(0);
+  }
+
+  function addCrossSell(pid, vid, onOk, onErr) {
+    tnCartAdd(pid, vid, '1', onOk, onErr);
   }
 
   function submitOriginal() {
     /* Leer producto original desde LS (lo más confiable en TN) */
     var pid = null, vid = null, qty = '1';
-
-    /* Primero intentar LS — siempre tiene el producto y variante correctos */
     if (window.LS && window.LS.product) {
       pid = window.LS.product.id;
       vid = window.LS.selectedVariation ? window.LS.selectedVariation.id : null;
     }
-
-    /* Fallback: leer del form si existe */
     if (!pid && _pendingForm) {
       var fd = new FormData(_pendingForm);
-      pid = fd.get('product_id') || fd.get('id');
-      vid = fd.get('variant_id') || fd.get('variation_id');
+      pid = fd.get('product_id') || fd.get('add_to_cart') || fd.get('id');
+      vid = fd.get('variation_id') || fd.get('variant_id');
       qty = fd.get('quantity') || '1';
     }
-
     _pendingForm = null;
-    if (!pid) { console.log('[CVA-CS] submitOriginal: no pid, redirecting'); window.location.href = '/cart'; return; }
-
+    if (!pid) { console.log('[CVA-CS] submitOriginal: no pid'); openCartDrawer(); return; }
     console.log('[CVA-CS] adding original: pid=', pid, 'vid=', vid);
-    var body = 'add_to_cart='+pid+'&product_id=' + pid + (vid ? '&variation_id=' + vid + '&variant_id=' + vid : '') + '&quantity=' + qty;
-    fetch('/carrito/agregar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
-      body: body
-    }).then(function() {
-      window.location.href = '/carrito';
-    }).catch(function() {
-      window.location.href = '/cart';
+    tnCartAdd(pid, vid, qty, function() {
+      openCartDrawer();
+    }, function() {
+      openCartDrawer();
     });
   }
 
