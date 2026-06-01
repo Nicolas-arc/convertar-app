@@ -25,31 +25,39 @@
     'Set x3 Cuadro Personalizado 40x35 Pinterest'
   ];
 
-  /* ── Cache de imágenes de productos TN ── */
+  /* ── Cache de imágenes: scraped del DOM de TN ── */
   var _imgCache = {};
 
-  function prefetchImages() {
-    fetch('/api/catalog/products?per_page=50')
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        var prods = data.products || (Array.isArray(data) ? data : []);
-        prods.forEach(function(p){
-          var src = p.images && p.images[0] && (p.images[0].src || p.images[0]);
-          if (!src) src = p.image && (p.image.src || p.image);
-          if (src && p.name) _imgCache[p.name.toLowerCase()] = src;
-        });
-      })
-      .catch(function(){});/* falla silenciosamente */
+  function scrapePageImages() {
+    /* TN renderiza product cards con .js-item-product o .item-product */
+    var cards = document.querySelectorAll('.js-item-product,.item-product,[data-item-product]');
+    cards.forEach(function(card) {
+      var nameEl = card.querySelector('.js-item-name,.item-name,.product-name,[class*="product-name"]');
+      var imgEl  = card.querySelector('img');
+      if (!nameEl || !imgEl) return;
+      var name = nameEl.textContent.trim().toLowerCase();
+      var src  = imgEl.getAttribute('data-src') || imgEl.getAttribute('data-original') || imgEl.src || '';
+      if (name && src && src.indexOf('data:') === -1) _imgCache[name] = src;
+    });
+    /* También product detail page */
+    var detailImg = document.querySelector(
+      '.js-product-image img, [data-store="product-image"] img, ' +
+      '.product-featured-image img, .js-main-image'
+    );
+    if (detailImg && window.LS && window.LS.product) {
+      var pname = (window.LS.product.name || '').toLowerCase();
+      var src   = detailImg.getAttribute('data-src') || detailImg.src || '';
+      if (pname && src && src.indexOf('data:') === -1) _imgCache[pname] = src;
+    }
   }
 
   function getProductImg(nombre) {
     var key = nombre.toLowerCase();
-    /* búsqueda exacta */
     if (_imgCache[key]) return _imgCache[key];
-    /* búsqueda parcial — los primeros 25 chars suelen ser suficientes */
-    var slug = key.substring(0, 25);
+    /* búsqueda parcial — primeras 3 palabras */
+    var words = key.split(/\s+/).slice(0,3).join(' ');
     for (var k in _imgCache) {
-      if (k.indexOf(slug) > -1 || slug.indexOf(k.substring(0,25)) > -1) return _imgCache[k];
+      if (k.indexOf(words) > -1) return _imgCache[k];
     }
     return null;
   }
@@ -118,7 +126,10 @@
     tVis=setTimeout(function(){cerrar(function(){if(!dismissed)tNext=setTimeout(mostrar,PAUSA);});},DURACION);
   }
 
-  /* Prefetch imágenes y arrancar */
-  prefetchImages();
-  setTimeout(mostrar, 3000);
+  /* Scrape imágenes del DOM y arrancar */
+  /* Esperar 1.5s para que TN termine de renderizar los product cards */
+  setTimeout(function() {
+    scrapePageImages();
+    setTimeout(mostrar, 1500);
+  }, 1500);
 })();
