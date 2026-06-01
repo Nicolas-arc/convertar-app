@@ -498,6 +498,56 @@
   }
 
   /* ════════════════════════════════════════
+     AUTO-FETCH VARIANTES DE TN
+  ════════════════════════════════════════ */
+  function fetchOfferVariants(offers, onDone) {
+    /* Solo busca los offers sin variantes configuradas */
+    var pids = offers
+      .filter(function(o) { return !o.variants || o.variants.length <= 1; })
+      .map(function(o) { return o.product_id; })
+      .filter(Boolean);
+
+    if (!pids.length) { onDone(); return; }
+
+    console.log('[CVA-CS] fetching variants for pids:', pids);
+    fetch('/api/catalog/products?ids=' + pids.join(','))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var prods = data.products || (Array.isArray(data) ? data : []);
+        prods.forEach(function(prod) {
+          offers.forEach(function(offer) {
+            if (String(offer.product_id) !== String(prod.id)) return;
+            var vars = prod.variants || [];
+            console.log('[CVA-CS] product', prod.id, 'variants:', vars.length);
+            if (vars.length > 1) {
+              offer.variants = vars.map(function(v) {
+                return {
+                  id:    v.id,
+                  label: v.name || v.label || ('Variante ' + v.id),
+                  price: v.price || offer.price || 0,
+                  img:   (v.image && (v.image.src || v.image)) || offer.img || ''
+                };
+              });
+            }
+            /* Actualizar imagen y precio del offer con los del primer variant */
+            if (vars.length && !offer.img) {
+              var firstImg = vars[0].image;
+              offer.img = (firstImg && (firstImg.src || firstImg)) || '';
+            }
+            if (vars.length && !offer.price) {
+              offer.price = vars[0].price || 0;
+            }
+          });
+        });
+        onDone();
+      })
+      .catch(function(e) {
+        console.log('[CVA-CS] fetchOfferVariants error:', e, '— continuando sin variantes');
+        onDone();
+      });
+  }
+
+  /* ════════════════════════════════════════
      INIT
   ════════════════════════════════════════ */
   function init() {
@@ -525,9 +575,12 @@
       if (!matched || !matched.offers || !matched.offers.length) return;
       _cfg  = cfg;
       _rule = matched;
-      injectCSS();
-      interceptCart();
-      injectProductSection(cfg, matched);
+      /* Buscar variantes automáticamente antes de armar el popup */
+      fetchOfferVariants(matched.offers, function() {
+        injectCSS();
+        interceptCart();
+        injectProductSection(cfg, matched);
+      });
     });
   }
 
