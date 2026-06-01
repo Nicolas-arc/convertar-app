@@ -183,6 +183,22 @@
 
     if (!filtros.length) return;
 
+    /* Para cortinas: agregar siempre el botón Combo Home al final si no está */
+    if (tipo === 'cortinas') {
+      var hasCombo = filtros.some(function(f) {
+        return f.extraClass === 'pill-combos' || (f.url && f.url.indexOf('combos') > -1);
+      });
+      if (!hasCombo) {
+        filtros = filtros.concat([{
+          key: 'combos',
+          label: 'Combo Home',
+          sub: 'Black Out + Voile',
+          url: 'https://www.pintoshogar.com.ar/black-out/combos-home/',
+          extraClass: 'pill-combos'
+        }]);
+      }
+    }
+
     var matchFn = tipo === 'cortinas' ? matchCortina
                 : tipo === 'cuadros'  ? matchCuadro
                 : matchGenerico;
@@ -223,10 +239,14 @@
       var cats = (cfg && cfg.categorias) || {};
       var path = window.location.pathname;
 
-      /* Buscar si la URL actual corresponde a alguna categoría configurada */
+      /* Buscar si la URL actual corresponde a alguna categoría configurada.
+         Matching EXACTO (normaliza trailing slash) para que /black-out/combos-home/
+         no active los filtros de /black-out */
       var matchedCfg = null;
+      var pathNorm = path.replace(/\/$/, '');
       Object.keys(cats).forEach(function(catPath) {
-        if (path.indexOf(catPath) > -1) matchedCfg = cats[catPath];
+        var keyNorm = catPath.replace(/\/$/, '');
+        if (pathNorm === keyNorm) matchedCfg = cats[catPath];
       });
 
       if (!matchedCfg) return;
