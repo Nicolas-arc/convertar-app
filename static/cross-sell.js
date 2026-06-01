@@ -6,9 +6,6 @@
   window.__CVA_CFG_P = window.__CVA_CFG_P ||
     fetch(API+'/config/'+SHOP).then(function(r){return r.json();}).catch(function(){return{};});
 
-  /* ── solo en páginas de producto ── */
-  if (!window.LS || !window.LS.product) return;
-
   var _cfg = null;
   var _rule = null;
   var _pendingForm = null;
@@ -481,13 +478,15 @@
      INIT
   ════════════════════════════════════════ */
   function init() {
+    console.log('[CVA-CS] init start, LS.product=', !!(window.LS && window.LS.product));
+    if (!window.LS || !window.LS.product) { console.log('[CVA-CS] no LS.product, abort'); return; }
     window.__CVA_CFG_P.then(function(cfg) {
       var f  = (cfg && cfg.features) || {};
-      console.log('[CVA-CS] init, features.crosssell=', f.crosssell);
+      console.log('[CVA-CS] config loaded, features.crosssell=', f.crosssell);
       if (f.crosssell === false) { console.log('[CVA-CS] feature disabled'); return; }
       var cs = cfg && cfg.crosssell;
       console.log('[CVA-CS] crosssell.enabled=', cs && cs.enabled, '| rules=', cs && cs.rules && cs.rules.length);
-      if (!cs || !cs.enabled) { console.log('[CVA-CS] not enabled'); return; }
+      if (!cs || !cs.enabled) { console.log('[CVA-CS] not enabled — activalo en el panel'); return; }
       var pid = String(window.LS.product.id);
       console.log('[CVA-CS] product id=', pid);
       var rules = cs.rules || [];
