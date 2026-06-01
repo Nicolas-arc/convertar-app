@@ -323,18 +323,28 @@
   ════════════════════════════════════════ */
   function addCrossSell(pid, vid, onOk, onErr) {
     if (!pid) { onOk && onOk(); return; }
-    var body = 'product_id='+pid+(vid?'&variant_id='+vid:'')+'&quantity=1';
-    fetch('/cart/add', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: body
-    }).then(function(r) {
-      if (r.ok || r.status === 200) { onOk && onOk(); }
-      else { onErr && onErr(); }
-    }).catch(function() { onErr && onErr(); });
+    var body = 'add_to_cart='+pid+'&product_id='+pid+(vid?'&variation_id='+vid+'&variant_id='+vid:'')+'&quantity=1';
+    /* TN Argentina usa /carrito/agregar; también probamos /cart/add como fallback */
+    function tryAdd(url, fallback) {
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body
+      }).then(function(r) {
+        console.log('[CVA-CS] addCrossSell', url, 'status:', r.status, 'ok:', r.ok);
+        if (r.ok) { onOk && onOk(); }
+        else if (fallback) { tryAdd(fallback, null); }
+        else { onErr && onErr(); }
+      }).catch(function(e) {
+        console.log('[CVA-CS] addCrossSell error:', e);
+        if (fallback) { tryAdd(fallback, null); }
+        else { onErr && onErr(); }
+      });
+    }
+    tryAdd('/carrito/agregar', '/cart/add');
   }
 
   function submitOriginal() {
@@ -359,13 +369,13 @@
     if (!pid) { console.log('[CVA-CS] submitOriginal: no pid, redirecting'); window.location.href = '/cart'; return; }
 
     console.log('[CVA-CS] adding original: pid=', pid, 'vid=', vid);
-    var body = 'product_id=' + pid + (vid ? '&variant_id=' + vid : '') + '&quantity=' + qty;
-    fetch('/cart/add', {
+    var body = 'add_to_cart='+pid+'&product_id=' + pid + (vid ? '&variation_id=' + vid + '&variant_id=' + vid : '') + '&quantity=' + qty;
+    fetch('/carrito/agregar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
       body: body
     }).then(function() {
-      window.location.href = '/cart';
+      window.location.href = '/carrito';
     }).catch(function() {
       window.location.href = '/cart';
     });
