@@ -27,7 +27,7 @@
       { key: 'llevas_mas',      file: 'llevas-mas.js'       },
       { key: 'filtros',         file: 'filtros-blackout.js' },
       { key: 'tags',            file: 'badge-tags.js'       },
-      { key: 'crosssell',       file: 'cross-sell.js'       }
+      { key: 'crosssell',       file: 'cross-sell.js?v=2'   }
     ];
 
     SCRIPTS.forEach(function(s){
