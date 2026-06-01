@@ -393,7 +393,7 @@
       if (form) {
         var action = (form.action || form.getAttribute('action') || '').toLowerCase();
         /* Rechazar solo si es claramente un form de otra cosa (búsqueda, login, etc.) */
-        if (action && action.indexOf('cart') === -1 && action.indexOf('carrito') === -1 && action.indexOf('buy') === -1) {
+        if (action && action.indexOf('cart') === -1 && action.indexOf('carrito') === -1 && action.indexOf('buy') === -1 && action.indexOf('comprar') === -1) {
           console.log('[CVA-CS] form action irrelevant:', action, '— skip');
           return;
         }
