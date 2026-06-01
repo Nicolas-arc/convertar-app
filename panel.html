@@ -996,7 +996,8 @@ function updatePreview() {
         mas_vendido: { txt: '🔥 Más vendido', bg: '#1a1a1a', color: '#d4a85a' },
         hot_days:    { txt: '⚡ Hot Days',    bg: 'linear-gradient(135deg,#c62828,#e53935)', color: '#fff' },
         nuevo:       { txt: '✨ Nuevo',        bg: '#0d47a1', color: '#fff' },
-        envio_free:  { txt: '🚚 Envío gratis', bg: '#1b5e20', color: '#fff' }
+        envio_free:  { txt: '🚚 Envío gratis', bg: '#1b5e20', color: '#fff' },
+        preventa:    { txt: '⚡ PREVENTA',     bg: '#F5B800', color: '#1a1a1a', sub: 'INGRESÁ 10/06 · ASEGURÁ TU PRECIO HOY' }
       };
       var allTags = Object.values(config.tags || {});
       var demoTags = allTags.length ? allTags[0] : ['mas_vendido'];
@@ -1305,7 +1306,8 @@ var TAG_DEFS = [
   { key: 'mas_vendido', label: '🔥 MÁS VENDIDO', bg: '#1a1a1a',                                   color: '#d4a85a' },
   { key: 'hot_days',    label: '⚡ HOT DAYS',     bg: 'linear-gradient(135deg,#c62828,#e53935)',    color: '#fff'    },
   { key: 'nuevo',       label: '✨ NUEVO',         bg: '#0d47a1',                                   color: '#fff'    },
-  { key: 'envio_free',  label: '🚚 ENVÍO GRATIS', bg: '#1b5e20',                                   color: '#fff'    }
+  { key: 'envio_free',  label: '🚚 ENVÍO GRATIS', bg: '#1b5e20',                                   color: '#fff'    },
+  { key: 'preventa',    label: '⚡ PREVENTA',      bg: '#F5B800',                                   color: '#1a1a1a' }
 ];
 
 var _tagsPage = 1;

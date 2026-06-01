@@ -11,7 +11,8 @@
     mas_vendido: { txt: '\uD83D\uDD25 M\u00E1s vendido', bg: '#1a1a1a',                                      color: '#d4a85a' },
     hot_days:    { txt: '\u26A1 Hot Days',               bg: 'linear-gradient(135deg,#c62828,#e53935)',      color: '#fff'    },
     nuevo:       { txt: '\u2728 Nuevo',                  bg: '#0d47a1',                                      color: '#fff'    },
-    envio_free:  { txt: '\uD83D\uDE9A Env\u00EDo gratis', bg: '#1b5e20',                                     color: '#fff'    }
+    envio_free:  { txt: '\uD83D\uDE9A Env\u00EDo gratis', bg: '#1b5e20',                                     color: '#fff'    },
+    preventa:    { txt: '\u26A1 PREVENTA',               bg: '#F5B800',                                      color: '#1a1a1a', sub: 'INGRES\u00C1 10/06 \u00B7 ASEGUR\u00C1 TU PRECIO HOY' }
   };
 
   function getProductId() {
@@ -38,8 +39,16 @@
       var def = TAG_STYLES[key];
       if (!def) return;
       var chip = document.createElement('span');
-      chip.style.cssText = 'display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;background:' + def.bg + ';color:' + def.color + ';';
-      chip.textContent = def.txt;
+      if (def.sub) {
+        /* Tag con subtítulo (ej. preventa) */
+        chip.style.cssText = 'display:inline-flex;flex-direction:column;align-items:center;padding:6px 14px;border-radius:6px;text-transform:uppercase;background:' + def.bg + ';color:' + def.color + ';';
+        chip.innerHTML =
+          '<span style="font-size:13px;font-weight:900;letter-spacing:1px;line-height:1.2">' + def.txt + '</span>' +
+          '<span style="font-size:9px;font-weight:700;letter-spacing:.6px;opacity:.85;margin-top:1px">' + def.sub + '</span>';
+      } else {
+        chip.style.cssText = 'display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;background:' + def.bg + ';color:' + def.color + ';';
+        chip.textContent = def.txt;
+      }
       wrap.appendChild(chip);
     });
     return wrap.children.length ? wrap : null;
