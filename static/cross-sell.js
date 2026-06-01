@@ -341,14 +341,36 @@
   }
 
   function submitOriginal() {
-    if (!_pendingForm) return;
-    var form = _pendingForm;
+    /* Agregar el producto ORIGINAL al carrito via fetch (no redirect) */
+    var pid = null, vid = null, qty = '1';
+
+    if (_pendingForm) {
+      var fd = new FormData(_pendingForm);
+      pid = fd.get('product_id') || fd.get('id');
+      vid = fd.get('variant_id') || fd.get('variation_id');
+      qty = fd.get('quantity') || '1';
+    }
+
+    /* Fallback: leer de LS directamente */
+    if (!pid && window.LS && window.LS.product) {
+      pid = window.LS.product.id;
+      vid = window.LS.selectedVariation ? window.LS.selectedVariation.id : null;
+    }
+
     _pendingForm = null;
-    /* resubmit natively */
-    var clone = form.cloneNode(true);
-    clone.style.display = 'none';
-    document.body.appendChild(clone);
-    clone.submit();
+    if (!pid) { console.log('[CVA-CS] submitOriginal: no pid'); window.location.href = '/cart'; return; }
+
+    console.log('[CVA-CS] submitOriginal pid=', pid, 'vid=', vid);
+    var body = 'product_id=' + pid + (vid ? '&variant_id=' + vid : '') + '&quantity=' + qty;
+    fetch('/cart/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+      body: body
+    }).then(function() {
+      window.location.href = '/cart';
+    }).catch(function() {
+      window.location.href = '/cart';
+    });
   }
 
   /* ════════════════════════════════════════
@@ -358,14 +380,19 @@
     document.addEventListener('click', function(e) {
       if (!_rule) return;
       var btn = e.target.closest(
-        'button[type="submit"], [data-store="add-to-cart"], .js-add-to-cart-btn, input[type="submit"]'
+        'button[type="submit"], [data-store="add-to-cart"], .js-add-to-cart-btn, input[type="submit"], button[name="add"]'
       );
       if (!btn) return;
-      var form = btn.closest('form[action*="/cart/add"]') || btn.closest('form');
-      if (!form || !form.action || form.action.indexOf('/cart/add') === -1) return;
+      /* Buscar form padre — aceptar /cart/add o /carrito/agregar */
+      var form = btn.closest('form');
+      if (!form) return;
+      var action = (form.action || form.getAttribute('action') || '').toLowerCase();
+      console.log('[CVA-CS] click intercepted, form action:', action);
+      if (action.indexOf('/cart/add') === -1 && action.indexOf('/carrito/agregar') === -1) return;
       e.preventDefault();
       e.stopImmediatePropagation();
       _pendingForm = form;
+      console.log('[CVA-CS] showing popup, rule:', _rule);
       buildPopup(_cfg, _rule);
     }, true);
   }
@@ -456,10 +483,13 @@
   function init() {
     window.__CVA_CFG_P.then(function(cfg) {
       var f  = (cfg && cfg.features) || {};
-      if (f.crosssell === false) return;
+      console.log('[CVA-CS] init, features.crosssell=', f.crosssell);
+      if (f.crosssell === false) { console.log('[CVA-CS] feature disabled'); return; }
       var cs = cfg && cfg.crosssell;
-      if (!cs || !cs.enabled) return;
+      console.log('[CVA-CS] crosssell.enabled=', cs && cs.enabled, '| rules=', cs && cs.rules && cs.rules.length);
+      if (!cs || !cs.enabled) { console.log('[CVA-CS] not enabled'); return; }
       var pid = String(window.LS.product.id);
+      console.log('[CVA-CS] product id=', pid);
       var rules = cs.rules || [];
       var matched = null;
       for (var i = 0; i < rules.length; i++) {
@@ -469,6 +499,7 @@
         }
         if (matched) break;
       }
+      console.log('[CVA-CS] matched rule=', matched ? 'YES ('+matched.offers.length+' offers)' : 'NO');
       if (!matched || !matched.offers || !matched.offers.length) return;
       _cfg  = cfg;
       _rule = matched;
