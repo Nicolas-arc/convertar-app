@@ -57,7 +57,8 @@
   function doInsert(activeTags) {
     if (document.getElementById('cva-tags-wrap')) return;
     var anchor = findAnchor();
-    if (!anchor) return;
+    /* Verificar que el anchor esté realmente en el DOM activo (no detached) */
+    if (!anchor || !document.body.contains(anchor)) return;
     var wrap = buildWrap(activeTags);
     if (!wrap) return;
     anchor.insertAdjacentElement('beforebegin', wrap);
@@ -85,31 +86,41 @@
       if (ready) {
         clearInterval(iv);
         console.log('[CVA-Tags] ready! mp=', !!mpEl, 'bdg=', !!bdgEl, 'elapsed=', elapsed);
-        doInsert(activeTags);
-        console.log('[CVA-Tags] after doInsert, wrap in DOM:', !!document.getElementById('cva-tags-wrap'));
 
-        /* Observar el body completo — TN puede re-renderizar secciones
-           enteras. Cuando detecta que el wrap fue removido, espera 200ms
-           para que TN termine de re-renderizar el h1 antes de reinsertar */
-        var reinjectCount = 0;
-        var reinjectTimer = null;
-        var obs = new MutationObserver(function() {
-          if (!document.getElementById('cva-tags-wrap')) {
-            reinjectCount++;
-            console.log('[CVA-Tags] wrap removed, scheduling re-inject #'+reinjectCount);
-            /* Cancelar si ya hay uno pendiente */
-            if (reinjectTimer) clearTimeout(reinjectTimer);
-            /* Esperar a que TN termine de re-renderizar el h1 */
-            reinjectTimer = setTimeout(function() {
-              reinjectTimer = null;
-              doInsert(activeTags);
-              console.log('[CVA-Tags] re-inject done, wrap in DOM:', !!document.getElementById('cva-tags-wrap'));
-            }, 250);
+        /* Intentar insertar con reintentos hasta que quede en el DOM */
+        var insertAttempts = 0;
+        function tryInsert() {
+          insertAttempts++;
+          doInsert(activeTags);
+          var inDom = !!document.getElementById('cva-tags-wrap');
+          console.log('[CVA-Tags] insert attempt #'+insertAttempts+', wrap in DOM:', inDom);
+          if (!inDom && insertAttempts < 8) {
+            /* TN todavía está re-renderizando — esperar más y reintentar */
+            setTimeout(tryInsert, 300);
+            return;
           }
-        });
-        obs.observe(document.body, { childList: true, subtree: true });
-        /* Desconectar después de 60s */
-        setTimeout(function() { obs.disconnect(); }, 60000);
+          if (!inDom) { console.log('[CVA-Tags] giving up after '+insertAttempts+' attempts'); return; }
+
+          /* Solo observar cambios si el wrap quedó en el DOM */
+          var reinjectCount = 0;
+          var reinjectTimer = null;
+          var obs = new MutationObserver(function() {
+            if (!document.getElementById('cva-tags-wrap')) {
+              reinjectCount++;
+              console.log('[CVA-Tags] wrap removed, scheduling re-inject #'+reinjectCount);
+              if (reinjectTimer) clearTimeout(reinjectTimer);
+              /* Esperar a que TN termine de re-renderizar el h1 */
+              reinjectTimer = setTimeout(function() {
+                reinjectTimer = null;
+                insertAttempts = 0;
+                tryInsert();
+              }, 400);
+            }
+          });
+          obs.observe(document.body, { childList: true, subtree: true });
+          setTimeout(function() { obs.disconnect(); }, 60000);
+        }
+        tryInsert();
       }
       if (elapsed >= 8000) { console.log('[CVA-Tags] timeout'); clearInterval(iv); }
     }, 100);
