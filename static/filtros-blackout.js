@@ -21,12 +21,10 @@
   var DEFAULT_FILTROS = [
     {key:'todos',  label:'Todas',       sub:'Ver todo'},
     {key:'h150',   label:'150cm',       sub:'110 – 150cm'},
-    {key:'h210',   label:'210cm',       sub:'2 paños'},
-    {key:'h220',   label:'220cm',       sub:'1 paño'},
-    {key:'h240',   label:'240cm',       sub:'1 paño'},
-    {key:'h260',   label:'260cm',       sub:'1 paño'},
-    {key:'h280',   label:'280cm',       sub:'1 paño'},
-    {key:'h3m',    label:'3m',          sub:'300cm'},
+    {key:'h210',   label:'210cm',       sub:'Altura media'},
+    {key:'h240',   label:'240cm',       sub:'220 · 230 · 240'},
+    {key:'h260',   label:'260cm',       sub:'250 · 260'},
+    {key:'h300',   label:'3m',          sub:'270 · 280 · 290 · 300'},
     {key:'combos', label:'Combo Home',  sub:'Black Out + Voile', url:'https://www.pintoshogar.com.ar/black-out/combos-home/', extraClass:'pill-combos'}
   ];
 
@@ -39,12 +37,10 @@
     if (key === 'todos')   return true;
     if (key === 'h150')    return /\b(110|120|130|140|150)(?:cm)?\s*[x×]/i.test(n);
     if (key === 'h210')    return /\b210(?!\d)/i.test(n);
-    if (key === 'h220')    return /\b220(?!\d)/i.test(n);
-    if (key === 'h240')    return /\b240(?!\d)/i.test(n);
-    if (key === 'h260')    return /\b260(?!\d)/i.test(n);
-    if (key === 'h280')    return /\b280(?!\d)/i.test(n);
-    if (key === 'h300')    return /\b300(?!\d)/i.test(n) || /\b3\s*m\b/i.test(n);
-    if (key === 'h3m')     return /\b300(?!\d)/i.test(n) || /\b3\s*m\b/i.test(n);
+    if (key === 'h240')    return /\b(220|230|240)(?!\d)/i.test(n);
+    if (key === 'h260')    return /\b(250|260)(?!\d)/i.test(n);
+    if (key === 'h300')    return /\b(270|280|290|300)(?!\d)/i.test(n) || /\b3\s*m\b/i.test(n);
+    if (key === 'h3m')     return /\b(270|280|290|300)(?!\d)/i.test(n) || /\b3\s*m\b/i.test(n);
     /* Para claves personalizadas: busca el número en el key (ej: h230 → busca 230) */
     var numMatch = key.match(/h(\d+)/);
     if (numMatch) return new RegExp('\\b' + numMatch[1] + '(?!\\d)').test(n);
