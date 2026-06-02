@@ -240,14 +240,21 @@
       var path = window.location.pathname;
 
       /* Buscar si la URL actual corresponde a alguna categoría configurada.
-         Matching EXACTO (normaliza trailing slash) para que /black-out/combos-home/
-         no active los filtros de /black-out */
+         Estrategia: la clave más larga (más específica) que sea prefijo del path actual gana.
+         Esto permite que /black-out/black-out-a-medida/ herede config de /black-out,
+         y que /black-out/combos-home/ se pueda excluir con skip:true en el panel. */
       var matchedCfg = null;
       var pathNorm = path.replace(/\/$/, '');
-      Object.keys(cats).forEach(function(catPath) {
+      var sortedKeys = Object.keys(cats).sort(function(a, b) { return b.length - a.length; });
+      sortedKeys.forEach(function(catPath) {
+        if (matchedCfg) return;
         var keyNorm = catPath.replace(/\/$/, '');
-        if (pathNorm === keyNorm) matchedCfg = cats[catPath];
+        if (pathNorm === keyNorm || pathNorm.indexOf(keyNorm + '/') === 0 || pathNorm.indexOf(keyNorm) === 0) {
+          matchedCfg = cats[catPath];
+        }
       });
+      /* Si la config tiene tipo:'skip', no mostrar nada en esta URL */
+      if (matchedCfg && matchedCfg.tipo === 'skip') return;
 
       if (!matchedCfg) return;
 

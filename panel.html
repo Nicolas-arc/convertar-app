@@ -1523,8 +1523,9 @@ function makeCatRow(slug, cat) {
     '<input class="form-input cat-slug" placeholder="/cuadros-pintos-home" value="' + escHtml(slug) + '" oninput="markDirty();syncCat()"></div>' +
     '<div class="form-group"><label class="form-label">Tipo</label>' +
     '<select class="form-select cat-tipo" onchange="markDirty()">' +
-    ['cuadros','cortinas','generico'].map(function(t) {
-      return '<option value="' + t + '"' + (cat.tipo === t ? ' selected' : '') + '>' + t + '</option>';
+    ['cuadros','cortinas','generico','skip'].map(function(t) {
+      var label = t === 'skip' ? 'skip — sin filtros (excluir)' : t;
+      return '<option value="' + t + '"' + (cat.tipo === t ? ' selected' : '') + '>' + label + '</option>';
     }).join('') + '</select></div>' +
     '<div class="form-group"><label class="form-label">Título del hero</label>' +
     '<input class="form-input cat-titulo" placeholder="Elegí cómo querés transformar tu hogar" value="' + escHtml(cat.hero_titulo||'') + '" oninput="markDirty();syncCat()"></div>' +
