@@ -240,18 +240,18 @@
       var path = window.location.pathname;
 
       /* Buscar si la URL actual corresponde a alguna categoría configurada.
-         Estrategia: la clave más larga (más específica) que sea prefijo del path actual gana.
-         Esto permite que /black-out/black-out-a-medida/ herede config de /black-out,
-         y que /black-out/combos-home/ se pueda excluir con skip:true en el panel. */
+         Estrategia: contains matching (indexOf), pero la clave más larga
+         (más específica) gana primero. Así:
+         - /home1/cuadros-pintos-home  →  matchea /cuadros-pintos-home  ✅
+         - /black-out/combos-home/     →  matchea /black-out/combos-home (skip) ✅
+         - /black-out/black-out-a-medida/ → matchea /black-out            ✅  */
       var matchedCfg = null;
       var pathNorm = path.replace(/\/$/, '');
       var sortedKeys = Object.keys(cats).sort(function(a, b) { return b.length - a.length; });
       sortedKeys.forEach(function(catPath) {
         if (matchedCfg) return;
         var keyNorm = catPath.replace(/\/$/, '');
-        if (pathNorm === keyNorm || pathNorm.indexOf(keyNorm + '/') === 0 || pathNorm.indexOf(keyNorm) === 0) {
-          matchedCfg = cats[catPath];
-        }
+        if (pathNorm.indexOf(keyNorm) > -1) matchedCfg = cats[catPath];
       });
       /* Si la config tiene tipo:'skip', no mostrar nada en esta URL */
       if (matchedCfg && matchedCfg.tipo === 'skip') return;
