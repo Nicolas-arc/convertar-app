@@ -565,7 +565,9 @@ app.get('/api/recent-orders', async (req, res) => {
       const city      = (customer.default_address && customer.default_address.city) || '';
 
       const prod        = (order.products || [])[0] || {};
-      const productName = (prod.name && (prod.name.es || Object.values(prod.name)[0])) || prod.name || '';
+      const productName = typeof prod.name === 'object'
+        ? (prod.name.es || prod.name.en || Object.values(prod.name).find(v => v) || '')
+        : (prod.name || '');
       const productImg  = (prod.image && (prod.image.src || prod.image.url)) || null;
 
       const createdAt  = new Date(order.created_at).getTime();
