@@ -5,9 +5,9 @@
   document.head.appendChild(st);}
 
   var API = 'https://convertar-app-production.up.railway.app';
-  var DURACION      = 9000;            /* visible 9 seg          */
-  var PAUSA         = 28 * 60 * 1000; /* 28 min entre popups    */
-  var DELAY_INICIAL = 10000;           /* primera: 10 seg        */
+  var DURACION      = 9000;   /* visible 9 seg                        */
+  var PAUSA         = 6000;   /* 6 seg después de cerrar → cada ~15s  */
+  var DELAY_INICIAL = 10000;  /* primera: 10 seg                      */
 
   /* ── Fallback sintético cuando no hay órdenes reales ── */
   var NOMBRES=['Úrsula','María','Carlos','Facundo','Valentina','Diego','Ana','Sofía','Martín','Laura','Pablo','Florencia','Nicolás','Camila','Lucía','Roberto','Jimena','Fernando','Gabriela','Santiago'];
@@ -26,7 +26,16 @@
   ];
 
   function rand(a){return a[Math.floor(Math.random()*a.length)];}
-  function fmtMin(m){if(m<60)return 'hace '+m+' min';var h=Math.floor(m/60),rm=m%60;return 'hace '+(rm>0?h+'h '+rm+'min':h+'h');}
+
+  /* ── Tiempo falso "hace X min" — crece de a ~8-12 min, resetea a los 55 ── */
+  var _fakeMin = 5 + Math.floor(Math.random() * 8); /* empieza entre 5-12 min */
+  function nextFakeMin() {
+    var val = _fakeMin;
+    _fakeMin += 8 + Math.floor(Math.random() * 5); /* suma 8-12 min cada vez */
+    if (_fakeMin > 55) _fakeMin = 5 + Math.floor(Math.random() * 6); /* resetea */
+    return val;
+  }
+  function fmtMin(m){ return 'hace ' + m + ' min'; }
 
   /* ── Pool de órdenes reales (cacheadas en memoria) ── */
   var _ordenes = null;
@@ -47,13 +56,13 @@
     if (_ordenes && _ordenes.length) {
       var o = _ordenes[_ordenIdx % _ordenes.length];
       _ordenIdx++;
-      return { nombre: o.nombre, ciudad: o.ciudad, producto: o.producto, imagen: o.imagen, min: Math.max(1, o.min) };
+      return { nombre: o.nombre, ciudad: o.ciudad, producto: o.producto, imagen: o.imagen, min: nextFakeMin() };
     }
     /* Fallback sintético */
     var KEY = 'ph_sp_idx', LOOP = 23, idx = 0;
     try { idx = parseInt(localStorage.getItem(KEY)||'0',10)||0; } catch(e){}
     try { localStorage.setItem(KEY, String((idx+1)%LOOP)); } catch(e){}
-    return { nombre: rand(NOMBRES), ciudad: rand(CIUDADES), producto: PRODUCTOS[idx%PRODUCTOS.length], imagen: null, min: 3+(idx%LOOP)*8 };
+    return { nombre: rand(NOMBRES), ciudad: rand(CIUDADES), producto: PRODUCTOS[idx%PRODUCTOS.length], imagen: null, min: nextFakeMin() };
   }
 
   var dismissed = false;
