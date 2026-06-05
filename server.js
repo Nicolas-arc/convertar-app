@@ -624,6 +624,379 @@ app.post('/api/promos/:shop_id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── CALCULADORA DE CORTINAS ────────────────────────────
+// GET /api/catalogo-cortinas  → lee catálogo real de TN, cachea 30 min
+// GET /calculadora            → landing page interactiva
+
+let _catalogoCache = null;
+let _catalogoCacheTime = 0;
+const CATALOGO_TTL = 30 * 60 * 1000;
+
+function parsearNombre(name) {
+  if (typeof name === 'object') return name.es || name.en || Object.values(name).find(v => v) || '';
+  return name || '';
+}
+
+function extraerAlto(nombre) {
+  const low = nombre.toLowerCase();
+  const cm = low.match(/(\d{3})\s*cm/);  if (cm) return parseInt(cm[1]);
+  const m  = low.match(/(\d+(?:[.,]\d+)?)\s*m\b/); if (m) return Math.round(parseFloat(m[1].replace(',','.')) * 100);
+  return 0;
+}
+
+function procesarCatalogo(products) {
+  const cortinas = [], voile = [], cuadros = [];
+
+  products.forEach(p => {
+    const nombre  = parsearNombre(p.name);
+    const low     = nombre.toLowerCase();
+    const precio  = parseFloat(p.price || 0);
+    const handle  = p.handle || '';
+    const imagen  = (p.images && p.images[0]) ? (p.images[0].src || p.images[0].url || null) : null;
+    const url     = `https://www.pintoshogar.com.ar/${handle}`;
+    const base    = { id: p.id, nombre, precio, precioTransf: Math.round(precio * 0.9), handle, imagen, url };
+
+    if (/cuadro/i.test(low) && !/combo/i.test(low)) {
+      if (/x6/i.test(low)) cuadros.push({ ...base, tipo: 'x6' });
+      else if (/x3/i.test(low)) cuadros.push({ ...base, tipo: 'x3' });
+      return;
+    }
+    if (/voile/i.test(low) && !/combo/i.test(low)) { voile.push(base); return; }
+    if (/black.?out|blackout/i.test(low) && !/combo|voile|cuadro/i.test(low)) {
+      const alto = extraerAlto(nombre);
+      if (alto >= 150) cortinas.push({ ...base, alto });
+    }
+  });
+
+  cortinas.sort((a, b) => a.alto - b.alto);
+
+  /* Agrupar por rango de alto */
+  const RANGOS = [
+    { label: '210cm', min: 150, max: 215 },
+    { label: '240cm', min: 216, max: 245 },
+    { label: '260cm', min: 246, max: 265 },
+    { label: '300cm', min: 266, max: 320 },
+  ];
+  const cortinasPorRango = {};
+  RANGOS.forEach(r => {
+    const match = cortinas.filter(c => c.alto >= r.min && c.alto <= r.max);
+    if (match.length) cortinasPorRango[r.label] = match[0];
+  });
+
+  voile.sort((a, b) => a.precio - b.precio);
+  cuadros.sort((a, b) => a.precio - b.precio);
+
+  return {
+    cortinas: cortinasPorRango,
+    voile:      voile[0] || null,
+    cuadros_x3: cuadros.find(c => c.tipo === 'x3') || null,
+    cuadros_x6: cuadros.find(c => c.tipo === 'x6') || null,
+    _updated: new Date().toISOString()
+  };
+}
+
+app.get('/api/catalogo-cortinas', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=1800');
+
+  if (_catalogoCache && Date.now() - _catalogoCacheTime < CATALOGO_TTL) return res.json(_catalogoCache);
+
+  const TN_TOKEN = process.env.TN_TOKEN, TN_STORE_ID = process.env.TN_STORE_ID;
+  if (!TN_TOKEN || !TN_STORE_ID) return res.status(503).json({ error: 'TN no configurado' });
+
+  try {
+    const headers = { 'Authentication': `bearer ${TN_TOKEN}`, 'User-Agent': 'ConvertAR (nicolas@pintoshome.com)' };
+    const r = await fetch(`https://api.tiendanube.com/v1/${TN_STORE_ID}/products?per_page=200&published=true`, { headers });
+    if (!r.ok) throw new Error(`TN ${r.status}`);
+    const products = await r.json();
+    _catalogoCache = procesarCatalogo(products);
+    _catalogoCacheTime = Date.now();
+    res.json(_catalogoCache);
+  } catch (err) {
+    console.error('catalogo-cortinas error:', err);
+    if (_catalogoCache) return res.json(_catalogoCache);
+    res.status(500).json({ error: 'Error al leer catálogo' });
+  }
+});
+
+app.get('/calculadora', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>¿Cuántas cortinas necesitás? · Pintos Home</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f1;color:#111;min-height:100vh}
+  /* HEADER */
+  .ph-header{background:#111;color:#fff;text-align:center;padding:22px 16px 20px}
+  .ph-header-logo{font-size:20px;font-weight:800;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+  .ph-header-sub{font-size:12px;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase}
+  /* HERO */
+  .ph-hero{background:linear-gradient(135deg,#1a1a1a,#2d2d2d);color:#fff;text-align:center;padding:32px 20px 28px}
+  .ph-hero h1{font-size:clamp(22px,4vw,34px);font-weight:800;line-height:1.2;margin-bottom:10px}
+  .ph-hero p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;max-width:380px;margin:0 auto}
+  /* CARD */
+  .ph-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:24px 20px;max-width:480px;margin:24px auto;width:calc(100% - 32px)}
+  .ph-section-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;margin-bottom:14px}
+  /* INPUTS */
+  .ph-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px}
+  .ph-input-wrap{display:flex;flex-direction:column;gap:5px}
+  .ph-input-wrap label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px}
+  .ph-input-group{position:relative;display:flex;align-items:center}
+  .ph-input-group input{width:100%;padding:14px 44px 14px 14px;border:2px solid #e8e8e6;border-radius:10px;font-size:22px;font-weight:700;color:#111;background:#fafafa;-webkit-appearance:none;appearance:none;outline:none;transition:border-color .2s}
+  .ph-input-group input:focus{border-color:#111;background:#fff}
+  .ph-input-group .unit{position:absolute;right:12px;font-size:12px;font-weight:700;color:#bbb}
+  .ph-input-hint{font-size:10px;color:#ccc;margin-top:2px}
+  /* RESULTADO */
+  #ph-resultado{margin-top:20px;display:none}
+  .ph-result-main{background:#f8f7f4;border-radius:12px;padding:16px;margin-bottom:12px;border-left:3px solid #111}
+  .ph-result-title{font-size:13px;font-weight:700;color:#111;margin-bottom:8px}
+  .ph-result-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+  .ph-result-label{font-size:12px;color:#666}
+  .ph-result-value{font-size:13px;font-weight:700;color:#111}
+  .ph-result-price{font-size:20px;font-weight:800;color:#111}
+  .ph-result-transf{font-size:11px;color:#2d7a2d;font-weight:700;margin-top:2px}
+  /* ADDONS */
+  .ph-addons{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .ph-addon{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid #efefed;border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s;user-select:none}
+  .ph-addon.active{border-color:#111;background:#fafafa}
+  .ph-addon-check{width:20px;height:20px;border-radius:50%;border:2px solid #ddd;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:11px;color:#fff}
+  .ph-addon.active .ph-addon-check{background:#111;border-color:#111}
+  .ph-addon-info{flex:1}
+  .ph-addon-name{font-size:13px;font-weight:700;color:#111}
+  .ph-addon-desc{font-size:11px;color:#888;margin-top:1px}
+  .ph-addon-price{font-size:13px;font-weight:700;color:#111;text-align:right}
+  .ph-addon-transf{font-size:10px;color:#2d7a2d;font-weight:600}
+  /* TOTAL */
+  .ph-total{background:#111;color:#fff;border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .ph-total-label{font-size:12px;color:rgba(255,255,255,.6)}
+  .ph-total-amount{font-size:24px;font-weight:800}
+  .ph-total-transf{font-size:11px;color:#7ecf7e;font-weight:700;margin-top:2px;text-align:right}
+  /* CTAS */
+  .ph-ctas{display:flex;flex-direction:column;gap:8px}
+  .ph-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;transition:transform .15s,box-shadow .15s;cursor:pointer;border:none}
+  .ph-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+  .ph-btn-primary{background:#111;color:#fff}
+  .ph-btn-wa{background:#25d366;color:#fff}
+  .ph-btn-secondary{background:#f0ede8;color:#111;border:1.5px solid #e0dbd0}
+  /* IMAGEN */
+  .ph-prod-img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0}
+  /* FOOTER */
+  .ph-footer{text-align:center;padding:24px 16px;font-size:11px;color:#bbb}
+  .ph-spinner{text-align:center;padding:20px;color:#aaa;font-size:13px}
+  @media(max-width:360px){.ph-inputs{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="ph-header">
+  <div class="ph-header-logo">PINTOS HOME</div>
+  <div class="ph-header-sub">Calculadora de cortinas</div>
+</div>
+
+<div class="ph-hero">
+  <h1>¿Cuántas cortinas<br>necesitás?</h1>
+  <p>Ingresá las medidas de tu ventana y te decimos exactamente qué productos necesitás y cuánto sale.</p>
+</div>
+
+<div class="ph-card">
+  <div class="ph-section-title">Medidas de tu ventana</div>
+  <div class="ph-inputs">
+    <div class="ph-input-wrap">
+      <label>Alto</label>
+      <div class="ph-input-group">
+        <input type="number" id="alto" placeholder="210" min="100" max="320" inputmode="numeric">
+        <span class="unit">cm</span>
+      </div>
+      <span class="ph-input-hint">Ej: 210, 240, 260</span>
+    </div>
+    <div class="ph-input-wrap">
+      <label>Ancho</label>
+      <div class="ph-input-group">
+        <input type="number" id="ancho" placeholder="260" min="50" max="800" inputmode="numeric">
+        <span class="unit">cm</span>
+      </div>
+      <span class="ph-input-hint">Ej: 130, 260, 390</span>
+    </div>
+  </div>
+
+  <div id="ph-resultado">
+    <div id="ph-spinner" class="ph-spinner">Calculando...</div>
+    <div id="ph-contenido" style="display:none">
+
+      <div class="ph-result-main" id="ph-cortina-card">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <img id="ph-prod-img" class="ph-prod-img" src="" alt="" style="display:none">
+          <div style="flex:1">
+            <div class="ph-result-title" id="ph-prod-nombre">—</div>
+            <div class="ph-result-row">
+              <span class="ph-result-label">Paños necesarios</span>
+              <span class="ph-result-value" id="ph-panos">—</span>
+            </div>
+            <div class="ph-result-row">
+              <span class="ph-result-label">Precio por paño</span>
+              <span class="ph-result-value" id="ph-precio-unidad">—</span>
+            </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e8e8e6">
+              <div class="ph-result-price" id="ph-subtotal-cortinas">—</div>
+              <div class="ph-result-transf" id="ph-subtotal-transf">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ph-section-title" style="margin-top:16px">Completá tu combo (opcional)</div>
+      <div class="ph-addons" id="ph-addons"></div>
+
+      <div class="ph-total">
+        <div>
+          <div class="ph-total-label">Total estimado</div>
+          <div class="ph-total-amount" id="ph-total">$0</div>
+        </div>
+        <div style="text-align:right">
+          <div class="ph-total-label">Con transferencia</div>
+          <div class="ph-total-transf" id="ph-total-transf">$0</div>
+        </div>
+      </div>
+
+      <div class="ph-ctas" id="ph-ctas"></div>
+
+    </div>
+  </div>
+</div>
+
+<div class="ph-footer">
+  Cada paño mide 130cm de ancho · Los precios pueden variar · <a href="https://www.pintoshogar.com.ar" style="color:#aaa">Ver tienda completa</a>
+</div>
+
+<script>
+var API = 'https://convertar-app-production.up.railway.app';
+var WA  = '5492235551148';
+var catalogo = null;
+
+function ars(n){ return '$' + Math.round(n).toString().replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.'); }
+
+/* Cargar catálogo */
+fetch(API + '/api/catalogo-cortinas')
+  .then(function(r){ return r.json(); })
+  .then(function(data){ catalogo = data; })
+  .catch(function(){ catalogo = {}; });
+
+/* Inputs */
+document.getElementById('alto').addEventListener('input', calcular);
+document.getElementById('ancho').addEventListener('input', calcular);
+
+var _addonsActivos = {};
+
+function calcular() {
+  var alto  = parseInt(document.getElementById('alto').value) || 0;
+  var ancho = parseInt(document.getElementById('ancho').value) || 0;
+  if (alto < 100 || ancho < 50) { document.getElementById('ph-resultado').style.display = 'none'; return; }
+
+  document.getElementById('ph-resultado').style.display = 'block';
+  if (!catalogo) { document.getElementById('ph-spinner').style.display='block'; document.getElementById('ph-contenido').style.display='none'; return; }
+  document.getElementById('ph-spinner').style.display='none';
+  document.getElementById('ph-contenido').style.display='block';
+
+  /* Encontrar cortina por alto */
+  var rangos = [
+    { max:215, key:'210cm' }, { max:245, key:'240cm' },
+    { max:265, key:'260cm' }, { max:320, key:'300cm' }
+  ];
+  var key = null;
+  for (var i=0;i<rangos.length;i++) { if (alto <= rangos[i].max) { key = rangos[i].key; break; } }
+  if (!key) key = '300cm';
+
+  var cortina = catalogo.cortinas && catalogo.cortinas[key];
+  if (!cortina) {
+    document.getElementById('ph-prod-nombre').textContent = 'No encontramos una cortina para esa medida';
+    return;
+  }
+
+  var panos = Math.ceil(ancho / 130);
+  var subtotal = cortina.precio * panos;
+  var subtotalT = cortina.precioTransf * panos;
+
+  /* Imagen */
+  var img = document.getElementById('ph-prod-img');
+  if (cortina.imagen) { img.src = cortina.imagen; img.style.display='block'; }
+  else { img.style.display='none'; }
+
+  document.getElementById('ph-prod-nombre').textContent = cortina.nombre;
+  document.getElementById('ph-panos').textContent = panos + (panos===1?' paño':' paños');
+  document.getElementById('ph-precio-unidad').textContent = ars(cortina.precio) + ' c/u';
+  document.getElementById('ph-subtotal-cortinas').textContent = ars(subtotal);
+  document.getElementById('ph-subtotal-transf').textContent = 'Con transferencia: ' + ars(subtotalT);
+
+  /* Addons */
+  var addonsList = [];
+  if (catalogo.voile) addonsList.push({ key:'voile', emoji:'🌿', nombre:'Voile', desc: panos+' paño'+(panos>1?'s':''), obj: catalogo.voile, qty: panos });
+  if (catalogo.cuadros_x3) addonsList.push({ key:'x3', emoji:'🖼️', nombre:'Set x3 Cuadros', desc:'40x35 · Envío gratis', obj: catalogo.cuadros_x3, qty:1 });
+  if (catalogo.cuadros_x6) addonsList.push({ key:'x6', emoji:'🖼️', nombre:'Set x6 Cuadros', desc:'30x20 · Envío gratis', obj: catalogo.cuadros_x6, qty:1 });
+
+  var addonsEl = document.getElementById('ph-addons');
+  addonsEl.innerHTML = '';
+  addonsList.forEach(function(a) {
+    var total = a.obj.precio * a.qty;
+    var totalT = a.obj.precioTransf * a.qty;
+    var div = document.createElement('div');
+    div.className = 'ph-addon' + (_addonsActivos[a.key] ? ' active' : '');
+    div.dataset.key = a.key;
+    div.innerHTML =
+      '<div class="ph-addon-check">' + (_addonsActivos[a.key]?'✓':'') + '</div>' +
+      '<div class="ph-addon-info">' +
+        '<div class="ph-addon-name">' + a.emoji + ' ' + a.nombre + '</div>' +
+        '<div class="ph-addon-desc">' + a.desc + '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div class="ph-addon-price">' + ars(total) + '</div>' +
+        '<div class="ph-addon-transf">' + ars(totalT) + ' transf.</div>' +
+      '</div>';
+    div.addEventListener('click', function() {
+      _addonsActivos[a.key] = !_addonsActivos[a.key];
+      calcular();
+    });
+    addonsEl.appendChild(div);
+  });
+
+  /* Total */
+  var totalBase = subtotal, totalT2 = subtotalT;
+  addonsList.forEach(function(a) {
+    if (_addonsActivos[a.key]) {
+      totalBase += a.obj.precio * a.qty;
+      totalT2   += a.obj.precioTransf * a.qty;
+    }
+  });
+  document.getElementById('ph-total').textContent = ars(totalBase);
+  document.getElementById('ph-total-transf').textContent = ars(totalT2);
+
+  /* CTAs */
+  var ctasEl = document.getElementById('ph-ctas');
+  ctasEl.innerHTML = '';
+
+  var btnProd = document.createElement('a');
+  btnProd.className = 'ph-btn ph-btn-primary';
+  btnProd.href = cortina.url;
+  btnProd.target = '_blank';
+  btnProd.innerHTML = '🛒 Ver cortina en la tienda';
+  ctasEl.appendChild(btnProd);
+
+  var msg = encodeURIComponent('Hola! Necesito ' + panos + ' paño(s) de cortina ' + alto + 'cm x ancho total ' + ancho + 'cm. ¿Me podés ayudar?');
+  var btnWA = document.createElement('a');
+  btnWA.className = 'ph-btn ph-btn-wa';
+  btnWA.href = 'https://wa.me/' + WA + '?text=' + msg;
+  btnWA.target = '_blank';
+  btnWA.innerHTML = '💬 Consultar por WhatsApp';
+  ctasEl.appendChild(btnWA);
+}
+</script>
+</body>
+</html>`);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ ConvertAR backend corriendo en puerto ${PORT}`);
