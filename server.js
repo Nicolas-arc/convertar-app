@@ -650,11 +650,16 @@ function procesarCatalogo(products) {
   products.forEach(p => {
     const nombre  = parsearNombre(p.name);
     const low     = nombre.toLowerCase();
-    const precio  = parseFloat(p.price || 0);
+    /* En TN el precio real está en variants[0].price, p.price suele ser null o "0.00" */
+    const variant = (p.variants && p.variants[0]) || {};
+    const precio  = parseFloat(variant.price || p.price || 0);
+    const precioPromo = parseFloat(variant.promotional_price || p.promotional_price || 0);
+    /* Precio transferencia: precio promocional si existe, sino -10% */
+    const precioTransf = precioPromo > 0 ? precioPromo : Math.round(precio * 0.9);
     const handle  = p.handle || '';
     const imagen  = (p.images && p.images[0]) ? (p.images[0].src || p.images[0].url || null) : null;
     const url     = `https://www.pintoshogar.com.ar/${handle}`;
-    const base    = { id: p.id, nombre, precio, precioTransf: Math.round(precio * 0.9), handle, imagen, url };
+    const base    = { id: p.id, nombre, precio, precioTransf, handle, imagen, url };
 
     if (/cuadro/i.test(low) && !/combo/i.test(low)) {
       if (/x6/i.test(low)) cuadros.push({ ...base, tipo: 'x6' });
@@ -670,12 +675,12 @@ function procesarCatalogo(products) {
 
   cortinas.sort((a, b) => a.alto - b.alto);
 
-  /* Agrupar por rango de alto */
+  /* Agrupar por rango de alto — el cliente elige la cortina >= su medida */
   const RANGOS = [
-    { label: '210cm', min: 150, max: 215 },
-    { label: '240cm', min: 216, max: 245 },
-    { label: '260cm', min: 246, max: 265 },
-    { label: '300cm', min: 266, max: 320 },
+    { label: '210cm', min: 150, max: 210 },
+    { label: '240cm', min: 211, max: 240 },
+    { label: '260cm', min: 241, max: 260 },
+    { label: '300cm', min: 261, max: 320 },
   ];
   const cortinasPorRango = {};
   RANGOS.forEach(r => {
@@ -901,10 +906,10 @@ function calcular() {
   document.getElementById('ph-spinner').style.display='none';
   document.getElementById('ph-contenido').style.display='block';
 
-  /* Encontrar cortina por alto */
+  /* Encontrar cortina: la que mide >= alto del cliente */
   var rangos = [
-    { max:215, key:'210cm' }, { max:245, key:'240cm' },
-    { max:265, key:'260cm' }, { max:320, key:'300cm' }
+    { max:210, key:'210cm' }, { max:240, key:'240cm' },
+    { max:260, key:'260cm' }, { max:320, key:'300cm' }
   ];
   var key = null;
   for (var i=0;i<rangos.length;i++) { if (alto <= rangos[i].max) { key = rangos[i].key; break; } }
@@ -926,6 +931,10 @@ function calcular() {
   else { img.style.display='none'; }
 
   document.getElementById('ph-prod-nombre').textContent = cortina.nombre;
+  /* Tip: explica por qué esa medida */
+  var tipEl = document.getElementById('ph-medida-tip');
+  if (!tipEl) { tipEl = document.createElement('div'); tipEl.id='ph-medida-tip'; tipEl.style.cssText='font-size:11px;color:#888;margin-top:4px'; document.getElementById('ph-prod-nombre').after(tipEl); }
+  tipEl.textContent = 'Tu ventana mide ' + alto + 'cm · Te recomendamos esta medida para que cubra bien';
   document.getElementById('ph-panos').textContent = panos + (panos===1?' paño':' paños');
   document.getElementById('ph-precio-unidad').textContent = ars(cortina.precio) + ' c/u';
   document.getElementById('ph-subtotal-cortinas').textContent = ars(subtotal);
