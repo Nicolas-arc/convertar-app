@@ -639,8 +639,14 @@ function parsearNombre(name) {
 
 function extraerAlto(nombre) {
   const low = nombre.toLowerCase();
-  const cm = low.match(/(\d{3})\s*cm/);  if (cm) return parseInt(cm[1]);
-  const m  = low.match(/(\d+(?:[.,]\d+)?)\s*m\b/); if (m) return Math.round(parseFloat(m[1].replace(',','.')) * 100);
+  // "210cm" o "210 cm"
+  const cm = low.match(/(\d{3})\s*cm/);          if (cm) return parseInt(cm[1]);
+  // "210 x130" — paño NNN x ancho
+  const paño = low.match(/pa[ñn]o\s+(\d{3})\s*x/); if (paño) return parseInt(paño[1]);
+  // "210 x" genérico (tres dígitos antes de x)
+  const x = low.match(/\b(\d{3})\s*x\s*\d/);       if (x)    return parseInt(x[1]);
+  // "3m" o "2.5m"
+  const m = low.match(/\b(\d+(?:[.,]\d+)?)\s*m\b/); if (m)    return Math.round(parseFloat(m[1].replace(',','.')) * 100);
   return 0;
 }
 
@@ -675,12 +681,14 @@ function procesarCatalogo(products) {
 
   cortinas.sort((a, b) => a.alto - b.alto);
 
-  /* Agrupar por rango de alto — el cliente elige la cortina >= su medida */
+  /* Rango: la cortina cubre si su alto >= alto de la ventana */
   const RANGOS = [
     { label: '210cm', min: 150, max: 210 },
-    { label: '240cm', min: 211, max: 240 },
+    { label: '220cm', min: 211, max: 220 },
+    { label: '240cm', min: 221, max: 240 },
     { label: '260cm', min: 241, max: 260 },
-    { label: '300cm', min: 261, max: 320 },
+    { label: '280cm', min: 261, max: 280 },
+    { label: '300cm', min: 281, max: 320 },
   ];
   const cortinasPorRango = {};
   RANGOS.forEach(r => {
@@ -908,8 +916,9 @@ function calcular() {
 
   /* Encontrar cortina: la que mide >= alto del cliente */
   var rangos = [
-    { max:210, key:'210cm' }, { max:240, key:'240cm' },
-    { max:260, key:'260cm' }, { max:320, key:'300cm' }
+    { max:210, key:'210cm' }, { max:220, key:'220cm' },
+    { max:240, key:'240cm' }, { max:260, key:'260cm' },
+    { max:280, key:'280cm' }, { max:320, key:'300cm' }
   ];
   var key = null;
   for (var i=0;i<rangos.length;i++) { if (alto <= rangos[i].max) { key = rangos[i].key; break; } }
