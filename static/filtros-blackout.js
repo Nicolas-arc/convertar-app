@@ -41,7 +41,9 @@
     '.ph-cor-fbox .fv{font-size:13px;font-weight:700;color:#fff;white-space:nowrap}',
     '.ph-cor-fsep{font-size:20px;color:rgba(255,255,255,0.25)}',
     '.ph-cor-note{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:400px;margin:0 auto}',
-    '.ph-cor-note strong{color:rgba(255,255,255,0.8)}'
+    '.ph-cor-note strong{color:rgba(255,255,255,0.8)}',
+    '.ph-cor-tip{font-size:11px;color:rgba(255,255,255,0.35);line-height:1.7;max-width:420px;margin:10px auto 0;border-top:1px solid rgba(255,255,255,0.08);padding-top:10px}',
+    '.ph-cor-tip strong{color:rgba(255,255,255,0.65)}'
   ].join('');
 
   function injectCSS(id, css) {
@@ -146,6 +148,7 @@
       +   '<div class="ph-cor-fbox"><span class="fl">Tu cortina</span><span class="fv">Perfecta</span></div>'
       + '</div>'
       + '<p class="ph-cor-note">El <strong>alto</strong> define el tamaño · El <strong>ancho</strong> define cuántos paños. Cada paño mide 130cm de ancho.</p>'
+      + '<p class="ph-cor-tip">Podés medir con la cámara de tu cel 📱 · Si tenés <strong>iPhone</strong> usá la app <em>Medición</em> · Si tenés <strong>Android</strong> cualquier app de medición · o con un metro si tenés en casa</p>'
       + '</div>';
     return hero;
   }
