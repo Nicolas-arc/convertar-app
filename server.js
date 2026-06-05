@@ -630,6 +630,7 @@ app.post('/api/promos/:shop_id', async (req, res) => {
 
 let _catalogoCache = null;
 let _catalogoCacheTime = 0;
+const _catalogoVersion = '2'; // incrementar para invalidar cache
 const CATALOGO_TTL = 30 * 60 * 1000;
 
 function parsearNombre(name) {
@@ -692,8 +693,13 @@ function procesarCatalogo(products) {
   ];
   const cortinasPorRango = {};
   RANGOS.forEach(r => {
+    const altoLabel = parseInt(r.label);
     const match = cortinas.filter(c => c.alto >= r.min && c.alto <= r.max);
-    if (match.length) cortinasPorRango[r.label] = match[0];
+    if (!match.length) return;
+    // Preferir coincidencia exacta con el label del rango (ej: 210, 220, 240…)
+    const exacto = match.find(c => c.alto === altoLabel);
+    // Si no hay exacto, tomar el de mayor alto del rango (el que más cubre)
+    cortinasPorRango[r.label] = exacto || match[match.length - 1];
   });
 
   voile.sort((a, b) => a.precio - b.precio);
