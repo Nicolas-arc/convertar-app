@@ -10,6 +10,49 @@
   var API  = 'https://convertar-app-production.up.railway.app';
   var SHOP = 'pintoshogar';
 
+  /* ── Anti-CLS: reservar espacio ANTES de que cargue el config ──────────
+     Inyecta un placeholder oscuro con la altura del hero+pills para que
+     el layout no salte cuando se inserte el contenido real.
+     Se detecta la URL sincrónicamente (sin esperar fetch).              */
+  (function reservarEspacio() {
+    if (document.getElementById('ph-cls-placeholder')) return;
+    var path = window.location.pathname.replace(/\/$/, '');
+    /* Solo en páginas que van a tener hero de cortinas */
+    var esCortinas = path.indexOf('black-out') > -1 && path.indexOf('combos-home') === -1;
+    if (!esCortinas) return;
+    var ph = document.createElement('div');
+    ph.id = 'ph-cls-placeholder';
+    /* Mismo fondo que el hero para que no se vea el salto.
+       min-height: hero 260px + pills ~90px + tip ~40px = ~390px */
+    ph.style.cssText = [
+      'background:linear-gradient(135deg,#0a0a0a,#1a1a1a,#2a2a2a)',
+      'min-height:390px',
+      'width:100%',
+      'display:flex',
+      'align-items:center',
+      'justify-content:center'
+    ].join(';');
+    /* Spinner sutil para que no parezca roto */
+    ph.innerHTML = '<div style="width:28px;height:28px;border:2px solid rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.4);border-radius:50%;animation:ph-spin .8s linear infinite"></div>'
+      + '<style>@keyframes ph-spin{to{transform:rotate(360deg)}}</style>';
+
+    /* Insertar antes del grid de productos en cuanto esté disponible */
+    var tries = 0;
+    function tryInsertPh() {
+      var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
+      if (ref && ref.parentNode) {
+        ref.parentNode.insertBefore(ph, ref);
+      } else if (tries++ < 20) {
+        setTimeout(tryInsertPh, 100);
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryInsertPh);
+    } else {
+      tryInsertPh();
+    }
+  })();
+
   window.__CVA_CFG_P = window.__CVA_CFG_P ||
     fetch(API + '/config/' + SHOP).then(function(r){ return r.json(); }).catch(function(){ return {}; });
 
@@ -156,6 +199,9 @@
   /* ── Insertar en página ── */
   function insertarEnPagina(catCfg) {
     if (document.getElementById('ph-cat-filtros')) return;
+    /* Eliminar placeholder anti-CLS */
+    var ph = document.getElementById('ph-cls-placeholder');
+    if (ph) ph.remove();
 
     var tipo    = catCfg.tipo || 'generico';
     var filtros = catCfg.filtros || [];
