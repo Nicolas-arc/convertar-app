@@ -1,66 +1,20 @@
 /* ============================================================
-   ConvertAR · Hero + Filtros de Categorías
-   Maneja TODAS las categorías configuradas en el panel:
-   tipo "cortinas" → hero oscuro + filtro por altura
-   tipo "cuadros"  → filtro por estilo/set
-   tipo genérico   → solo pills de filtro
-   convertar-app-production.up.railway.app/static/filtros-blackout.js
+   ConvertAR · Hero + Filtros de Categorías v2 (CLS ≤ 0.1)
+   Estrategia anti-CLS:
+     1. Hero se renderiza INMEDIATAMENTE (sin esperar config)
+     2. Contenedor de pills se crea vacío con espacio reservado
+     3. Cuando config carga, solo se pueblan los pills in-place
+     → Cero layout shifts después del primer render
    ============================================================ */
 (function () {
   var API  = 'https://convertar-app-production.up.railway.app';
   var SHOP = 'pintoshogar';
 
-  /* ── Anti-CLS: reservar espacio ANTES de que cargue el config ──────────
-     Inyecta un placeholder oscuro con la altura del hero+pills para que
-     el layout no salte cuando se inserte el contenido real.
-     Se detecta la URL sincrónicamente (sin esperar fetch).              */
-  (function reservarEspacio() {
-    if (document.getElementById('ph-cls-placeholder')) return;
-    var path = window.location.pathname.replace(/\/$/, '');
-    /* Solo en páginas que van a tener hero de cortinas */
-    var esCortinas = path.indexOf('black-out') > -1 && path.indexOf('combos-home') === -1;
-    if (!esCortinas) return;
-    var ph = document.createElement('div');
-    ph.id = 'ph-cls-placeholder';
-    /* Mismo fondo que el hero para que no se vea el salto.
-       min-height: hero 260px + pills ~90px + tip ~40px = ~390px */
-    ph.style.cssText = [
-      'background:linear-gradient(135deg,#0a0a0a,#1a1a1a,#2a2a2a)',
-      'min-height:390px',
-      'width:100%',
-      'display:flex',
-      'align-items:center',
-      'justify-content:center'
-    ].join(';');
-    /* Spinner sutil para que no parezca roto */
-    ph.innerHTML = '<div style="width:28px;height:28px;border:2px solid rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.4);border-radius:50%;animation:ph-spin .8s linear infinite"></div>'
-      + '<style>@keyframes ph-spin{to{transform:rotate(360deg)}}</style>';
-
-    /* Insertar antes del grid de productos en cuanto esté disponible */
-    var tries = 0;
-    function tryInsertPh() {
-      var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
-      if (ref && ref.parentNode) {
-        ref.parentNode.insertBefore(ph, ref);
-      } else if (tries++ < 20) {
-        setTimeout(tryInsertPh, 100);
-      }
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', tryInsertPh);
-    } else {
-      tryInsertPh();
-    }
-  })();
-
-  window.__CVA_CFG_P = window.__CVA_CFG_P ||
-    fetch(API + '/config/' + SHOP).then(function(r){ return r.json(); }).catch(function(){ return {}; });
-
-  /* ── CSS compartido de pills ── */
+  /* ── CSS ────────────────────────────────────────────────── */
   var CSS_PILLS = [
     '#ph-cat-filtros{background:#fafaf9;padding:28px 16px 24px;text-align:center;border-bottom:1px solid #efefed;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
     '#ph-cat-filtros h3{font-size:clamp(14px,2.5vw,18px);font-weight:700;color:#111;margin:0 0 18px;letter-spacing:-.2px}',
-    '#ph-cat-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}',
+    '#ph-cat-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:44px}',
     '.ph-cat-pill{display:inline-flex;flex-direction:column;align-items:center;gap:3px;padding:10px 20px;border-radius:999px;border:1.5px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);cursor:pointer;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.06);min-width:100px;font-family:inherit}',
     '.ph-cat-pill:hover{border-color:#111;background:#fff;transform:translateY(-1px)}',
     '.ph-cat-pill.active{background:#111;border-color:#111}',
@@ -73,7 +27,7 @@
     '@media(max-width:480px){.ph-cat-pill{min-width:80px;padding:9px 12px}.phl{font-size:13px}.phs{font-size:9px}}'
   ].join('');
 
-  var CSS_CORTINAS_HERO = [
+  var CSS_HERO = [
     '#ph-cortinas-hero{width:100%;overflow:hidden;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 50%,#2a2a2a 100%);display:flex;align-items:center;justify-content:center;padding:40px 24px;min-height:260px}',
     '#ph-cortinas-hero-inner{max-width:680px;width:100%;text-align:center}',
     '#ph-cortinas-hero-inner .hero-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:14px}',
@@ -95,6 +49,81 @@
     document.head.appendChild(el);
   }
 
+  /* ── HTML del hero (siempre igual para cortinas) ────────── */
+  var HERO_HTML =
+    '<div id="ph-cortinas-hero-inner">'
+    + '<span class="hero-tag">Cortinas Black Out</span>'
+    + '<h1>¿Cuál es la cortina perfecta para tu ventana?</h1>'
+    + '<div class="ph-cor-formula">'
+    +   '<div class="ph-cor-fbox"><span class="fl">Alto</span><span class="fv">Tu ventana</span></div>'
+    +   '<span class="ph-cor-fsep">×</span>'
+    +   '<div class="ph-cor-fbox"><span class="fl">Ancho</span><span class="fv">Cantidad de paños</span></div>'
+    +   '<span class="ph-cor-fsep">=</span>'
+    +   '<div class="ph-cor-fbox"><span class="fl">Tu cortina</span><span class="fv">Perfecta</span></div>'
+    + '</div>'
+    + '<p class="ph-cor-note">El <strong>alto</strong> define el tamaño · El <strong>ancho</strong> define cuántos paños. Cada paño mide 130cm de ancho.</p>'
+    + '<p class="ph-cor-tip">Podés medir con la cámara de tu cel 📱 · Si tenés <strong>iPhone</strong> usá la app <em>Medición</em> · Si tenés <strong>Android</strong> cualquier app de medición · o con un metro si tenés en casa</p>'
+    + '</div>';
+
+  /* ── FASE 1: Renderizado inmediato (anti-CLS) ───────────────
+     Se ejecuta ANTES del fetch del config.
+     Inyecta hero completo + contenedor de pills vacío con altura
+     reservada. Así el layout queda fijo desde el primer render.  */
+  (function renderInmediato() {
+    var path = window.location.pathname.replace(/\/$/, '');
+    var esCortinas = path.indexOf('black-out') > -1 && path.indexOf('combos-home') === -1;
+    if (!esCortinas) return;
+    if (document.getElementById('ph-cortinas-hero')) return; /* ya renderizado */
+
+    /* Inyectar CSS antes de crear los nodos */
+    injectCSS('ph-cor-hero-css', CSS_HERO);
+    injectCSS('ph-cat-css', CSS_PILLS);
+
+    /* Hero con contenido real */
+    var hero = document.createElement('div');
+    hero.id = 'ph-cortinas-hero';
+    hero.innerHTML = HERO_HTML;
+
+    /* Contenedor de pills: vacío pero con altura reservada */
+    var pillsWrap = document.createElement('div');
+    pillsWrap.id = 'ph-cat-filtros';
+    /* Esqueleto de pills para reservar espacio visualmente */
+    pillsWrap.innerHTML =
+      '<div id="ph-cat-pills" style="min-height:44px">'
+      + '<div style="display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:center;pointer-events:none">'
+      + ['Todas','110–150cm','210cm','220–240cm','250–260cm','270–300cm'].map(function(l){
+          return '<div style="padding:10px 20px;border-radius:999px;border:1.5px solid rgba(0,0,0,.08);background:rgba(0,0,0,.04);min-width:80px;height:42px;box-sizing:border-box"></div>';
+        }).join('')
+      + '</div></div>'
+      + '<div id="ph-cat-result"></div>';
+
+    /* Insertar antes del grid */
+    function doInsert() {
+      if (document.getElementById('ph-cortinas-hero')) return;
+      var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
+      if (!ref || !ref.parentNode) return false;
+      ref.parentNode.insertBefore(hero, ref);
+      ref.parentNode.insertBefore(pillsWrap, ref);
+      return true;
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function tryDOM() {
+        if (!doInsert()) {
+          var t = 0, iv = setInterval(function() {
+            if (doInsert() || (t += 100) > 3000) clearInterval(iv);
+          }, 100);
+        }
+      });
+    } else {
+      if (!doInsert()) {
+        var t = 0, iv = setInterval(function() {
+          if (doInsert() || (t += 100) > 3000) clearInterval(iv);
+        }, 100);
+      }
+    }
+  })();
+
   /* ── Helpers ── */
   function getCards() { return document.querySelectorAll('.js-item-product,.item-product'); }
   function getNombre(card) {
@@ -104,25 +133,23 @@
 
   /* ── Matching por tipo ── */
   function matchCortina(nombre, key) {
-    if (key === 'todos')   return true;
-    if (key === 'h150')    return /\b(110|120|130|140|150)(?:cm)?\s*[x×]/i.test(nombre);
-    if (key === 'h210')    return /\b210(?!\d)/i.test(nombre);
-    if (key === 'h240')    return /\b(220|230|240)(?!\d)/i.test(nombre);
-    if (key === 'h260')    return /\b(250|260)(?!\d)/i.test(nombre);
-    if (key === 'h300')    return /\b(270|280|290|300)(?!\d)/i.test(nombre) || /\b3\s*m\b/i.test(nombre);
-    if (key === 'h3m')     return /\b(270|280|290|300)(?!\d)/i.test(nombre) || /\b3\s*m\b/i.test(nombre);
-    /* clave custom tipo h230 → busca el número */
+    if (key === 'todos') return true;
+    if (key === 'h150')  return /\b(110|120|130|140|150)(?:cm)?\s*[x×]/i.test(nombre);
+    if (key === 'h210')  return /\b210(?!\d)/i.test(nombre);
+    if (key === 'h240')  return /\b(220|230|240)(?!\d)/i.test(nombre);
+    if (key === 'h260')  return /\b(250|260)(?!\d)/i.test(nombre);
+    if (key === 'h300')  return /\b(270|280|290|300)(?!\d)/i.test(nombre) || /\b3\s*m\b/i.test(nombre);
+    if (key === 'h3m')   return /\b(270|280|290|300)(?!\d)/i.test(nombre) || /\b3\s*m\b/i.test(nombre);
     var m = key.match(/h(\d+)/);
     if (m) return new RegExp('\\b' + m[1] + '(?!\\d)').test(nombre);
     return true;
   }
 
   function matchCuadro(nombre, key) {
-    if (key === 'todos')        return true;
-    if (key === 'x3')           return /set\s*x3|x3[\s,]/i.test(nombre) && !/x6/i.test(nombre);
-    if (key === 'x6')           return /set\s*x6|x6[\s,]/i.test(nombre);
+    if (key === 'todos')         return true;
+    if (key === 'x3')            return /set\s*x3|x3[\s,]/i.test(nombre) && !/x6/i.test(nombre);
+    if (key === 'x6')            return /set\s*x6|x6[\s,]/i.test(nombre);
     if (key === 'personalizado') return /personalizado/i.test(nombre);
-    /* clave custom → busca el texto de la clave en el nombre */
     return nombre.indexOf(key.toLowerCase()) > -1;
   }
 
@@ -147,79 +174,49 @@
     if (res) res.textContent = visibles + ' producto' + (visibles !== 1 ? 's' : '');
   }
 
-  /* ── Construir pills ── */
-  function buildPills(filtros, matchFn) {
-    injectCSS('ph-cat-css', CSS_PILLS);
+  /* ── FASE 2: Poblar pills cuando llega el config ───────────
+     No inserta nada nuevo en el DOM — solo actualiza #ph-cat-pills
+     que ya existe con el espacio reservado.                    */
+  function poblarPills(filtros, matchFn) {
+    var pillsEl = document.getElementById('ph-cat-pills');
+    if (!pillsEl) return;
 
-    var wrap = document.createElement('div');
-    wrap.id = 'ph-cat-filtros';
-
-    var pillsHtml = (filtros || []).map(function(f) {
-      return '<button class="ph-cat-pill' + (f.key === 'todos' ? ' active' : '') + (f.extraClass ? ' ' + f.extraClass : '') + '"'
+    var html = (filtros || []).map(function(f) {
+      return '<button class="ph-cat-pill'
+        + (f.key === 'todos' ? ' active' : '')
+        + (f.extraClass ? ' ' + f.extraClass : '') + '"'
         + ' data-key="' + f.key + '" data-url="' + (f.url || '') + '">'
         + '<span class="phl">' + (f.label || f.key) + '</span>'
         + '<span class="phs">' + (f.sub || '') + '</span>'
         + '</button>';
     }).join('');
 
-    wrap.innerHTML = '<div id="ph-cat-pills">' + pillsHtml + '</div><div id="ph-cat-result"></div>';
+    pillsEl.style.minHeight = '';
+    pillsEl.innerHTML = html;
 
-    wrap.addEventListener('click', function(e) {
-      var pill = e.target.closest('.ph-cat-pill');
-      if (!pill) return;
-      var key = pill.dataset.key;
-      var url = pill.dataset.url || '';
-      aplicarFiltro(key, matchFn, url || null);
-    });
+    /* Listener en el contenedor padre (ya existente) */
+    var wrap = document.getElementById('ph-cat-filtros');
+    if (wrap && !wrap._cvaListener) {
+      wrap._cvaListener = true;
+      wrap.addEventListener('click', function(e) {
+        var pill = e.target.closest('.ph-cat-pill');
+        if (!pill) return;
+        aplicarFiltro(pill.dataset.key, matchFn, pill.dataset.url || null);
+      });
+    }
 
-    return wrap;
+    aplicarFiltro('todos', matchFn, null);
   }
 
-  /* ── Hero cortinas ── */
-  function buildCortinasHero(titulo) {
-    injectCSS('ph-cor-hero-css', CSS_CORTINAS_HERO);
-    var hero = document.createElement('div');
-    hero.id = 'ph-cortinas-hero';
-    hero.innerHTML = '<div id="ph-cortinas-hero-inner">'
-      + '<span class="hero-tag">Cortinas Black Out</span>'
-      + '<h1>' + (titulo || '¿Cuál es la cortina perfecta para tu ventana?') + '</h1>'
-      + '<div class="ph-cor-formula">'
-      +   '<div class="ph-cor-fbox"><span class="fl">Alto</span><span class="fv">Tu ventana</span></div>'
-      +   '<span class="ph-cor-fsep">×</span>'
-      +   '<div class="ph-cor-fbox"><span class="fl">Ancho</span><span class="fv">Cantidad de paños</span></div>'
-      +   '<span class="ph-cor-fsep">=</span>'
-      +   '<div class="ph-cor-fbox"><span class="fl">Tu cortina</span><span class="fv">Perfecta</span></div>'
-      + '</div>'
-      + '<p class="ph-cor-note">El <strong>alto</strong> define el tamaño · El <strong>ancho</strong> define cuántos paños. Cada paño mide 130cm de ancho.</p>'
-      + '<p class="ph-cor-tip">Podés medir con la cámara de tu cel 📱 · Si tenés <strong>iPhone</strong> usá la app <em>Medición</em> · Si tenés <strong>Android</strong> cualquier app de medición · o con un metro si tenés en casa</p>'
-      + '</div>';
-    return hero;
-  }
-
-  /* ── Insertar en página ── */
+  /* ── Insertar para tipos NO-cortinas (cuadros, genérico) ── */
   function insertarEnPagina(catCfg) {
     if (document.getElementById('ph-cat-filtros')) return;
-    /* Eliminar placeholder anti-CLS */
-    var ph = document.getElementById('ph-cls-placeholder');
-    if (ph) ph.remove();
-
-    var tipo    = catCfg.tipo || 'generico';
+    var tipo   = catCfg.tipo || 'generico';
     var filtros = catCfg.filtros || [];
     var titulo  = catCfg.hero_titulo || '';
 
-    /* Si no hay filtros configurados en panel, usar defaults según tipo */
     if (!filtros.length) {
-      if (tipo === 'cortinas') {
-        filtros = [
-          {key:'todos', label:'Todas',      sub:'Ver todo'},
-          {key:'h150',  label:'150cm',      sub:'110 – 150cm'},
-          {key:'h210',  label:'210cm',      sub:'Altura media'},
-          {key:'h240',  label:'240cm',      sub:'220 · 230 · 240'},
-          {key:'h260',  label:'260cm',      sub:'250 · 260'},
-          {key:'h300',  label:'3m',         sub:'270 · 280 · 290 · 300'},
-          {key:'combos',label:'Combo Home', sub:'Black Out + Voile', url:'https://www.pintoshogar.com.ar/black-out/combos-home/', extraClass:'pill-combos'}
-        ];
-      } else if (tipo === 'cuadros') {
+      if (tipo === 'cuadros') {
         filtros = [
           {key:'todos',        label:'Todos',        sub:'Ver todo'},
           {key:'x3',           label:'Set x3',       sub:'40x35 · Envío gratis'},
@@ -229,47 +226,30 @@
         ];
       }
     }
-
     if (!filtros.length) return;
 
-    /* Para cortinas: agregar siempre el botón Combo Home al final si no está */
-    if (tipo === 'cortinas') {
-      var hasCombo = filtros.some(function(f) {
-        return f.extraClass === 'pill-combos' || (f.url && f.url.indexOf('combos') > -1);
-      });
-      if (!hasCombo) {
-        filtros = filtros.concat([{
-          key: 'combos',
-          label: 'Combo Home',
-          sub: 'Black Out + Voile',
-          url: 'https://www.pintoshogar.com.ar/black-out/combos-home/',
-          extraClass: 'pill-combos'
-        }]);
-      }
-    }
+    var matchFn = tipo === 'cuadros' ? matchCuadro : matchGenerico;
 
-    var matchFn = tipo === 'cortinas' ? matchCortina
-                : tipo === 'cuadros'  ? matchCuadro
-                : matchGenerico;
-
+    injectCSS('ph-cat-css', CSS_PILLS);
     var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
     if (!ref) return;
 
-    /* Hero solo para cortinas */
-    if (tipo === 'cortinas' && !document.getElementById('ph-cortinas-hero')) {
-      ref.parentNode.insertBefore(buildCortinasHero(titulo), ref);
-    }
-
-    /* Pills — para todos los tipos, con título si lo hay */
-    var pillsEl = buildPills(filtros, matchFn);
-    if (titulo && tipo !== 'cortinas') {
-      var h3 = document.createElement('h3');
-      h3.style.cssText = 'font-size:clamp(14px,2.5vw,18px);font-weight:700;color:#111;margin:0 0 18px;letter-spacing:-.2px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
-      h3.textContent = titulo;
-      pillsEl.insertBefore(h3, pillsEl.firstChild);
-    }
-    ref.parentNode.insertBefore(pillsEl, ref);
-
+    var wrap = document.createElement('div');
+    wrap.id = 'ph-cat-filtros';
+    var pillsHtml = filtros.map(function(f) {
+      return '<button class="ph-cat-pill' + (f.key==='todos'?' active':'') + (f.extraClass?' '+f.extraClass:'') + '"'
+        + ' data-key="' + f.key + '" data-url="' + (f.url||'') + '">'
+        + '<span class="phl">' + (f.label||f.key) + '</span>'
+        + '<span class="phs">' + (f.sub||'') + '</span></button>';
+    }).join('');
+    if (titulo) wrap.innerHTML = '<h3 style="font-size:clamp(14px,2.5vw,18px);font-weight:700;color:#111;margin:0 0 18px">' + titulo + '</h3>';
+    wrap.innerHTML += '<div id="ph-cat-pills">' + pillsHtml + '</div><div id="ph-cat-result"></div>';
+    wrap.addEventListener('click', function(e) {
+      var pill = e.target.closest('.ph-cat-pill');
+      if (!pill) return;
+      aplicarFiltro(pill.dataset.key, matchFn, pill.dataset.url || null);
+    });
+    ref.parentNode.insertBefore(wrap, ref);
     aplicarFiltro('todos', matchFn, null);
 
     new MutationObserver(function() {
@@ -279,48 +259,87 @@
     }).observe(ref, { childList: true, subtree: true });
   }
 
-  /* ── Init ── */
+  /* ── Init: fetch config y poblar/insertar ── */
+  window.__CVA_CFG_P = window.__CVA_CFG_P ||
+    fetch(API + '/config/' + SHOP).then(function(r){ return r.json(); }).catch(function(){ return {}; });
+
   function init() {
     window.__CVA_CFG_P.then(function(cfg) {
-      var f    = (cfg && cfg.features) || {};
+      var f = (cfg && cfg.features) || {};
       if (f.filtros === false && f.hero_categorias === false) return;
 
-      var cats = (cfg && cfg.categorias) || {};
-      var path = window.location.pathname;
-
-      /* Buscar si la URL actual corresponde a alguna categoría configurada.
-         Estrategia: contains matching (indexOf), pero la clave más larga
-         (más específica) gana primero. Así:
-         - /home1/cuadros-pintos-home  →  matchea /cuadros-pintos-home  ✅
-         - /black-out/combos-home/     →  matchea /black-out/combos-home (skip) ✅
-         - /black-out/black-out-a-medida/ → matchea /black-out            ✅  */
-      var matchedCfg = null;
+      var cats    = (cfg && cfg.categorias) || {};
+      var path    = window.location.pathname;
       var pathNorm = path.replace(/\/$/, '');
-      var sortedKeys = Object.keys(cats).sort(function(a, b) { return b.length - a.length; });
-      sortedKeys.forEach(function(catPath) {
-        if (matchedCfg) return;
-        var keyNorm = catPath.replace(/\/$/, '');
-        if (pathNorm.indexOf(keyNorm) > -1) matchedCfg = cats[catPath];
+
+      /* Matching: clave más larga primero */
+      var matchedCfg = null;
+      Object.keys(cats).sort(function(a,b){return b.length-a.length;}).forEach(function(k) {
+        if (!matchedCfg && pathNorm.indexOf(k.replace(/\/$/,'')) > -1) matchedCfg = cats[k];
       });
-      /* Si la config tiene tipo:'skip', no mostrar nada en esta URL */
-      if (matchedCfg && matchedCfg.tipo === 'skip') return;
+      if (!matchedCfg || matchedCfg.tipo === 'skip') return;
 
-      if (!matchedCfg) return;
+      var tipo   = matchedCfg.tipo || 'generico';
+      var filtros = matchedCfg.filtros || [];
 
-      /* Esperar a que cargue el grid de productos */
-      var elapsed = 0;
-      var iv = setInterval(function() {
-        elapsed += 100;
-        var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
-        if (ref) { clearInterval(iv); insertarEnPagina(matchedCfg); }
-        if (elapsed >= 8000) clearInterval(iv);
-      }, 100);
+      /* Defaults para cortinas */
+      if (!filtros.length && tipo === 'cortinas') {
+        filtros = [
+          {key:'todos', label:'Todas',      sub:'Ver todo'},
+          {key:'h150',  label:'150cm',      sub:'110 – 150cm'},
+          {key:'h210',  label:'210cm',      sub:'Altura media'},
+          {key:'h240',  label:'240cm',      sub:'220 · 230 · 240'},
+          {key:'h260',  label:'260cm',      sub:'250 · 260'},
+          {key:'h300',  label:'3m',         sub:'270 · 280 · 290 · 300'},
+          {key:'combos',label:'Combo Home', sub:'Black Out + Voile', url:'https://www.pintoshogar.com.ar/black-out/combos-home/', extraClass:'pill-combos'}
+        ];
+      }
+
+      /* Auto-agregar Combo Home para cortinas */
+      if (tipo === 'cortinas') {
+        var hasCombo = filtros.some(function(f2) {
+          return f2.extraClass === 'pill-combos' || (f2.url && f2.url.indexOf('combos') > -1);
+        });
+        if (!hasCombo) filtros = filtros.concat([{key:'combos',label:'Combo Home',sub:'Black Out + Voile',url:'https://www.pintoshogar.com.ar/black-out/combos-home/',extraClass:'pill-combos'}]);
+      }
+
+      if (!filtros.length) return;
+
+      var matchFn = tipo === 'cortinas' ? matchCortina
+                  : tipo === 'cuadros'  ? matchCuadro
+                  : matchGenerico;
+
+      if (tipo === 'cortinas') {
+        /* Hero ya renderizado en Fase 1 — solo poblar pills */
+        var waitRef = 0;
+        var iv = setInterval(function() {
+          var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
+          if (ref) {
+            clearInterval(iv);
+            poblarPills(filtros, matchFn);
+            new MutationObserver(function() {
+              var active = document.querySelector('.ph-cat-pill.active');
+              var key = active ? active.dataset.key : 'todos';
+              if (key !== 'todos') aplicarFiltro(key, matchFn, null);
+            }).observe(ref, { childList: true, subtree: true });
+          }
+          if ((waitRef += 100) > 8000) clearInterval(iv);
+        }, 100);
+      } else {
+        /* Cuadros y genérico: insertar normalmente */
+        var waitRef2 = 0;
+        var iv2 = setInterval(function() {
+          var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
+          if (ref) { clearInterval(iv2); insertarEnPagina(matchedCfg); }
+          if ((waitRef2 += 100) > 8000) clearInterval(iv2);
+        }, 100);
+      }
     });
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    setTimeout(init, 400);
+    setTimeout(init, 0);
   }
 })();
