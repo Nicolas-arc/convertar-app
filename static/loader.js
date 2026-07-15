@@ -23,7 +23,7 @@
       { key: 'cuotas',          file: 'badge-cuotas.js'     },
       { key: 'whatsapp',        file: 'badge-whatsapp.js'   },
       { key: 'social_proof',    file: 'social-proof.js'     },
-      { key: 'floating_buttons',file: 'floating-buttons.js' },
+      { key: 'floating_buttons',file: 'floating-buttons.js?v=3' },
       { key: 'llevas_mas',      file: 'llevas-mas.js'       },
       { key: 'filtros',         file: 'filtros-blackout.js' },
       { key: 'tags',            file: 'badge-tags.js?v=2'   },

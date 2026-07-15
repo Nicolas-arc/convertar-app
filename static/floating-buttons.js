@@ -1,23 +1,26 @@
-/* ConvertAR - Floating Buttons v2 (WA + Promos popup) */
+/* ConvertAR - Floating Buttons v3 (botón único WA + Promos) */
 (function(){
   var SHOP_ID='pintoshogar';
   var API='https://convertar-app-production.up.railway.app';
-  var WA='5492235551148';
-  var WA_MSG='Hola! Quiero hacer una consulta sobre sus productos.';
+
+  var WA_BUTTONS=[
+    {name:'Consultar',number:'5492235551148',message:'Hola! Quiero hacer una consulta sobre sus productos.'}
+  ];
+
   var DEFAULT_PROMOS=[
-    {icon:'\uD83D\uDCB3',titulo:'6 cuotas sin inter\u00e9s',detalle:'Con todas las tarjetas'},
-    {icon:'\uD83C\uDFE6',titulo:'10% OFF con transferencia',detalle:'Mejor precio al momento de pagar'},
-    {icon:'\uD83D\uDE9A',titulo:'Env\u00edo gratis',detalle:'En compras desde $69.999'},
-    {icon:'\uD83C\uDF81',titulo:'Arm\u00e1 tu combo',detalle:'Black Out + Voile + Cuadros con descuento especial'}
+    {icon:'💳',titulo:'6 cuotas sin interés',detalle:'Con todas las tarjetas'},
+    {icon:'🏦',titulo:'10% OFF con transferencia',detalle:'Mejor precio al momento de pagar'},
+    {icon:'🚚',titulo:'Envío gratis',detalle:'En compras desde $69.999'},
+    {icon:'🎁',titulo:'Armá tu combo',detalle:'Black Out + Voile + Cuadros con descuento especial'}
   ];
   var _promos=null;
 
+  var WA_SVG='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+
   var CSS=[
     '#ph-fb-wrap{position:fixed;bottom:20px;right:20px;z-index:99998;display:flex;flex-direction:column;align-items:flex-end;gap:10px}',
-    '#ph-fb-promo{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:#111;color:#fff;border:none;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:transform .2s,box-shadow .2s;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;white-space:nowrap}',
-    '#ph-fb-promo:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.35)}',
-    '#ph-fb-wa{width:56px;height:56px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,.4);transition:transform .2s,box-shadow .2s;text-decoration:none}',
-    '#ph-fb-wa:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(37,211,102,.55)}',
+    '#ph-fb-main{display:inline-flex;align-items:center;gap:9px;padding:12px 22px;background:#25d366;color:#fff;border:none;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(37,211,102,.45);transition:transform .2s,box-shadow .2s;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;white-space:nowrap;line-height:1}',
+    '#ph-fb-main:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(37,211,102,.6)}',
     '#ph-fb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999999;display:flex;align-items:flex-end;justify-content:center;padding-bottom:0}',
     '@media(min-width:480px){#ph-fb-overlay{align-items:center}}',
     '#ph-fb-modal{background:#fff;width:100%;max-width:400px;border-radius:20px 20px 0 0;overflow:hidden;animation:ph-fb-up .3s cubic-bezier(.2,.8,.3,1)}',
@@ -33,9 +36,10 @@
     '.ph-fb-ptext{flex:1;min-width:0}',
     '.ph-fb-ptit{font-size:14px;font-weight:700;color:#111;line-height:1.3}',
     '.ph-fb-pdet{font-size:12px;color:#888;margin-top:2px}',
-    '.ph-fb-mfooter{padding:0 20px 20px}',
-    '.ph-fb-wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#25d366;color:#fff;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;transition:background .2s}',
-    '.ph-fb-wa-btn:hover{background:#1da851}'
+    '.ph-fb-mfooter{padding:0 20px 20px;display:flex;flex-direction:column;gap:10px}',
+    '.ph-fb-wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;transition:background .2s;color:#fff}',
+    '.ph-fb-wa-btn.ventas{background:#25d366}.ph-fb-wa-btn.ventas:hover{background:#1da851}',
+    '.ph-fb-wa-btn.postventa{background:#128C7E}.ph-fb-wa-btn.postventa:hover{background:#075E54}'
   ].join('');
 
   if(!document.getElementById('ph-fb-css')){
@@ -43,14 +47,11 @@
   }
 
   var wrap=document.createElement('div');wrap.id='ph-fb-wrap';
-  var promoBtn=document.createElement('button');promoBtn.id='ph-fb-promo';
-  promoBtn.textContent='\uD83D\uDD25 Ver promos hoy';
-  promoBtn.onclick=openModal;
-  var waBtn=document.createElement('a');waBtn.id='ph-fb-wa';
-  waBtn.href='https://wa.me/'+WA+'?text='+encodeURIComponent(WA_MSG);
-  waBtn.target='_blank';waBtn.rel='noopener';
-  waBtn.innerHTML='<svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
-  wrap.appendChild(promoBtn);wrap.appendChild(waBtn);
+
+  var mainBtn=document.createElement('button');mainBtn.id='ph-fb-main';
+  mainBtn.innerHTML=WA_SVG+'<span>Promos Hoy</span>';
+  mainBtn.onclick=openModal;
+  wrap.appendChild(mainBtn);
 
   function init(){if(!document.getElementById('ph-fb-wrap'))document.body.appendChild(wrap);}
 
@@ -58,42 +59,55 @@
   function openModal(){
     if(overlay)return;
     if(_promos){renderModal(_promos);return;}
-    promoBtn.disabled=true;
+    mainBtn.disabled=true;
     fetch(API+'/api/promos/'+SHOP_ID)
       .then(function(r){return r.ok?r.json():null;})
       .then(function(d){_promos=Array.isArray(d)&&d.length?d:DEFAULT_PROMOS;renderModal(_promos);})
       .catch(function(){_promos=DEFAULT_PROMOS;renderModal(_promos);})
-      .finally(function(){promoBtn.disabled=false;});
+      .finally(function(){mainBtn.disabled=false;});
   }
 
   function closeModal(){if(overlay){overlay.remove();overlay=null;}}
+
+  function waUrl(btn){return'https://wa.me/'+btn.number+'?text='+encodeURIComponent(btn.message||'Hola!');}
 
   function renderModal(promos){
     overlay=document.createElement('div');overlay.id='ph-fb-overlay';
     overlay.addEventListener('click',function(e){if(e.target===overlay)closeModal();});
     var modal=document.createElement('div');modal.id='ph-fb-modal';
+
+    /* Header */
     var head=document.createElement('div');head.className='ph-fb-mhead';
     var htit=document.createElement('div');htit.className='ph-fb-mhead-title';
-    htit.textContent='Promociones de hoy \uD83C\uDF89';
+    htit.textContent='Promociones de hoy 🎉';
     var hclose=document.createElement('button');hclose.className='ph-fb-mclose';
-    hclose.textContent='\u00d7';hclose.onclick=closeModal;
+    hclose.textContent='×';hclose.onclick=closeModal;
     head.appendChild(htit);head.appendChild(hclose);
+
+    /* Promos */
     var body=document.createElement('div');body.className='ph-fb-mbody';
     promos.forEach(function(p){
       var row=document.createElement('div');row.className='ph-fb-prow';
-      var ico=document.createElement('div');ico.className='ph-fb-picon';ico.textContent=p.icon||'\u2728';
+      var ico=document.createElement('div');ico.className='ph-fb-picon';ico.textContent=p.icon||'✨';
       var txt=document.createElement('div');txt.className='ph-fb-ptext';
       var tit=document.createElement('div');tit.className='ph-fb-ptit';tit.textContent=p.titulo||'';
       var det=document.createElement('div');det.className='ph-fb-pdet';det.textContent=p.detalle||'';
       txt.appendChild(tit);txt.appendChild(det);
       row.appendChild(ico);row.appendChild(txt);body.appendChild(row);
     });
+
+    /* Footer — botones WA */
     var footer=document.createElement('div');footer.className='ph-fb-mfooter';
-    var waLink=document.createElement('a');waLink.className='ph-fb-wa-btn';
-    waLink.href='https://wa.me/'+WA+'?text='+encodeURIComponent(WA_MSG);
-    waLink.target='_blank';waLink.rel='noopener';
-    waLink.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Consultar por WhatsApp';
-    footer.appendChild(waLink);
+    var btns=WA_BUTTONS.filter(function(b){return b.number;});
+    var COLORS=['ventas','postventa'];
+    btns.forEach(function(b,i){
+      var a=document.createElement('a');
+      a.className='ph-fb-wa-btn '+(COLORS[i]||'ventas');
+      a.href=waUrl(b);a.target='_blank';a.rel='noopener';
+      a.innerHTML=WA_SVG+(b.name||'Consultar por WhatsApp');
+      footer.appendChild(a);
+    });
+
     modal.appendChild(head);modal.appendChild(body);modal.appendChild(footer);
     overlay.appendChild(modal);document.body.appendChild(overlay);
   }
@@ -103,10 +117,13 @@
       fetch(API+'/config/'+SHOP_ID).then(function(r){return r.json();}).catch(function(){return{};});
     window.__CVA_CFG_P.then(function(cfg){
       var wa=(cfg&&cfg.whatsapp)||{};
-      if(wa.number){WA=wa.number;}
-      if(wa.message_float){WA_MSG=wa.message_float;}
-      /* actualizar href del bot\u00F3n flotante con el n\u00FAmero del config */
-      waBtn.href='https://wa.me/'+WA+'?text='+encodeURIComponent(WA_MSG);
+      /* wa_buttons: nuevo formato con múltiples botones */
+      if(wa.wa_buttons&&wa.wa_buttons.length){
+        WA_BUTTONS=wa.wa_buttons.filter(function(b){return b.number;});
+      } else if(wa.number) {
+        /* retrocompatibilidad: config viejo con un solo número */
+        WA_BUTTONS=[{name:'Consultar por WhatsApp',number:wa.number,message:wa.message_float||'Hola! Quiero hacer una consulta sobre sus productos.'}];
+      }
       init();
     });
   }
