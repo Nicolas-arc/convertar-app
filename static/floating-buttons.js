@@ -53,7 +53,30 @@
   mainBtn.onclick=openModal;
   wrap.appendChild(mainBtn);
 
-  function init(){if(!document.getElementById('ph-fb-wrap'))document.body.appendChild(wrap);}
+  function ajustarPosicion(){
+    /* En páginas de producto TN tiene una barra sticky "Agregar al carrito".
+       La detectamos y subimos el botón para que no se tape. */
+    var stickySelectors=[
+      '.buy-button-sticky','.js-buy-form-sticky','.sticky-cta',
+      '.product-buy-form--sticky','.buy-button-section--sticky',
+      '[class*="sticky"][class*="buy"]','[class*="sticky"][class*="cart"]'
+    ];
+    var barHeight=0;
+    for(var i=0;i<stickySelectors.length;i++){
+      var el=document.querySelector(stickySelectors[i]);
+      if(el){var h=el.getBoundingClientRect().height;if(h>20){barHeight=h;break;}}
+    }
+    /* Fallback: si estamos en producto y no encontramos el elemento, asumimos ~65px */
+    if(!barHeight&&window.LS&&window.LS.product){barHeight=65;}
+    wrap.style.bottom=(barHeight?barHeight+12:20)+'px';
+  }
+
+  function init(){
+    if(!document.getElementById('ph-fb-wrap'))document.body.appendChild(wrap);
+    ajustarPosicion();
+    /* Re-ajustar si la barra aparece después (TN la inyecta con delay) */
+    setTimeout(ajustarPosicion,1500);
+  }
 
   var overlay=null;
   function openModal(){
