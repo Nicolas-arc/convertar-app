@@ -57,6 +57,14 @@
 
   var _badgeListado = true; /* sobreescrito por config */
 
+  function crearTextoListado(cant, precio) {
+    var el = document.createElement('div');
+    el.setAttribute('data-pintos-badge', 'cuotas');
+    s(el, {'font-size':'12px','color':'#444','margin':'3px 0 0','line-height':'1.3','clear':'both'});
+    el.textContent = cant + ' x ' + ars(precio / cant) + ' sin interés';
+    return el;
+  }
+
   function inyectarEnListado() {
     if (!_badgeListado) return;
     document.querySelectorAll('.js-item-product, .item-product').forEach(function(card) {
@@ -64,10 +72,9 @@
       var pEl = card.querySelector('.js-price-display') || card.querySelector('.item-price') || card.querySelector('.js-price');
       if (!pEl) return;
       var precio = parsePrecio(pEl.textContent); if (precio <= 0) return;
-      var badge = crearBadgeCuotas(CUOTAS_N, precio, true);
+      var txt = crearTextoListado(CUOTAS_N, precio);
       card.dataset.pintoscuotas = '1';
-      /* Cuotas va ABAJO del precio de lista → afterend del contenedor */
-      pEl.parentNode.insertAdjacentElement('afterend', badge);
+      pEl.parentNode.insertAdjacentElement('afterend', txt);
       card.querySelectorAll('.js-max-installments-container,.js-max-installments,.item-installments,.product-installments').forEach(function(el){ el.style.setProperty('display','none','important'); });
     });
   }

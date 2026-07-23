@@ -20,7 +20,7 @@
        Esto garantiza compatibilidad: tiendas nuevas cargan todo por defecto. */
     var SCRIPTS = [
       { key: 'mejor_precio',    file: 'badge-transfer.js?v=2' },
-      { key: 'cuotas',          file: 'badge-cuotas.js?v=2'  },
+      { key: 'cuotas',          file: 'badge-cuotas.js?v=3'  },
       { key: 'whatsapp',        file: 'badge-whatsapp.js'   },
       { key: 'social_proof',    file: 'social-proof.js'     },
       { key: 'floating_buttons',file: 'floating-buttons.js?v=4' },
