@@ -1222,17 +1222,17 @@ function togglePreview() {
 
 // ── Features ─────────────────────────────────────
 var featureDefs = [
-  { key: 'precio_tachado',    label: 'Precio tachado + % OFF',      icon: '💰', desc: 'Muestra el precio de lista tachado con la pastilla de descuento.' },
-  { key: 'mejor_precio_badge',label: 'Mejor Precio (Transferencia)', icon: '🏷', desc: 'Chip y tarjetas con precio con descuento por transferencia/efectivo.' },
-  { key: 'cuotas',            label: 'Cuotas sin interés',           icon: '📦', desc: 'Muestra cuotas en producto y en el listado de categoría.' },
-  { key: 'envio_badge',       label: 'Badge de envío',               icon: '🚚', desc: 'Card glassmorphism con info de envío debajo del botón de compra.' },
-  { key: 'tags',              label: 'Tags por producto',            icon: '🏷', desc: '"Más vendido", "Hot Days", "Nuevo" — configurables por SKU.' },
-  { key: 'countdown',         label: 'Countdown de oferta',         icon: '⏱', desc: 'Temporizador de urgencia en la página de producto.' },
-  { key: 'faq',               label: 'FAQ de objeciones',           icon: '❓', desc: 'Acordeón de preguntas frecuentes debajo de la descripción.' },
-  { key: 'hero_categorias',   label: 'Hero de Categorías',          icon: '🏪', desc: 'Banner hero con filtros en páginas de cuadros, cortinas y más.' },
-  { key: 'sticky_bar',        label: 'Sticky bar mobile',           icon: '📱', desc: 'Barra fija inferior en celular con precio y botón Comprar.' },
-  { key: 'reviews',           label: 'Reseñas verificadas',         icon: '⭐', desc: 'Bloque de reviews de compradores reales.' },
-  { key: 'crosssell',         label: 'Cross-Sell popup',            icon: '🛒', desc: 'Popup de productos complementarios al agregar al carrito.' }
+  /* ── Página de producto ── */
+  { key: 'mejor_precio_badge', label: 'Mejor Precio (Transferencia)', icon: '💳', desc: 'Badge rojo con precio con 10% off por transferencia/efectivo. También muestra precio tachado en listados.' },
+  { key: 'cuotas',             label: 'Cuotas sin interés',           icon: '📦', desc: 'Muestra cuotas en producto y en el listado de categoría.' },
+  { key: 'llevas_mas',         label: 'Llevá más & Ahorrá',          icon: '🎁', desc: 'Selector de cantidad con descuento por volumen en página de producto.' },
+  { key: 'whatsapp',           label: 'Botón WhatsApp en producto',  icon: '💬', desc: 'Botón verde de consulta con mensaje pre-cargado en cada producto.' },
+  { key: 'tags',               label: 'Tags por producto',           icon: '🏷', desc: '"Más vendido", "Hot Days", "Nuevo" — configurables por SKU.' },
+  /* ── Sitewide ── */
+  { key: 'floating_buttons',   label: 'Botón flotante Promos Hoy',   icon: '📲', desc: 'Botón WA flotante que muestra el popup de promociones del día.' },
+  { key: 'social_proof',       label: 'Popup compras recientes',     icon: '🔔', desc: 'Notificación popup con últimas órdenes reales de la tienda.' },
+  { key: 'hero_categorias',    label: 'Hero de Categorías',          icon: '🏪', desc: 'Banner hero con filtros en páginas de cuadros, cortinas y combos.' },
+  { key: 'crosssell',          label: 'Cross-Sell popup',            icon: '🛒', desc: 'Popup de productos complementarios al agregar al carrito.' }
 ];
 
 function renderFeatures() {
@@ -1794,9 +1794,9 @@ function deleteLanding(slug) {
 // ── Load config ──────────────────────────────────
 var defaultConfig = {
   features: {
-    precio_tachado: true, mejor_precio_badge: true, cuotas: true,
-    envio_badge: true, tags: false, countdown: false, faq: true,
-    hero_categorias: true, sticky_bar: false, reviews: false
+    mejor_precio_badge: true, cuotas: true, llevas_mas: true,
+    whatsapp: true, tags: false, floating_buttons: true,
+    social_proof: true, hero_categorias: true, crosssell: false
   },
   envio: { tipo: 'calcular', texto: 'Medio de envío: presioná y poné tu código postal para saber cuándo llega.' },
   mejor_precio: { descuento_pct: 10, chip_line1: 'Mejor Precio', chip_line2: 'Transferencia' },

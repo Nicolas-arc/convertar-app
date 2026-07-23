@@ -19,15 +19,15 @@
        Si la feature no est\u00E1 expl\u00EDcitamente en false, se carga.
        Esto garantiza compatibilidad: tiendas nuevas cargan todo por defecto. */
     var SCRIPTS = [
-      { key: 'mejor_precio',    file: 'badge-transfer.js?v=2' },
-      { key: 'cuotas',          file: 'badge-cuotas.js?v=3'  },
-      { key: 'whatsapp',        file: 'badge-whatsapp.js'   },
-      { key: 'social_proof',    file: 'social-proof.js'     },
-      { key: 'floating_buttons',file: 'floating-buttons.js?v=4' },
-      { key: 'llevas_mas',      file: 'llevas-mas.js'       },
-      { key: 'filtros',         file: 'filtros-blackout.js' },
-      { key: 'tags',            file: 'badge-tags.js?v=2'   },
-      { key: 'crosssell',       file: 'cross-sell.js?v=2'   }
+      { key: 'mejor_precio_badge', file: 'badge-transfer.js?v=2'   },
+      { key: 'cuotas',             file: 'badge-cuotas.js?v=3'     },
+      { key: 'whatsapp',           file: 'badge-whatsapp.js'       },
+      { key: 'social_proof',       file: 'social-proof.js'         },
+      { key: 'floating_buttons',   file: 'floating-buttons.js?v=4' },
+      { key: 'llevas_mas',         file: 'llevas-mas.js'           },
+      { key: 'hero_categorias',    file: 'filtros-blackout.js'     },
+      { key: 'tags',               file: 'badge-tags.js?v=2'       },
+      { key: 'crosssell',          file: 'cross-sell.js?v=2'       }
     ];
 
     SCRIPTS.forEach(function(s){
