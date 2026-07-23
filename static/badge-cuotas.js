@@ -55,7 +55,10 @@
     if (nativo) nativo.style.setProperty('display', 'none', 'important');
   }
 
+  var _badgeListado = true; /* sobreescrito por config */
+
   function inyectarEnListado() {
+    if (!_badgeListado) return;
     document.querySelectorAll('.js-item-product, .item-product').forEach(function(card) {
       if (card.dataset.pintoscuotas) return;
       var pEl = card.querySelector('.js-price-display') || card.querySelector('.item-price') || card.querySelector('.js-price');
@@ -63,9 +66,8 @@
       var precio = parsePrecio(pEl.textContent); if (precio <= 0) return;
       var badge = crearBadgeCuotas(CUOTAS_N, precio, true);
       card.dataset.pintoscuotas = '1';
-      var xfer = card.querySelector('[data-pintos-badge="transfer"]');
-      var ancla = xfer || pEl.parentNode;
-      ancla.insertAdjacentElement('afterend', badge);
+      /* Cuotas va ABAJO del precio de lista → afterend del contenedor */
+      pEl.parentNode.insertAdjacentElement('afterend', badge);
       card.querySelectorAll('.js-max-installments-container,.js-max-installments,.item-installments,.product-installments').forEach(function(el){ el.style.setProperty('display','none','important'); });
     });
   }
@@ -93,5 +95,17 @@
       }, 100);
     }
   }
-  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { setTimeout(init, 400); }
+  var API  = 'https://convertar-app-production.up.railway.app';
+  var SHOP = 'pintoshogar';
+  function start() {
+    window.__CVA_CFG_P = window.__CVA_CFG_P ||
+      fetch(API + '/config/' + SHOP).then(function(r){ return r.json(); }).catch(function(){ return {}; });
+    window.__CVA_CFG_P.then(function(cfg) {
+      var c = (cfg && cfg.cuotas) || {};
+      if (c.cantidad) CUOTAS_N = c.cantidad;
+      _badgeListado = c.badge_listado !== false; /* true por defecto */
+      init();
+    });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', start); } else { setTimeout(start, 0); }
 })();

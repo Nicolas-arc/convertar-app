@@ -426,8 +426,14 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
             Sin interés
           </label>
         </div>
+        <div class="form-group" style="margin-top:6px;">
+          <label class="form-label" style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:13px;font-weight:500;color:var(--text);">
+            <label class="toggle"><input type="checkbox" id="cuotas-badge-listado" onchange="markDirty()"><span class="toggle-slider"></span></label>
+            Mostrar badge de cuotas en home y categorías
+          </label>
+        </div>
         <div style="background:rgba(212,168,90,.06);border:1px solid rgba(212,168,90,.2);border-radius:8px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6;">
-          💡 Requiere que actives <strong style="color:var(--text);">📦 Cuotas</strong> en Features.
+          💡 Requiere que actives <strong style="color:var(--text);">📦 Cuotas</strong> en Features. El monto se calcula automáticamente: precio ÷ cuotas.
         </div>
       </div>
     </div>
@@ -570,12 +576,12 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
       <div class="page-title">💬 WhatsApp</div>
       <div class="page-sub">Configurá los botones que aparecen en el popup "Promos Hoy" y en la página de producto.</div>
 
-      <!-- Botón 1 -->
+      <!-- Botón WA del popup -->
       <div class="config-card" style="border-color:rgba(37,211,102,.3);">
-        <div class="config-card-title" style="margin-bottom:14px;">🟢 Botón 1 (Ventas)</div>
+        <div class="config-card-title" style="margin-bottom:14px;">🟢 Botón del popup "Promos Hoy"</div>
         <div class="form-group">
           <label class="form-label">Nombre del botón</label>
-          <input type="text" class="form-input" id="wa1-name" placeholder="Ventas" oninput="markDirty()">
+          <input type="text" class="form-input" id="wa1-name" placeholder="Consultar por WhatsApp" oninput="markDirty()">
         </div>
         <div class="form-group">
           <label class="form-label">Número (con código de país, sin +)</label>
@@ -585,23 +591,6 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
         <div class="form-group">
           <label class="form-label">Mensaje</label>
           <input type="text" class="form-input" id="wa1-message" placeholder="Hola! Quiero consultar sobre un producto." oninput="markDirty()">
-        </div>
-      </div>
-
-      <!-- Botón 2 -->
-      <div class="config-card" style="border-color:rgba(18,140,126,.3);">
-        <div class="config-card-title" style="margin-bottom:14px;">🟩 Botón 2 (Post-venta)</div>
-        <div class="form-group">
-          <label class="form-label">Nombre del botón</label>
-          <input type="text" class="form-input" id="wa2-name" placeholder="Post-venta" oninput="markDirty()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Número (con código de país, sin +)</label>
-          <input type="text" class="form-input" id="wa2-number" placeholder="5492235551148" oninput="markDirty()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mensaje</label>
-          <input type="text" class="form-input" id="wa2-message" placeholder="Hola! Quiero consultar sobre mi pedido." oninput="markDirty()">
         </div>
       </div>
 
@@ -1293,8 +1282,9 @@ function renderMejorPrecio() {
 // ── Cuotas ────────────────────────────────────────
 function renderCuotas() {
   var c = config.cuotas || {};
-  document.getElementById('cuotas-cantidad').value    = c.cantidad    || 6;
-  document.getElementById('cuotas-sin-interes').checked = c.sin_interes !== false;
+  document.getElementById('cuotas-cantidad').value          = c.cantidad     || 6;
+  document.getElementById('cuotas-sin-interes').checked     = c.sin_interes  !== false;
+  document.getElementById('cuotas-badge-listado').checked   = c.badge_listado !== false;
 }
 
 // ── Countdown ────────────────────────────────────
@@ -1692,8 +1682,9 @@ function saveConfig() {
   };
 
   config.cuotas = {
-    cantidad:    parseInt(document.getElementById('cuotas-cantidad').value) || 6,
-    sin_interes: document.getElementById('cuotas-sin-interes').checked
+    cantidad:      parseInt(document.getElementById('cuotas-cantidad').value) || 6,
+    sin_interes:   document.getElementById('cuotas-sin-interes').checked,
+    badge_listado: document.getElementById('cuotas-badge-listado').checked
   };
 
   config.countdown = {
@@ -1704,18 +1695,13 @@ function saveConfig() {
 
   var _waNum = document.getElementById('wa-number').value.trim() || '5492235551148';
   config.whatsapp = {
-    number:        _waNum,
-    btn_text:      document.getElementById('wa-btn-text').value.trim() || 'Tenés una consulta? Escribínos',
+    number:   _waNum,
+    btn_text: document.getElementById('wa-btn-text').value.trim() || 'Tenés una consulta? Escribínos',
     wa_buttons: [
       {
-        name:    document.getElementById('wa1-name').value.trim()    || 'Ventas',
+        name:    document.getElementById('wa1-name').value.trim()    || 'Consultar por WhatsApp',
         number:  document.getElementById('wa1-number').value.trim()  || _waNum,
         message: document.getElementById('wa1-message').value.trim() || 'Hola! Quiero consultar sobre un producto.'
-      },
-      {
-        name:    document.getElementById('wa2-name').value.trim()    || 'Post-venta',
-        number:  document.getElementById('wa2-number').value.trim()  || _waNum,
-        message: document.getElementById('wa2-message').value.trim() || 'Hola! Quiero consultar sobre mi pedido.'
       }
     ]
   };
@@ -1875,14 +1861,10 @@ function renderWhatsApp() {
   var wa = config.whatsapp || {};
   var btns = wa.wa_buttons || [];
   var b1 = btns[0] || {};
-  var b2 = btns[1] || {};
-  /* botones del popup */
-  document.getElementById('wa1-name').value    = b1.name    || 'Ventas';
+  /* botón del popup */
+  document.getElementById('wa1-name').value    = b1.name    || 'Consultar por WhatsApp';
   document.getElementById('wa1-number').value  = b1.number  || wa.number || '5492235551148';
   document.getElementById('wa1-message').value = b1.message || wa.message_float || 'Hola! Quiero consultar sobre un producto.';
-  document.getElementById('wa2-name').value    = b2.name    || 'Post-venta';
-  document.getElementById('wa2-number').value  = b2.number  || wa.number || '5492235551148';
-  document.getElementById('wa2-message').value = b2.message || 'Hola! Quiero consultar sobre mi pedido.';
   /* botón en producto */
   document.getElementById('wa-number').value   = wa.number  || '5492235551148';
   document.getElementById('wa-btn-text').value  = wa.btn_text || 'Tenés una consulta? Escribínos';

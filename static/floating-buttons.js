@@ -119,17 +119,16 @@
       row.appendChild(ico);row.appendChild(txt);body.appendChild(row);
     });
 
-    /* Footer — botones WA */
+    /* Footer — botón WA único */
     var footer=document.createElement('div');footer.className='ph-fb-mfooter';
-    var btns=WA_BUTTONS.filter(function(b){return b.number;});
-    var COLORS=['ventas','postventa'];
-    btns.forEach(function(b,i){
+    var btn=WA_BUTTONS[0];
+    if(btn&&btn.number){
       var a=document.createElement('a');
-      a.className='ph-fb-wa-btn '+(COLORS[i]||'ventas');
-      a.href=waUrl(b);a.target='_blank';a.rel='noopener';
-      a.innerHTML=WA_SVG+(b.name||'Consultar por WhatsApp');
+      a.className='ph-fb-wa-btn ventas';
+      a.href=waUrl(btn);a.target='_blank';a.rel='noopener';
+      a.innerHTML=WA_SVG+(btn.name||'Consultar por WhatsApp');
       footer.appendChild(a);
-    });
+    }
 
     modal.appendChild(head);modal.appendChild(body);modal.appendChild(footer);
     overlay.appendChild(modal);document.body.appendChild(overlay);

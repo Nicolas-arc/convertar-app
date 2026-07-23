@@ -113,7 +113,8 @@
         tachado.textContent = ars(precioListaCard); pEl.insertAdjacentElement('afterend', tachado);
       }
       var badge = crearBadge(precio * (1 - DESC), true); card.dataset.pintosmp = '1';
-      s(badge, {'display':'flex','clear':'both'}); pEl.parentNode.insertAdjacentElement('afterend', badge);
+      /* Transferencia va ARRIBA del precio de lista → beforebegin */
+      s(badge, {'display':'flex','clear':'both'}); pEl.parentNode.insertAdjacentElement('beforebegin', badge);
       card.querySelectorAll('span,div,p').forEach(function(el) {
         if (el.children.length > 0) return;
         var t = el.textContent.trim().toLowerCase();
