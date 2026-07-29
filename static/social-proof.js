@@ -6,8 +6,8 @@
 
   var API = 'https://convertar-app-production.up.railway.app';
   var DURACION      = 9000;   /* visible 9 seg                        */
-  var PAUSA         = 6000;   /* 6 seg después de cerrar → cada ~15s  */
-  var DELAY_INICIAL = 10000;  /* primera: 10 seg                      */
+  var PAUSA         = 27000;  /* 27 seg de pausa → cada ~36s en total */
+  var DELAY_INICIAL = 15000;  /* primera: 15 seg                      */
 
   /* ── Fallback sintético cuando no hay órdenes reales ── */
   var NOMBRES=['Úrsula','María','Carlos','Facundo','Valentina','Diego','Ana','Sofía','Martín','Laura','Pablo','Florencia','Nicolás','Camila','Lucía','Roberto','Jimena','Fernando','Gabriela','Santiago'];
