@@ -1,0 +1,878 @@
+<!-- ============================================================
+     PINTOS HOME — Códigos Externos Completo
+     Pegar TODO en TN → Configuración → Códigos externos → Para la tienda
+     ============================================================ -->
+
+<!-- INICIO: setear precio promocional cuando hay promocion de NxM -->
+<script>
+    function setDiscountDetail() {
+      const identificador = '*'
+      if (
+        document
+          .querySelector('#single-product .js-product-name')
+          .innerText.toLowerCase()
+          .includes(identificador)
+      ) {
+        document.querySelector(
+          '#single-product [data-store="product-item-offer-label"]'
+        ).style.display = 'none'
+        $(".labels .label:contains('Comprando')").each(function () {
+          const comparePrice = parseFloat(
+            $(this).closest('.js-product-container').find('.js-compare-price-display').text().trim().replace(/[$.]+/g, '').replace(',', '.')
+          )
+          const price = parseFloat(
+            $(this).closest('.js-product-container').find('.js-price-display').text().trim().replace(/[$.]+/g, '').replace(',', '.')
+          )
+          const exists = $(this).closest('.js-product-container').find('.custom-label')[0]
+          if (comparePrice) {
+            if (exists) {
+              const percentage = Math.round(((comparePrice - price) * 100) / comparePrice)
+              $(this).closest('.label').find('.custom-label').html('<span>' + parseInt(percentage) + '</span>% OFF')
+              $(this).addClass('offerChange')
+            } else {
+              const percentage = Math.round(((comparePrice - price) * 100) / comparePrice)
+              $(this).closest('.labels').prepend('<div class="js-offer-label label label-accent label-circle custom-label"><span>' + parseInt(percentage) + '</span>% OFF</div>')
+            }
+          }
+        })
+      }
+    }
+    function setDiscountGrid() {
+      const identificador = '*'
+      document.querySelectorAll('.js-item-product.item.item-product').forEach((product) => {
+        const productName = product.querySelector('.js-item-name.item-name.mb-3').innerText.toLowerCase()
+        if (productName.includes(identificador)) {
+          const comparePrice = product.querySelector('span.js-compare-price-display.price-compare').innerText.replace(/[$.]/g, '')
+          const price = product.querySelector('span.js-price-display.item-price').innerText.replace(/[$.]/g, '')
+          const percentage = Math.round(((comparePrice - price) * 100) / comparePrice)
+          const labelDiscount = '<div class="js-offer-label label label-accent label-circle" data-store="product-item-offer-label"><span class="js-offer-percentage"> ' + percentage + '</span>% OFF</div>'
+          product.querySelector('.labels').innerHTML = labelDiscount
+        }
+      })
+    }
+    if (LS.product) { window.onload = setDiscountDetail() }
+    if (document.querySelector('.js-item-product.item.item-product')) {
+      window.onload = setDiscountGrid()
+      window.addEventListener('scroll', setDiscountGrid)
+    }
+</script>
+
+<!-- Cuotas -->
+<script>
+  const CUOTAS = 6
+  function formatterAR(price, cuotas) {
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(price / cuotas)
+  }
+  function installemtsGrid() {
+    try {
+      document.querySelectorAll('.js-item-product').forEach((product) => {
+        const INSTALLMENTS_CONTAINER =
+          product.querySelector('.js-max-installments.product-installments.installment-no-interest') ||
+          product.querySelector('.js-max-installments-container.js-max-installments.item-installments')
+        const PRICE = product.querySelector('.js-price-display.item-price').innerText.replace(/[$.]/g, '').replace(',', '.')
+        const INSTALLMENT_PRICE = formatterAR(PRICE, CUOTAS)
+        INSTALLMENTS_CONTAINER.innerHTML =
+          '<span class="js-installment-amount product-installment-amount">' + CUOTAS + '</span>' +
+          '<span> cuotas sin interés de </span>' +
+          '<span class="js-installment-price product-installment-value">' + INSTALLMENT_PRICE + '</span>'
+      })
+    } catch (error) {}
+  }
+  function installmentsDetail() {
+    try {
+      const PRODUCT_CONTAINER = document.querySelector('#single-product')
+      const INSTALLMENTS_CONTAINER = PRODUCT_CONTAINER.querySelector('.js-max-installments .js-max-installments')
+      const PRICE = PRODUCT_CONTAINER.querySelector('#price_display').innerText.replace(/[$.]/g, '').replace(',', '.')
+      const INSTALLMENT_PRICE = formatterAR(PRICE, CUOTAS)
+      INSTALLMENTS_CONTAINER.innerHTML =
+        '<span class="js-installment-amount product-installment-amount">' + CUOTAS + '</span>' +
+        '<span> cuotas sin interés de </span>' +
+        '<span class="js-installment-price product-installment-value">' + INSTALLMENT_PRICE + '</span>'
+    } catch (error) {}
+  }
+  function installmentsCart() {
+    try {
+      const CART_CONTAINER = document.querySelector('#modal-cart')
+      const INSTALLMENTS_CONTAINER =
+        CART_CONTAINER.querySelector('.js-installments-cart-total.cart-installments.font-small.mt-1.text-right.installment-no-interest') ||
+        CART_CONTAINER.querySelector('.js-installments-cart-total.cart-installments.font-small.mt-1.text-right')
+      const PRICE = CART_CONTAINER.querySelector('.js-cart-total').innerText.replace(/[$.]/g, '').replace(',', '.')
+      const INSTALLMENT_PRICE = formatterAR(PRICE, CUOTAS)
+      INSTALLMENTS_CONTAINER.innerHTML =
+        'O hasta <span class="js-cart-installments-amount cart-installments-amount installment-no-interest">' + CUOTAS + '</span>' +
+        '<span> cuotas sin interés de </span>' +
+        '<span class="js-cart-installments cart-installments-money installment-no-interest">' + INSTALLMENT_PRICE + '</span>'
+    } catch (error) {}
+  }
+  if (LS.product) {
+    window.onload = installmentsDetail()
+    LS.registerOnChangeVariant(installmentsDetail)
+  }
+  if (document.querySelector('.js-item-product')) {
+    window.onload = installemtsGrid()
+    window.addEventListener('scroll', installemtsGrid)
+  }
+  if (document.querySelector('#modal-cart .js-cart-total')) {
+    window.onload = installmentsCart()
+    const observer = new MutationObserver((mutation) => { if (mutation) { setTimeout(() => { installmentsCart() }) } })
+    observer.observe(document.querySelector('#modal-cart .js-cart-total'), { subtree: true, childList: true })
+  }
+</script>
+
+<!-- PINTOS HOME — Mejor Precio Badge -->
+<script>
+(function () {
+  var DESC = 0.10;
+  var _priceObs = null;
+  function ars(n) { return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function parsePrecio(txt) { if (!txt) return 0; var n = txt.replace(/[^0-9]/g, ''); return n ? parseInt(n, 10) : 0; }
+  function s(el, obj) { Object.keys(obj).forEach(function(p) { el.style.setProperty(p, obj[p], 'important'); }); }
+  function crearBadge(precioFinal, small) {
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-pintos-badge', 'transfer');
+    s(wrap, { 'display':'flex','align-items':'center','gap': small ? '6px' : '10px','border':'2px solid #c0392b','border-radius':'6px','padding': small ? '4px 8px 4px 4px' : '6px 12px 6px 6px','margin':'6px 0 4px','background':'#fff5f5','width':'fit-content','max-width':'100%','box-sizing':'border-box','float':'none','clear':'both' });
+    var chip = document.createElement('div');
+    s(chip, { 'background':'#c0392b','color':'#fff','border-radius':'4px','padding': small ? '3px 6px' : '4px 9px','display':'flex','flex-direction':'column','align-items':'center','flex-shrink':'0' });
+    var t1 = document.createElement('span');
+    s(t1, { 'display':'block','font-size': small ? '8px' : '10px','font-weight':'800','letter-spacing':'0.5px','text-transform':'uppercase','line-height':'1.3','white-space':'nowrap','color':'#fff' });
+    t1.textContent = 'Mejor Precio';
+    var t2 = document.createElement('span');
+    s(t2, { 'display':'block','font-size': small ? '7px' : '9px','font-weight':'600','color':'rgba(255,255,255,0.85)','white-space':'nowrap' });
+    t2.textContent = 'Transferencia';
+    chip.appendChild(t1); chip.appendChild(t2);
+    var price = document.createElement('span');
+    s(price, { 'display':'inline-block','font-size': small ? '14px' : '20px','font-weight':'800','color':'#111','white-space':'nowrap','line-height':'1' });
+    price.textContent = ars(precioFinal);
+    wrap.appendChild(chip); wrap.appendChild(price);
+    return wrap;
+  }
+  function inyectarEnProducto() {
+    if (_priceObs) _priceObs.disconnect();
+    clearTimeout(window._pintosT);
+    var viejoBadge = document.getElementById('pintos-mp-prod'); if (viejoBadge) viejoBadge.remove();
+    var viejoTachado = document.getElementById('pintos-tachado-prod'); if (viejoTachado) viejoTachado.remove();
+    var precio = 0;
+    var datEl = document.querySelector('[data-product-price]');
+    if (datEl) precio = (parseFloat(datEl.getAttribute('data-product-price')) || 0) / 100;
+    var priceEl = document.querySelector('#price_display');
+    if (!precio && priceEl) precio = parsePrecio(priceEl.textContent);
+    var precioLista = 0;
+    var cmpAttr = document.querySelector('[data-compare-price]');
+    if (cmpAttr) precioLista = (parseFloat(cmpAttr.getAttribute('data-compare-price')) || 0) / 100;
+    if (!precioLista) { var cmpEl = document.querySelector('.js-compare-price-display') || document.querySelector('.price-compare'); if (cmpEl) precioLista = parsePrecio(cmpEl.textContent); }
+    if (precioLista > precio) { var cmpNativo = document.querySelector('.js-compare-price-display, .price-compare, [data-store="compare-price"]'); if (cmpNativo) cmpNativo.style.setProperty('display', 'none', 'important'); }
+    if (precio && priceEl) {
+      s(priceEl, { 'display':'inline-block', 'width':'auto', 'max-width':'none', 'flex-shrink':'0' });
+      s(priceEl.parentNode, { 'display':'flex', 'align-items':'baseline', 'gap':'10px', 'flex-wrap':'nowrap' });
+      if (precioLista > precio) {
+        var tachado = document.createElement('span'); tachado.id = 'pintos-tachado-prod';
+        s(tachado, { 'font-size':'0.72em','font-weight':'500','color':'#bbb','text-decoration':'line-through','white-space':'nowrap','line-height':'1','display':'inline-block','flex-shrink':'0' });
+        tachado.textContent = ars(precioLista); priceEl.insertAdjacentElement('afterend', tachado);
+      }
+      var badge = crearBadge(precio * (1 - DESC), false); badge.id = 'pintos-mp-prod';
+      s(badge, { 'display':'flex', 'clear':'both' }); priceEl.parentNode.insertAdjacentElement('afterend', badge);
+    }
+    setTimeout(function() { var root = document.querySelector('#price_display'); if (_priceObs && root) _priceObs.observe(root.parentNode || root, { childList:true, subtree:true, characterData:true }); }, 300);
+  }
+  function inyectarEnListado() {
+    document.querySelectorAll('.js-item-product, .item-product').forEach(function (card) {
+      if (card.dataset.pintosmp) return;
+      var pEl = card.querySelector('.js-price-display') || card.querySelector('.item-price') || card.querySelector('.js-price');
+      if (!pEl) return;
+      var precio = parsePrecio(pEl.textContent); if (precio <= 0) return;
+      var cmpElCard = card.querySelector('.js-compare-price-display') || card.querySelector('.price-compare');
+      var precioListaCard = cmpElCard ? parsePrecio(cmpElCard.textContent) : 0;
+      if (cmpElCard && precioListaCard > precio) cmpElCard.style.setProperty('display', 'none', 'important');
+      s(pEl, { 'display':'inline-block', 'width':'auto', 'flex-shrink':'0' });
+      s(pEl.parentNode, { 'display':'flex', 'align-items':'baseline', 'gap':'6px', 'flex-wrap':'nowrap' });
+      if (precioListaCard > precio) {
+        var tachado = document.createElement('span');
+        s(tachado, { 'font-size':'11px','font-weight':'500','color':'#bbb','text-decoration':'line-through','white-space':'nowrap','display':'inline-block','flex-shrink':'0' });
+        tachado.textContent = ars(precioListaCard); pEl.insertAdjacentElement('afterend', tachado);
+      }
+      var badge = crearBadge(precio * (1 - DESC), true); card.dataset.pintosmp = '1';
+      s(badge, { 'display':'flex', 'clear':'both' }); pEl.parentNode.insertAdjacentElement('afterend', badge);
+      card.querySelectorAll('span, div, p').forEach(function(el) {
+        if (el.children.length > 0) return;
+        var t = el.textContent.trim().toLowerCase();
+        if (t.length > 0 && t.length < 80 && ((t.includes('lleva') && t.includes('paga')) || /comprando \d+ o m/.test(t))) el.style.setProperty('display', 'none', 'important');
+      });
+    });
+  }
+  function init() {
+    var esProducto = !!(window.LS && LS.product);
+    if (esProducto) {
+      inyectarEnProducto();
+      var root = document.querySelector('#price_display');
+      if (root) { _priceObs = new MutationObserver(function () { clearTimeout(window._pintosT); window._pintosT = setTimeout(inyectarEnProducto, 350); }); }
+      document.addEventListener('change', function (e) { if (e.target.matches('select, input[type="radio"]')) { clearTimeout(window._pintosT); window._pintosT = setTimeout(inyectarEnProducto, 400); } });
+    } else {
+      inyectarEnListado();
+      var listRoot = document.querySelector('.js-product-table, .js-products-container, #products, .products-grid');
+      if (listRoot) { new MutationObserver(function () { clearTimeout(window._pintosT); window._pintosT = setTimeout(inyectarEnListado, 400); }).observe(listRoot, { childList:true, subtree:true }); }
+    }
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { setTimeout(init, 300); }
+})();
+</script>
+<!-- FIN PINTOS HOME — Mejor Precio Badge -->
+
+<!-- PINTOS HOME — Luxury Envio Badge -->
+<script>
+(function () {
+  if (!window.LS || !LS.product) return;
+  function luxuryEnvio() {
+    if (document.getElementById('pintos-envio-wrap')) return;
+    var scope = document.getElementById('single-product'); if (!scope) return;
+    var shippingEl = scope.querySelector('.js-shipping-calculator') || scope.querySelector('.shipping-calculator') || scope.querySelector('[data-store="shipping-estimator"]') || scope.querySelector('.product-shipping') || scope.querySelector('.js-product-shipping');
+    if (!shippingEl) { var divs = scope.querySelectorAll('div, section'); for (var i = 0; i < divs.length; i++) { var d = divs[i]; if (d.children.length >= 1 && d.children.length <= 5 && /Medios de env/i.test(d.textContent) && d.textContent.trim().length < 200) { shippingEl = d; break; } } }
+    var wrap = document.createElement('div'); wrap.id = 'pintos-envio-wrap';
+    wrap.style.cssText = 'background:rgba(250,250,248,0.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(0,0,0,0.07);border-radius:18px;padding:16px 22px 14px;box-shadow:0 3px 22px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.95);margin:10px 0 8px;';
+    var mainText = document.createElement('span');
+    mainText.style.cssText = 'display:block;font-size:15px;font-weight:400;color:#1a1a1a;font-family:Georgia,"Times New Roman",serif;font-style:italic;line-height:1.5;' + (shippingEl ? 'margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(0,0,0,0.06);' : '');
+    mainText.textContent = 'Medio de envío: presioná y poné tu código postal para saber cuándo llega.';
+    wrap.appendChild(mainText);
+    if (shippingEl) { shippingEl.parentNode.insertBefore(wrap, shippingEl); wrap.appendChild(shippingEl); }
+    else { var anchor = scope.querySelector('.js-buy-form') || scope.querySelector('#buy-form') || scope.querySelector('.product-buy') || scope.querySelector('.js-add-to-cart'); if (anchor) { anchor.insertAdjacentElement('afterend', wrap); } else { scope.appendChild(wrap); } }
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', luxuryEnvio); } else { setTimeout(luxuryEnvio, 600); }
+})();
+</script>
+<!-- FIN PINTOS HOME — Luxury Envio Badge -->
+
+<!-- PINTOS HOME — Ocultar barra envio gratis carrito -->
+<style>
+.js-free-shipping-progress,.js-cart-free-shipping,.cart-free-shipping,[class*="free-shipping-bar"],[class*="free-shipping-progress"],[data-store="free-shipping-bar"],[data-store="cart-free-shipping"]{display:none!important}
+</style>
+
+<!-- PINTOS HOME — Filtros Cuadros -->
+<script>
+(function () {
+  if (!window.location.pathname.includes('/cuadros-pintos-home')) return;
+  var css = '#ph-cuadros-filtros{background:#fafaf9;padding:28px 16px 24px;text-align:center;border-bottom:1px solid #efefed;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#ph-cuadros-filtros h3{font-size:clamp(14px,2.5vw,18px);font-weight:700;color:#111;margin:0 0 18px;letter-spacing:-.2px}#ph-filtros-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.ph-pill{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:10px 20px;border-radius:999px;border:1.5px solid rgba(0,0,0,.12);background:rgba(255,255,255,.8);cursor:pointer;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.06);min-width:100px;font-family:inherit}.ph-pill:hover{border-color:#111;background:#fff;transform:translateY(-1px)}.ph-pill.active{background:#111;border-color:#111}.ph-pill.active .ph-pill-label{color:#fff}.ph-pill.active .ph-pill-sub{color:rgba(255,255,255,.7)}.ph-pill-label{font-size:14px;font-weight:700;color:#111;white-space:nowrap}.ph-pill-sub{font-size:11px;color:#888;white-space:nowrap}#ph-filtros-result{font-size:12px;color:#aaa;margin-top:14px}@media(max-width:480px){.ph-pill{min-width:80px;padding:9px 12px}.ph-pill-label{font-size:13px}.ph-pill-sub{font-size:10px}}';
+  var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  var filtros = [{key:'todos',label:'Todos',sub:'Ver todo'},{key:'x3',label:'Set x3',sub:'40x35 · Envío gratis'},{key:'x6',label:'Set x6',sub:'30x20 · Envío gratis'},{key:'personalizado',label:'Personalizado',sub:'Creá tu galería'}];
+  var activoKey = 'todos';
+  function getCards() { return document.querySelectorAll('.js-item-product, .item-product'); }
+  function getNombre(card) { var el = card.querySelector('.js-item-name, .item-name'); return el ? el.textContent.toLowerCase() : ''; }
+  function aplicarFiltro(key) {
+    activoKey = key; var visibles = 0;
+    getCards().forEach(function(card) {
+      var n = getNombre(card); var m = false;
+      if (key==='todos') m=true;
+      else if (key==='x3') m=/set\s*x3|x3[\s,]/i.test(n)&&!/x6/i.test(n);
+      else if (key==='x6') m=/set\s*x6|x6[\s,]/i.test(n);
+      else if (key==='personalizado') m=/personalizado/i.test(n);
+      card.style.display = m ? '' : 'none'; if (m) visibles++;
+    });
+    document.querySelectorAll('.ph-pill').forEach(function(p){p.classList.toggle('active',p.dataset.key===key);});
+    var res = document.getElementById('ph-filtros-result'); if (res) res.textContent = visibles+' producto'+(visibles!==1?'s':'');
+  }
+  function insertarFiltros() {
+    if (document.getElementById('ph-cuadros-filtros')) return;
+    var pillsHtml = filtros.map(function(f){return '<button class="ph-pill'+(f.key==='todos'?' active':'')+'" data-key="'+f.key+'"><span class="ph-pill-label">'+f.label+'</span><span class="ph-pill-sub">'+f.sub+'</span></button>';}).join('');
+    var el = document.createElement('div'); el.id = 'ph-cuadros-filtros';
+    el.innerHTML = '<h3>Elegí cómo querés transformar tu hogar</h3><div id="ph-filtros-pills">'+pillsHtml+'</div><div id="ph-filtros-result"></div>';
+    var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products'); if (!ref) return;
+    ref.parentNode.insertBefore(el, ref);
+    document.querySelectorAll('.ph-pill').forEach(function(btn){btn.addEventListener('click',function(){aplicarFiltro(this.dataset.key);});});
+    aplicarFiltro('todos');
+    new MutationObserver(function(){if(activoKey!=='todos')aplicarFiltro(activoKey);}).observe(ref,{childList:true,subtree:true});
+  }
+  if (document.readyState==='loading'){document.addEventListener('DOMContentLoaded',insertarFiltros);}else{setTimeout(insertarFiltros,400);}
+})();
+</script>
+<!-- FIN PINTOS HOME — Filtros Cuadros -->
+
+<!-- PINTOS HOME — Hero + Filtros Cortinas Black Out -->
+<script>
+(function () {
+  if (!window.location.pathname.includes('/black-out')) return;
+  if (window.location.pathname.includes('/combos-home')) return;
+  var css = '#ph-cortinas-hero{width:100%;overflow:hidden;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 50%,#2a2a2a 100%);display:flex;align-items:center;justify-content:center;padding:40px 24px;min-height:260px}#ph-cortinas-hero-inner{max-width:680px;width:100%;text-align:center}#ph-cortinas-hero-inner .hero-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:14px}#ph-cortinas-hero-inner h1{font-size:clamp(20px,3.5vw,32px);font-weight:800;color:#fff;line-height:1.2;margin-bottom:18px}.ph-cortinas-formula{display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px 22px;margin-bottom:18px;flex-wrap:wrap;justify-content:center}.ph-cortinas-fbox{display:flex;flex-direction:column;align-items:center;gap:2px}.ph-cortinas-fbox .flabel{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4)}.ph-cortinas-fbox .fval{font-size:13px;font-weight:700;color:#fff;white-space:nowrap}.ph-cortinas-fsep{font-size:20px;color:rgba(255,255,255,0.25)}.ph-cortinas-note{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:400px;margin:0 auto}.ph-cortinas-note strong{color:rgba(255,255,255,0.8)}#ph-cortinas-filtros{background:#fafaf9;padding:28px 16px 22px;text-align:center;border-bottom:1px solid #efefed;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#ph-cortinas-filtros h3{font-size:clamp(13px,2.2vw,16px);font-weight:700;color:#111;margin:0 0 6px}#ph-cortinas-filtros p{font-size:12px;color:#888;margin:0 0 18px}#ph-cortinas-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.ph-co-pill{display:inline-flex;flex-direction:column;align-items:center;gap:3px;padding:10px 18px;border-radius:999px;border:1.5px solid rgba(0,0,0,.12);background:rgba(255,255,255,.85);cursor:pointer;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.06);min-width:100px;font-family:inherit}.ph-co-pill:hover{border-color:#111;background:#fff;transform:translateY(-1px)}.ph-co-pill.active{background:#111;border-color:#111}.ph-co-pill.active .ph-co-label{color:#fff}.ph-co-pill.active .ph-co-sub{color:rgba(255,255,255,.6)}.ph-co-label{font-size:14px;font-weight:700;color:#111;white-space:nowrap}.ph-co-sub{font-size:10px;color:#999;white-space:nowrap;text-align:center;line-height:1.3}#ph-cortinas-result{font-size:12px;color:#aaa;margin-top:14px}.ph-co-pill.pill-combos{border-color:rgba(180,130,60,.4);background:linear-gradient(135deg,rgba(212,168,90,.12),rgba(180,130,60,.08))}.ph-co-pill.pill-combos .ph-co-label{color:#8a6020}.ph-co-pill.pill-combos .ph-co-sub{color:#b8954a}@media(max-width:480px){.ph-co-pill{min-width:75px;padding:9px 10px}.ph-co-label{font-size:12px}.ph-co-sub{font-size:9px}}';
+  var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  var filtros = [{key:'todos',label:'Todas',sub:'Ver todo'},{key:'h150',label:'Hasta 150cm',sub:'Juego · 2 paños'},{key:'h210',label:'210cm',sub:'Juego · 2 paños'},{key:'h240',label:'220–240cm',sub:'x 1 paño · 130cm'},{key:'h260',label:'250–260cm',sub:'x 1 paño · 130cm'},{key:'h300',label:'270–300cm',sub:'x 1 paño · 130cm'},{key:'combos',label:'🏠 Ver Combos',sub:'Transformación completa',url:'https://www.pintoshogar.com.ar/black-out/combos-home/',extraClass:'pill-combos'}];
+  var activoKey = 'todos';
+  function getCards(){return document.querySelectorAll('.js-item-product,.item-product');}
+  function getNombre(card){var el=card.querySelector('.js-item-name,.item-name');return el?el.textContent.toLowerCase():'';}
+  function matchFiltro(n,key){if(key==='todos')return true;if(key==='h150')return /\b(120|130|140|150)\s*cm\s*x/i.test(n);if(key==='h210')return /\b210\s*cm\s*x/i.test(n);if(key==='h240')return /\b(220|230|240)\s*cm\s*x/i.test(n);if(key==='h260')return /\b(250|260)\s*cm\s*x/i.test(n);if(key==='h300')return /\b(270|280|290|300)\s*cm\s*x/i.test(n)||/\b3\s*m\b/i.test(n);return true;}
+  function aplicarFiltro(key,url){
+    if(url){window.location.href=url;return;}
+    activoKey=key; var visibles=0;
+    getCards().forEach(function(card){var m=matchFiltro(getNombre(card),key);card.style.display=m?'':'none';if(m)visibles++;});
+    document.querySelectorAll('.ph-co-pill').forEach(function(p){p.classList.toggle('active',p.dataset.key===key);});
+    var res=document.getElementById('ph-cortinas-result');if(res)res.textContent=visibles+' producto'+(visibles!==1?'s':'');
+  }
+  function insertarHero(){
+    if(document.getElementById('ph-cortinas-hero'))return;
+    var hero=document.createElement('div');hero.id='ph-cortinas-hero';
+    hero.innerHTML='<div id="ph-cortinas-hero-inner"><span class="hero-tag">Cortinas Black Out</span><h1>¿Cuál es la cortina perfecta para tu ventana?</h1><div class="ph-cortinas-formula"><div class="ph-cortinas-fbox"><span class="flabel">Alto</span><span class="fval">Tu ventana</span></div><span class="ph-cortinas-fsep">×</span><div class="ph-cortinas-fbox"><span class="flabel">Ancho</span><span class="fval">Cantidad de paños</span></div><span class="ph-cortinas-fsep">=</span><div class="ph-cortinas-fbox"><span class="flabel">Tu cortina</span><span class="fval">Perfecta</span></div></div><p class="ph-cortinas-note">El <strong>alto</strong> define el tamaño · El <strong>ancho</strong> define cuántos paños. Cada paño mide 130cm de ancho.</p></div>';
+    var pillsHtml=filtros.map(function(f){return '<button class="ph-co-pill'+(f.key==='todos'?' active':'')+(f.extraClass?' '+f.extraClass:'')+'" data-key="'+f.key+'" data-url="'+(f.url||'')+'"><span class="ph-co-label">'+f.label+'</span><span class="ph-co-sub">'+f.sub+'</span></button>';}).join('');
+    var filtrosEl=document.createElement('div');filtrosEl.id='ph-cortinas-filtros';
+    filtrosEl.innerHTML='<h3>¿Qué alto tiene tu ventana?</h3><p>Seleccióná y te mostramos exactamente las que te quedan</p><div id="ph-cortinas-pills">'+pillsHtml+'</div><div id="ph-cortinas-result"></div>';
+    var ref=document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');if(!ref)return;
+    ref.parentNode.insertBefore(hero,ref);ref.parentNode.insertBefore(filtrosEl,ref);
+    document.querySelectorAll('.ph-co-pill').forEach(function(btn){btn.addEventListener('click',function(){aplicarFiltro(this.dataset.key,this.dataset.url||null);});});
+    aplicarFiltro('todos');
+    new MutationObserver(function(){if(activoKey!=='todos')aplicarFiltro(activoKey);}).observe(ref,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',insertarHero);}else{setTimeout(insertarHero,400);}
+})();
+</script>
+<!-- FIN PINTOS HOME — Hero + Filtros Cortinas Black Out -->
+
+<!-- PINTOS HOME — Hero Combos -->
+<script>
+(function () {
+  if (!window.location.pathname.includes('/combos-home')) return;
+  var css = '#ph-combos-hero{background:#fff;padding:44px 20px 36px;text-align:center;border-bottom:1px solid #f0ebe3;margin-bottom:12px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.ph-combos-chip{display:inline-block;background:#b8860b;color:#fff;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;padding:5px 16px;border-radius:20px;margin-bottom:22px}.ph-combos-quote{font-style:italic;font-size:clamp(20px,4vw,34px);color:#1a1a1a;line-height:1.4;font-family:Georgia,"Times New Roman",serif;max-width:580px;margin:0 auto 14px}.ph-combos-cats{font-size:13px;color:#b8860b;font-weight:600;letter-spacing:1px;margin:0 0 4px}.ph-combos-sub{font-size:12px;color:#bbb;letter-spacing:0.6px;text-transform:uppercase;margin:0}';
+  var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+  function inyectar(){
+    if(document.getElementById('ph-combos-hero'))return;
+    var h=document.createElement('div');h.id='ph-combos-hero';
+    h.innerHTML='<div class="ph-combos-chip">COMBO HOME</div><p class="ph-combos-quote">“Porque transformar tu hogar no debería ser complicado.”</p><p class="ph-combos-cats">Cortinas &nbsp;|&nbsp; Cuadros &nbsp;|&nbsp; Fundas</p><p class="ph-combos-sub">Todo en una sola compra</p>';
+    var targets=['.js-product-table','.products-grid','.js-products-container','#products','.js-product-list','.product-list','section.category'];
+    var ref=null;for(var i=0;i<targets.length;i++){ref=document.querySelector(targets[i]);if(ref)break;}
+    if(ref){ref.parentNode.insertBefore(h,ref);}else{var main=document.querySelector('main')||document.body;main.insertBefore(h,main.firstChild);}
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',inyectar);}else{setTimeout(inyectar,400);}
+})();
+</script>
+<!-- FIN PINTOS HOME — Hero Combos -->
+
+<!-- PINTOS HOME — Accesos Rapidos Home v11 -->
+<script>
+(function () {
+  var path = window.location.pathname;
+  if (path !== '/' && path !== '' && path !== '/index.html') return;
+
+  var st = document.createElement('style');
+  st.textContent = [
+    '#ph-home-accesos{background:#fafaf8;padding:28px 16px 24px;text-align:center;border-top:1px solid #efefed;border-bottom:1px solid #efefed;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}',
+    '.ph-acc-titulo{font-size:10px!important;font-weight:700!important;letter-spacing:2px!important;text-transform:uppercase!important;color:#ccc!important;margin-bottom:16px!important;display:block!important}',
+    '.ph-acc-grid{display:flex!important;flex-direction:row!important;gap:12px!important;justify-content:center!important;flex-wrap:wrap!important}',
+    '.ph-acc-card{display:flex!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:14px 18px!important;border-radius:12px!important;border:1.5px solid rgba(0,0,0,.1)!important;background:#fff!important;text-decoration:none!important;box-shadow:0 2px 10px rgba(0,0,0,.05)!important;flex:1!important;min-width:240px!important;max-width:320px!important}',
+    '.ph-acc-card.combos{border-color:rgba(184,134,11,.35)!important;background:linear-gradient(135deg,rgba(212,168,90,.08),rgba(180,130,60,.04))!important}',
+    '.ph-acc-icon{font-size:24px!important;flex-shrink:0!important}',
+    '.ph-acc-text{display:flex!important;flex-direction:column!important;gap:2px!important;flex:1!important;text-align:left!important}',
+    '.ph-acc-label{font-size:14px!important;font-weight:700!important;color:#111!important;display:block!important}',
+    '.ph-acc-card.combos .ph-acc-label{color:#8a6020!important}',
+    '.ph-acc-detail{font-size:11px!important;color:#888!important;font-weight:500!important;display:block!important}',
+    '.ph-acc-card.combos .ph-acc-detail{color:#a07828!important}',
+    '.ph-acc-sub{font-size:10px!important;color:#bbb!important;display:block!important}',
+    '.ph-acc-card.combos .ph-acc-sub{color:#c9972a!important}',
+    '.ph-acc-arrow{font-size:14px!important;color:#ccc!important;flex-shrink:0!important}'
+  ].join('');
+  document.head.appendChild(st);
+
+  function buildWrap() {
+    var w = document.createElement('div');
+    w.id = 'ph-home-accesos';
+    w.innerHTML =
+      '<span class="ph-acc-titulo">¿Qué estás buscando?</span>' +
+      '<div class="ph-acc-grid">' +
+        '<a class="ph-acc-card" href="https://www.pintoshogar.com.ar/home1/cuadros-pintos-home/">' +
+          '<span class="ph-acc-icon">🖼️</span>' +
+          '<span class="ph-acc-text">' +
+            '<span class="ph-acc-label">Cuadros Decorativos</span>' +
+            '<span class="ph-acc-detail">Set x3 y Set x6</span>' +
+            '<span class="ph-acc-sub">Envío gratis</span>' +
+          '</span>' +
+          '<span class="ph-acc-arrow">›</span>' +
+        '</a>' +
+        '<a class="ph-acc-card" href="https://www.pintoshogar.com.ar/black-out/">' +
+          '<span class="ph-acc-icon">🧵</span>' +
+          '<span class="ph-acc-text">' +
+            '<span class="ph-acc-label">Cortinas Black Out</span>' +
+            '<span class="ph-acc-detail">A Medida · Black Out</span>' +
+            '<span class="ph-acc-sub">Elegí tu medida ideal</span>' +
+          '</span>' +
+          '<span class="ph-acc-arrow">›</span>' +
+        '</a>' +
+      '</div>';
+    return w;
+  }
+
+  function tryInsert(wrap) {
+    if (document.getElementById('ph-home-accesos')) return true;
+    var heading = document.querySelector('.js-products-featured-title');
+    if (!heading) {
+      var hs = document.querySelectorAll('h1,h2,h3,h4');
+      for (var i = 0; i < hs.length; i++) {
+        if (/vendido|destacado/i.test(hs[i].textContent.trim())) { heading = hs[i]; break; }
+      }
+    }
+    if (!heading) return false;
+
+    /* Sube hasta que el padre tenga 3+ hijos DIV/SECTION = contenedor principal de secciones */
+    var el = heading;
+    while (el && el.parentElement && el.parentElement !== document.body && el.parentElement.tagName !== 'HTML') {
+      var par = el.parentElement;
+      var kids = 0;
+      for (var k = 0; k < par.children.length; k++) {
+        var t = par.children[k].tagName;
+        if (t === 'DIV' || t === 'SECTION') kids++;
+      }
+      if (kids >= 3) break;
+      el = par;
+    }
+    if (!el || !el.parentElement) return false;
+    el.parentElement.insertBefore(wrap, el);
+    return true;
+  }
+
+  var wrap = buildWrap();
+  var elapsed = 0;
+  var iv = setInterval(function () {
+    if (tryInsert(wrap)) { clearInterval(iv); return; }
+    elapsed += 100;
+    if (elapsed >= 8000) clearInterval(iv);
+  }, 100);
+})();
+</script>
+<!-- FIN PINTOS HOME — Accesos Rapidos Home v11 -->
+
+<!-- PINTOS HOME — Cuotas Badge v3 -->
+<script>
+(function () {
+  var CUOTAS_N = 6;
+  function ars(n) { return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function parsePrecio(txt) { if (!txt) return 0; var n = txt.replace(/[^0-9]/g, ''); return n ? parseInt(n, 10) : 0; }
+  function s(el, obj) { Object.keys(obj).forEach(function(p) { el.style.setProperty(p, obj[p], 'important'); }); }
+
+  function getCuotas() {
+    var sels = ['.js-max-installments-container','.js-max-installments','.product-detail-installments','[data-store="installments"]'];
+    for (var i = 0; i < sels.length; i++) {
+      var el = document.querySelector(sels[i]);
+      if (el) { var m = el.textContent.match(/(\d+)\s*cuotas/i); if (m) return parseInt(m[1], 10); }
+    }
+    return CUOTAS_N;
+  }
+
+  function crearBadgeCuotas(cant, precio, small) {
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-pintos-badge', 'cuotas');
+    s(wrap, {'display':'flex','align-items':'center','gap':small?'5px':'10px','border':'2px solid #228b3a','border-radius':'6px','padding':small?'3px 6px 3px 3px':'6px 12px 6px 6px','margin':'4px 0 2px','background':'#f0fff4','width':'fit-content','max-width':'100%','box-sizing':'border-box','float':'none','clear':'both'});
+    var chip = document.createElement('div');
+    s(chip, {'background':'#228b3a','border-radius':'4px','padding':small?'3px 6px':'4px 9px','display':'flex','flex-direction':'column','align-items':'center','flex-shrink':'0'});
+    var t1 = document.createElement('span');
+    s(t1, {'display':'block','font-size':small?'8px':'10px','font-weight':'800','letter-spacing':'0.5px','text-transform':'uppercase','line-height':'1.3','white-space':'nowrap','color':'#fff'});
+    t1.textContent = cant + ' cuotas';
+    var t2 = document.createElement('span');
+    s(t2, {'display':'block','font-size':small?'7px':'9px','font-weight':'600','color':'rgba(255,255,255,0.85)','white-space':'nowrap'});
+    t2.textContent = 'sin interés ✓';
+    chip.appendChild(t1); chip.appendChild(t2);
+    var price = document.createElement('span');
+    s(price, {'display':'inline-block','font-size':small?'12px':'20px','font-weight':'800','color':'#111','white-space':'nowrap','line-height':'1'});
+    price.textContent = cant + ' x ' + ars(precio / cant);
+    wrap.appendChild(chip); wrap.appendChild(price);
+    return wrap;
+  }
+
+  /* ─── PRODUCTO ─── */
+  function inyectarEnProducto() {
+    var old = document.getElementById('cva-cuotas-badge'); if (old) old.remove();
+    var priceEl = document.getElementById('price_display') || document.querySelector('.js-price-display');
+    if (!priceEl) return;
+    var precio = 0;
+    var datEl = document.querySelector('[data-product-price]');
+    if (datEl) precio = (parseFloat(datEl.getAttribute('data-product-price')) || 0) / 100;
+    if (!precio) precio = parsePrecio(priceEl.textContent);
+    if (!precio) return;
+    var cant = getCuotas();
+    var badge = crearBadgeCuotas(cant, precio, false);
+    badge.id = 'cva-cuotas-badge';
+    var ancla = document.getElementById('pintos-mp-prod') || priceEl.parentNode;
+    ancla.insertAdjacentElement('afterend', badge);
+    /* Ocultar cuotas nativo de TN */
+    var nativo = document.querySelector('.js-max-installments-container,.js-max-installments,.product-detail-installments,[data-store="installments"]');
+    if (nativo) nativo.style.setProperty('display', 'none', 'important');
+  }
+
+  /* ─── LISTADO / HOME ─── */
+  function inyectarEnListado() {
+    document.querySelectorAll('.js-item-product, .item-product').forEach(function(card) {
+      if (card.dataset.pintoscuotas) return;
+      var pEl = card.querySelector('.js-price-display') || card.querySelector('.item-price') || card.querySelector('.js-price');
+      if (!pEl) return;
+      var precio = parsePrecio(pEl.textContent); if (precio <= 0) return;
+      var badge = crearBadgeCuotas(CUOTAS_N, precio, true);
+      card.dataset.pintoscuotas = '1';
+      /* Insertar después del badge de transferencia si ya existe */
+      var xfer = card.querySelector('[data-pintos-badge="transfer"]');
+      var ancla = xfer || pEl.parentNode;
+      ancla.insertAdjacentElement('afterend', badge);
+    });
+  }
+
+  function init() {
+    if (window.LS && window.LS.product) {
+      /* Página de producto — espera precio */
+      var e1 = 0;
+      var iv1 = setInterval(function() {
+        if (document.getElementById('price_display') || document.querySelector('.js-price-display')) {
+          clearInterval(iv1); inyectarEnProducto(); return;
+        }
+        e1 += 100; if (e1 >= 8000) clearInterval(iv1);
+      }, 100);
+      /* Re-render al cambiar variante */
+      document.addEventListener('change', function(e) {
+        if (e.target.matches('select,input[type="radio"]')) {
+          clearTimeout(window._cvaCuotasT);
+          window._cvaCuotasT = setTimeout(inyectarEnProducto, 450);
+        }
+      });
+    } else {
+      /* Listado / Home — espera a que las cards existan */
+      var e2 = 0;
+      var iv2 = setInterval(function() {
+        if (document.querySelector('.js-item-product, .item-product')) {
+          clearInterval(iv2);
+          inyectarEnListado();
+          var root = document.querySelector('.js-product-table,.js-products-container,#products,.products-grid');
+          if (root) new MutationObserver(function() { setTimeout(inyectarEnListado, 300); }).observe(root, {childList:true, subtree:true});
+          return;
+        }
+        e2 += 100; if (e2 >= 8000) clearInterval(iv2);
+      }, 100);
+    }
+  }
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { setTimeout(init, 400); }
+})();
+</script>
+<!-- FIN PINTOS HOME — Cuotas Badge v3 -->
+
+<!-- PINTOS HOME — Envios Badge v1 -->
+<script>
+(function () {
+  /* Solo en página de producto */
+  function s(el, obj) { Object.keys(obj).forEach(function(p) { el.style.setProperty(p, obj[p], 'important'); }); }
+
+  function leerTextoEnvio() {
+    /* Selectores específicos de TN para el texto de envío */
+    var sels = [
+      '[data-store="product-free-shipping"]',
+      '.product-free-shipping',
+      '.js-product-free-shipping',
+      '.js-free-shipping',
+      '[data-store="free-shipping"]',
+      '.product-shipping-info',
+      '.js-shipping-info'
+    ];
+    for (var i = 0; i < sels.length; i++) {
+      var el = document.querySelector(sels[i]);
+      if (el) { var t = el.textContent.trim(); if (t.length > 3 && t.length < 120) return t; }
+    }
+    /* Fallback: busca cualquier elemento con texto de envío corto */
+    var all = document.querySelectorAll('p,span,div,a');
+    for (var j = 0; j < all.length; j++) {
+      var el2 = all[j];
+      if (el2.children.length > 0) continue;
+      var txt = el2.textContent.trim();
+      if (txt.length > 5 && txt.length < 100 && /env[íi]o\s*gratis/i.test(txt)) return txt;
+    }
+    return null;
+  }
+
+  function parsearEnvio(txt) {
+    if (!txt) return null;
+    /* "Envío gratis superando los $69.999" → chip2="desde $69.999", valor="Todo el país" */
+    var match = txt.match(/\$([\d.,]+)/);
+    if (match) {
+      return { chip2: 'desde ' + match[0], valor: 'Todo el país' };
+    }
+    /* "Envío gratis" sin condición → chip2 vacío, valor="Todo el país" */
+    if (/env[íi]o\s*gratis/i.test(txt)) {
+      return { chip2: '', valor: 'Todo el país' };
+    }
+    return null;
+  }
+
+  function crearBadgeEnvios(chip2, valor) {
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-pintos-badge', 'envios');
+    s(wrap, {'display':'flex','align-items':'center','gap':'10px','border':'2px solid #2a2a2a','border-radius':'6px','padding':'6px 12px 6px 6px','margin':'5px 0 3px','background':'#f5f5f5','width':'fit-content','max-width':'100%','box-sizing':'border-box','float':'none','clear':'both'});
+    var chip = document.createElement('div');
+    s(chip, {'background':'#2a2a2a','border-radius':'4px','padding':'4px 9px','display':'flex','flex-direction':'column','align-items':'center','flex-shrink':'0'});
+    var t1 = document.createElement('span');
+    s(t1, {'display':'block','font-size':'9px','font-weight':'800','letter-spacing':'0.5px','text-transform':'uppercase','line-height':'1.3','white-space':'nowrap','color':'#fff'});
+    t1.textContent = 'Envío gratis';
+    chip.appendChild(t1);
+    if (chip2) {
+      var t2 = document.createElement('span');
+      s(t2, {'display':'block','font-size':'8px','font-weight':'600','color':'rgba(255,255,255,0.85)','white-space':'nowrap'});
+      t2.textContent = chip2;
+      chip.appendChild(t2);
+    }
+    var val = document.createElement('span');
+    s(val, {'display':'inline-block','font-size':'20px','font-weight':'800','color':'#111','white-space':'nowrap','line-height':'1'});
+    val.textContent = valor;
+    wrap.appendChild(chip); wrap.appendChild(val);
+    return wrap;
+  }
+
+  function run() {
+    if (document.querySelector('[data-pintos-badge="envios"]')) return;
+    var txt = leerTextoEnvio();
+    var info = parsearEnvio(txt);
+    if (!info) return;
+    var badge = crearBadgeEnvios(info.chip2, info.valor);
+    /* Insertar después del badge de cuotas, o después del de transferencia */
+    var ancla =
+      document.getElementById('cva-cuotas-badge') ||
+      document.getElementById('pintos-mp-prod');
+    if (ancla) ancla.insertAdjacentElement('afterend', badge);
+  }
+
+  function init() {
+    if (!window.LS || !window.LS.product) return;
+    /* Esperar a que los badges previos estén insertados */
+    var elapsed = 0;
+    var iv = setInterval(function() {
+      var hayAncla = !!(document.getElementById('cva-cuotas-badge') || document.getElementById('pintos-mp-prod'));
+      if (hayAncla) { clearInterval(iv); setTimeout(run, 400); return; }
+      elapsed += 100; if (elapsed >= 8000) clearInterval(iv);
+    }, 100);
+  }
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { setTimeout(init, 400); }
+})();
+</script>
+<!-- FIN PINTOS HOME — Envios Badge v1 -->
+
+<!-- PINTOS HOME — Llevá más & Ahorrá v1 -->
+<style>
+#ph-mas-ahorra{margin:12px 0 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.ph-ma-titulo{text-align:center;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.ph-ma-titulo::before,.ph-ma-titulo::after{content:"";flex:1;height:1px;background:#e8e8e8}
+.ph-ma-cards{display:flex;flex-direction:column;gap:8px}
+.ph-ma-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;user-select:none}
+.ph-ma-card:hover{border-color:#aaa}
+.ph-ma-card.ph-ma-sel{border-color:#111;background:#fafafa}
+.ph-ma-radio{width:18px;height:18px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+.ph-ma-card.ph-ma-sel .ph-ma-radio{border-color:#111}
+.ph-ma-dot{width:8px;height:8px;border-radius:50%;background:#111;opacity:0;transition:opacity .15s}
+.ph-ma-card.ph-ma-sel .ph-ma-dot{opacity:1}
+.ph-ma-info{flex:1;min-width:0}
+.ph-ma-r1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ph-ma-lbl{font-size:13px;font-weight:700;color:#111}
+.ph-ma-pct{font-size:11px;font-weight:700;color:#c0392b;background:#fff5f5;border:1px solid rgba(192,57,43,.2);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.ph-ma-best{font-size:10px;font-weight:800;color:#fff;background:#111;border-radius:4px;padding:2px 7px;letter-spacing:.5px;text-transform:uppercase;margin-left:auto;white-space:nowrap}
+.ph-ma-r2{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}
+.ph-ma-ahorra{font-size:11px;color:#228b3a;font-weight:600}
+.ph-ma-unit{font-size:11px;color:#999}
+.ph-ma-precio{text-align:right;flex-shrink:0}
+.ph-ma-total{font-size:16px;font-weight:800;color:#111;display:block;white-space:nowrap}
+.ph-ma-tach{font-size:11px;color:#ccc;text-decoration:line-through;display:block;text-align:right;white-space:nowrap}
+</style>
+<script>
+(function () {
+  if (!window.LS || !window.LS.product) return;
+
+  function ars(n) { return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+  /* Lee los tiers de descuento del producto en TN */
+  function getTiers() {
+    /* Método 1: LS.product.promotions */
+    var promos = window.LS && window.LS.product && window.LS.product.promotions;
+    if (Array.isArray(promos) && promos.length) {
+      var t1 = promos
+        .filter(function(p) { return p.min_quantity && p.discount_percentage; })
+        .map(function(p) { return { qty: parseInt(p.min_quantity), pct: parseFloat(p.discount_percentage) }; })
+        .filter(function(t) { return t.qty > 1 && t.pct > 0; })
+        .sort(function(a, b) { return a.qty - b.qty; });
+      if (t1.length) return t1;
+    }
+    /* Método 2: tabla nativa de TN en el DOM */
+    var selsTbl = [
+      '.js-bulk-discount-table',
+      '[data-store="product-bulk-discount"] table',
+      '.bulk-discount-table',
+      '.product-bulk-discount table',
+      '.js-bulk-discount-container table'
+    ];
+    for (var i = 0; i < selsTbl.length; i++) {
+      var tbl = document.querySelector(selsTbl[i]);
+      if (!tbl) continue;
+      var filas = tbl.querySelectorAll('tr');
+      var t2 = [];
+      filas.forEach(function(row) {
+        var celdas = row.querySelectorAll('td');
+        if (celdas.length < 2) return;
+        var qm = celdas[0].textContent.match(/\d+/);
+        var pm = celdas[1].textContent.match(/\d+/);
+        if (qm && pm) {
+          var q = parseInt(qm[0]), p = parseInt(pm[0]);
+          if (q > 1 && p > 0) t2.push({ qty: q, pct: p });
+        }
+      });
+      if (t2.length) return t2.sort(function(a,b){ return a.qty - b.qty; });
+    }
+    return [];
+  }
+
+  /* Oculta la tabla nativa de TN */
+  function ocultarNativo() {
+    var sels = [
+      '.js-bulk-discount-table',
+      '.js-bulk-discount-container',
+      '[data-store="product-bulk-discount"]',
+      '.bulk-discount',
+      '.product-bulk-discount',
+      '.js-product-promotions',
+      '.product-promotions-bulk'
+    ];
+    sels.forEach(function(sel) {
+      var el = document.querySelector(sel);
+      if (el) el.style.setProperty('display', 'none', 'important');
+    });
+  }
+
+  function renderWidget(precio) {
+    var tiers = getTiers();
+    if (!tiers.length) return;
+
+    ocultarNativo();
+
+    var old = document.getElementById('ph-mas-ahorra');
+    if (old) old.remove();
+
+    var opciones = [{ qty: 1, pct: 0 }].concat(tiers);
+    var bestPct  = Math.max.apply(null, tiers.map(function(t){ return t.pct; }));
+
+    var wrap = document.createElement('div');
+    wrap.id = 'ph-mas-ahorra';
+
+    var titulo = document.createElement('div');
+    titulo.className = 'ph-ma-titulo';
+    titulo.textContent = 'Llevá más & Ahorrá';
+    wrap.appendChild(titulo);
+
+    var cardsEl = document.createElement('div');
+    cardsEl.className = 'ph-ma-cards';
+
+    opciones.forEach(function(op, idx) {
+      var pUnit    = precio * (1 - op.pct / 100);
+      var total    = pUnit * op.qty;
+      var totalSin = precio * op.qty;
+      var ahorro   = totalSin - total;
+      var esBest   = op.pct > 0 && op.pct === bestPct;
+
+      var card = document.createElement('div');
+      card.className = 'ph-ma-card' + (idx === 0 ? ' ph-ma-sel' : '');
+      card.dataset.qty = op.qty;
+
+      var radio = document.createElement('div');
+      radio.className = 'ph-ma-radio';
+      var dot = document.createElement('div');
+      dot.className = 'ph-ma-dot';
+      radio.appendChild(dot);
+
+      var info = document.createElement('div');
+      info.className = 'ph-ma-info';
+
+      var r1 = document.createElement('div');
+      r1.className = 'ph-ma-r1';
+      var lbl = document.createElement('span');
+      lbl.className = 'ph-ma-lbl';
+      lbl.textContent = 'Llevá ' + op.qty;
+      r1.appendChild(lbl);
+      if (op.pct > 0) {
+        var pctEl = document.createElement('span');
+        pctEl.className = 'ph-ma-pct';
+        pctEl.textContent = op.pct + '% OFF 🔥';
+        r1.appendChild(pctEl);
+      }
+      if (esBest) {
+        var best = document.createElement('span');
+        best.className = 'ph-ma-best';
+        best.textContent = 'Mayor ahorro';
+        r1.appendChild(best);
+      }
+      info.appendChild(r1);
+
+      if (ahorro > 0 || op.qty > 1) {
+        var r2 = document.createElement('div');
+        r2.className = 'ph-ma-r2';
+        if (ahorro > 0) {
+          var ahorraEl = document.createElement('span');
+          ahorraEl.className = 'ph-ma-ahorra';
+          ahorraEl.textContent = 'Ahorrás ' + ars(ahorro);
+          r2.appendChild(ahorraEl);
+        }
+        if (op.qty > 1) {
+          var unitEl = document.createElement('span');
+          unitEl.className = 'ph-ma-unit';
+          unitEl.textContent = ars(pUnit) + ' c/u';
+          r2.appendChild(unitEl);
+        }
+        info.appendChild(r2);
+      }
+
+      var precioWrap = document.createElement('div');
+      precioWrap.className = 'ph-ma-precio';
+      var totalEl = document.createElement('span');
+      totalEl.className = 'ph-ma-total';
+      totalEl.textContent = ars(total);
+      precioWrap.appendChild(totalEl);
+      if (ahorro > 0) {
+        var tachEl = document.createElement('span');
+        tachEl.className = 'ph-ma-tach';
+        tachEl.textContent = ars(totalSin);
+        precioWrap.appendChild(tachEl);
+      }
+
+      card.appendChild(radio);
+      card.appendChild(info);
+      card.appendChild(precioWrap);
+
+      card.addEventListener('click', function() {
+        cardsEl.querySelectorAll('.ph-ma-card').forEach(function(c){ c.classList.remove('ph-ma-sel'); });
+        card.classList.add('ph-ma-sel');
+        var qtyInput = document.querySelector('input[name="quantity"], .js-product-quantity-input, #product-quantity');
+        if (qtyInput) {
+          qtyInput.value = op.qty;
+          qtyInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+
+      cardsEl.appendChild(card);
+    });
+
+    wrap.appendChild(cardsEl);
+
+    var ancla =
+      document.getElementById('cva-cuotas-badge') ||
+      document.querySelector('[data-pintos-badge="cuotas"]') ||
+      document.querySelector('[data-pintos-badge="transfer"]') ||
+      document.querySelector('[data-pintos-badge="envios"]');
+    if (ancla) ancla.insertAdjacentElement('afterend', wrap);
+  }
+
+  function init() {
+    var elapsed = 0;
+    var iv = setInterval(function() {
+      var el = document.querySelector('[data-product-price]');
+      if (el) {
+        clearInterval(iv);
+        var precio = parseFloat(el.getAttribute('data-product-price')) / 100;
+        if (precio > 0) setTimeout(function(){ renderWidget(precio); }, 700);
+        return;
+      }
+      elapsed += 100; if (elapsed >= 8000) clearInterval(iv);
+    }, 100);
+
+    if (LS.registerOnChangeVariant) {
+      LS.registerOnChangeVariant(function(variant) {
+        var p = variant && variant.price ? variant.price / 100 : 0;
+        if (p > 0) setTimeout(function(){ renderWidget(p); }, 450);
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { setTimeout(init, 400); }
+})();
+</script>
+<!-- FIN PINTOS HOME — Llevá más & Ahorrá v1 -->
+<!-- FIN PINTOS HOME — Envios Badge v1 -->

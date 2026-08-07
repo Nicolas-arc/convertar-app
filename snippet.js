@@ -160,6 +160,16 @@
         if (f.cuotas !== false) runCuotasListado(cfg);
       });
     }
+
+    // Home — accesos rápidos (entre carrusel y más vendidos)
+    if (pathActual === '/' || pathActual === '') {
+      runHomeAccesos();
+    }
+
+    // Combos — hero Option D
+    if (pathActual.indexOf('/combos-home') > -1) {
+      runHeroCombos();
+    }
   }
 
   // ════════════════════════════════════════════════
@@ -767,6 +777,142 @@
       hero.innerHTML = '<img src="' + catCfg.hero_imagen + '" alt="' + (catCfg.hero_titulo || '') + '" style="width:100%;display:block;max-height:400px;object-fit:cover;">';
       ref.parentNode.insertBefore(hero, ref);
     }
+  }
+
+  // ════════════════════════════════════════════════
+  //  FEATURE 13 — HERO COMBOS HOME (Opción D)
+  // ════════════════════════════════════════════════
+  function runHeroCombos() {
+    if (document.getElementById('cva-hero-combos')) return;
+    css([
+      '#cva-hero-combos{width:100%;padding:52px 24px 48px;text-align:center;',
+        'background:linear-gradient(160deg,#fdfcf8 0%,#f5f0e8 100%);',
+        'border-bottom:1px solid rgba(0,0,0,.06);',
+        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}',
+      '.ph-combos-chip{display:inline-block;font-size:10px;font-weight:700;',
+        'letter-spacing:3px;text-transform:uppercase;color:#b8860b;',
+        'border:1px solid rgba(184,134,11,.35);border-radius:999px;',
+        'padding:5px 16px;margin-bottom:20px;background:rgba(212,168,90,.1);}',
+      '.ph-combos-quote{font-family:Georgia,"Times New Roman",serif;font-style:italic;',
+        'font-size:clamp(18px,3vw,26px);font-weight:400;color:#1a1a1a;',
+        'line-height:1.4;margin-bottom:16px;letter-spacing:-.2px;}',
+      '.ph-combos-cats{font-size:13px;font-weight:600;color:#888;',
+        'letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}',
+      '.ph-combos-sub{font-size:11px;color:#bbb;letter-spacing:.5px;}'
+    ].join(''));
+
+    var hero = document.createElement('div');
+    hero.id = 'cva-hero-combos';
+    hero.innerHTML =
+      '<div class="ph-combos-chip">COMBO HOME</div>' +
+      '<p class="ph-combos-quote">“Porque transformar tu hogar no debería ser complicado.”</p>' +
+      '<p class="ph-combos-cats">Cortinas | Cuadros | Fundas</p>' +
+      '<p class="ph-combos-sub">Todo en una sola compra</p>';
+
+    waitForEl('.js-product-table,.products-grid,.js-products-container,#products', function (ref) {
+      if (!document.getElementById('cva-hero-combos')) ref.parentNode.insertBefore(hero, ref);
+    });
+  }
+
+  // ════════════════════════════════════════════════
+  //  FEATURE 14 — ACCESOS RÁPIDOS HOME
+  //  Aparece DEBAJO del carrusel, antes de Los más vendidos
+  // ════════════════════════════════════════════════
+  function runHomeAccesos() {
+    if (document.getElementById('ph-home-accesos')) return;
+
+    css([
+      '#ph-home-accesos{background:#fafaf8!important;padding:28px 16px 24px!important;',
+        'text-align:center!important;border-bottom:1px solid #efefed!important;',
+        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;}',
+      '#ph-home-accesos .ph-acc-title{font-size:10px!important;font-weight:700!important;',
+        'letter-spacing:2px!important;text-transform:uppercase!important;color:#ccc!important;',
+        'margin-bottom:16px!important;display:block!important;}',
+      '#ph-home-accesos .ph-acc-grid{display:flex!important;flex-direction:column!important;',
+        'gap:10px!important;max-width:540px!important;margin:0 auto!important;}',
+      '#ph-home-accesos a.ph-acc-card{display:flex!important;flex-direction:row!important;',
+        'align-items:center!important;gap:12px!important;padding:14px 16px!important;',
+        'border-radius:12px!important;border:1.5px solid rgba(0,0,0,.1)!important;',
+        'background:#fff!important;text-decoration:none!important;',
+        'box-shadow:0 2px 10px rgba(0,0,0,.05)!important;',
+        'transition:all .2s ease!important;width:100%!important;box-sizing:border-box!important;}',
+      '#ph-home-accesos a.ph-acc-card:hover{border-color:#111!important;',
+        'transform:translateY(-2px)!important;box-shadow:0 6px 20px rgba(0,0,0,.1)!important;}',
+      '#ph-home-accesos a.ph-acc-card.combos{border-color:rgba(184,134,11,.35)!important;',
+        'background:linear-gradient(135deg,rgba(212,168,90,.08),rgba(180,130,60,.04))!important;}',
+      '#ph-home-accesos a.ph-acc-card.combos:hover{border-color:#b8860b!important;',
+        'box-shadow:0 6px 20px rgba(184,134,11,.18)!important;}',
+      '#ph-home-accesos .ph-acc-icon{font-size:24px!important;flex-shrink:0!important;margin:0!important;}',
+      '#ph-home-accesos .ph-acc-body{display:flex!important;flex-direction:column!important;',
+        'gap:1px!important;flex:1!important;text-align:left!important;min-width:0!important;}',
+      '#ph-home-accesos .ph-acc-label{font-size:14px!important;font-weight:700!important;',
+        'color:#111!important;line-height:1.3!important;}',
+      '#ph-home-accesos a.ph-acc-card.combos .ph-acc-label{color:#8a6020!important;}',
+      '#ph-home-accesos .ph-acc-detail{font-size:11px!important;color:#888!important;font-weight:500!important;}',
+      '#ph-home-accesos a.ph-acc-card.combos .ph-acc-detail{color:#a07828!important;}',
+      '#ph-home-accesos .ph-acc-sub{font-size:10px!important;color:#bbb!important;letter-spacing:.3px!important;}',
+      '#ph-home-accesos a.ph-acc-card.combos .ph-acc-sub{color:#c9972a!important;}',
+      '#ph-home-accesos .ph-acc-arrow{font-size:16px!important;color:#ccc!important;flex-shrink:0!important;}',
+      '#ph-home-accesos a.ph-acc-card:hover .ph-acc-arrow{color:#999!important;}'
+    ].join(''));
+
+    function construirCard(href, icon, label, detail, sub, esCombos) {
+      var a = document.createElement('a');
+      a.href = href;
+      a.className = 'ph-acc-card' + (esCombos ? ' combos' : '');
+      var iconEl = document.createElement('span');
+      iconEl.className = 'ph-acc-icon';
+      iconEl.textContent = icon;
+      var body = document.createElement('span');
+      body.className = 'ph-acc-body';
+      var lbl = document.createElement('span'); lbl.className = 'ph-acc-label'; lbl.textContent = label;
+      var det = document.createElement('span'); det.className = 'ph-acc-detail'; det.textContent = detail;
+      var sbb = document.createElement('span'); sbb.className = 'ph-acc-sub'; sbb.textContent = sub;
+      body.appendChild(lbl); body.appendChild(det); body.appendChild(sbb);
+      var arr = document.createElement('span'); arr.className = 'ph-acc-arrow'; arr.textContent = '›';
+      a.appendChild(iconEl); a.appendChild(body); a.appendChild(arr);
+      return a;
+    }
+
+    var wrap = document.createElement('div');
+    wrap.id = 'ph-home-accesos';
+    var titleEl = document.createElement('span');
+    titleEl.className = 'ph-acc-title';
+    titleEl.textContent = '¿Qué estás buscando?';
+    var grid = document.createElement('div');
+    grid.className = 'ph-acc-grid';
+    grid.appendChild(construirCard('/home1/cuadros-pintos-home/', '🖼️', 'Cuadros Decorativos', 'Set x3 y Set x6', 'Envío gratis', false));
+    grid.appendChild(construirCard('/black-out/', '🧵', 'Cortinas Black Out', 'A Medida · Black Out', 'Elegí tu medida ideal', false));
+    wrap.appendChild(titleEl);
+    wrap.appendChild(grid);
+
+    // ─── INSERCIÓN: buscar el carrusel directamente y poner el bloque DESPUÉS ───
+    // TN tiene muchos divs utilitarios ANTES del carrusel en <main>,
+    // por eso no se puede confiar en "primer hijo visible".
+    var mainEl = document.querySelector('main') || document.body;
+
+    // Selectores de carrusel probados en templates TN (Atlántico, Pacífico, Trend, Materia, custom)
+    var CAROUSEL_SEL = [
+      '[data-store="home-slider"]',
+      '[data-store="slider"]',
+      '.home-slider',
+      '.js-home-slider',
+      '.js-main-slider',
+      '.main-slider',
+      '.slick-slider',
+      '.swiper-container',
+      '.swiper-wrapper'
+    ].join(',');
+
+    waitForEl(CAROUSEL_SEL, function (carousel) {
+      if (document.getElementById('ph-home-accesos')) return;
+      // Subir hasta el hijo directo de <main>
+      var anchor = carousel;
+      while (anchor.parentElement && anchor.parentElement !== mainEl) {
+        anchor = anchor.parentElement;
+      }
+      anchor.insertAdjacentElement('afterend', wrap);
+    }, 6000);
   }
 
   // ════════════════════════════════════════════════
