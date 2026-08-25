@@ -8,6 +8,7 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 const path = require('path');
+const fs   = require('fs');
 
 // Polyfill WebSocket para Node < 22 (requerido por @supabase/supabase-js v2)
 if (typeof globalThis.WebSocket === 'undefined') {
@@ -1022,10 +1023,17 @@ function calcular() {
 });
 
 // ── LANDING DE CORTINAS BLACKOUT ─────────────────────
-// GET /cortinas — landing de conversión, consume su propio /api/catalogo-cortinas
+// GET /cortinas — landing de conversión, inyecta WA_CORTINAS desde env
 app.get('/cortinas', (req, res) => {
-  res.setHeader('Cache-Control', 'public, max-age=60');
-  res.sendFile(path.join(__dirname, 'cortinas.html'));
+  const filePath = path.join(__dirname, 'cortinas.html');
+  fs.readFile(filePath, 'utf8', (err, html) => {
+    if (err) { res.status(500).send('Error cargando landing'); return; }
+    const waNum = process.env.WA_CORTINAS || '5491158881880';
+    const out = html.replace('__WA_NUM__', waNum);
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(out);
+  });
 });
 
 const PORT = process.env.PORT || 3000;
