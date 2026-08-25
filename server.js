@@ -9,6 +9,7 @@ const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 const path = require('path');
 const fs   = require('fs');
+const http = require('http');
 
 // Polyfill WebSocket para Node < 22 (requerido por @supabase/supabase-js v2)
 if (typeof globalThis.WebSocket === 'undefined') {
@@ -47,41 +48,86 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── OCA SOAP cotizador ────────────────────────────────
+function cotizarOCA(cpOrigen, cpDestino, pesoKg, volumenCm3) {
+  return new Promise((resolve, reject) => {
+    const soap = `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><Tarifar_Envio_Estimado xmlns="http://www.oca.com.ar/oep_oca/operaciones"><PesoTotal>${pesoKg}</PesoTotal><VolumenTotal>${volumenCm3}</VolumenTotal><CodigoPostalOrigen>${cpOrigen}</CodigoPostalOrigen><CodigoPostalDestino>${cpDestino}</CodigoPostalDestino><CantidadPaquetes>1</CantidadPaquetes></Tarifar_Envio_Estimado></soap:Body></soap:Envelope>`;
+    const options = {
+      hostname: 'webservice.oca.com.ar',
+      path: '/oep_oca.asmx',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': '"http://www.oca.com.ar/oep_oca/operaciones/Tarifar_Envio_Estimado"',
+        'Content-Length': Buffer.byteLength(soap),
+      },
+      timeout: 6000,
+    };
+    const req = http.request(options, (response) => {
+      let data = '';
+      response.on('data', chunk => { data += chunk; });
+      response.on('end', () => {
+        const match = data.match(/<Precio>([\d.,]+)<\/Precio>/);
+        if (match) {
+          resolve(parseFloat(match[1].replace(',', '.')));
+        } else {
+          reject(new Error('Sin precio en respuesta OCA'));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('OCA timeout')); });
+    req.write(soap);
+    req.end();
+  });
+}
+
 // ── Calculador de envío por CP ─────────────────────────
-// GET /api/envio?cp=1234&total=95000
-app.get('/api/envio', (req, res) => {
+// GET /api/envio?cp=1234&total=95000&panios=2
+app.get('/api/envio', async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  const cp = parseInt(req.query.cp) || 0;
+  const cpStr = (req.query.cp || '').replace(/\D/g, '').slice(0, 4);
   const total = parseFloat(req.query.total) || 0;
+  const panios = Math.max(1, parseInt(req.query.panios) || 1);
 
   if (total >= 100000) {
     return res.json({ gratis: true, mensaje: 'Envío GRATIS a todo el país 🎉' });
   }
-
-  // Zonas por CP argentino (4 dígitos)
-  let zona, costo;
-  if (cp >= 1000 && cp <= 1499) {
-    zona = 'CABA'; costo = 3800;
-  } else if (cp >= 1500 && cp <= 2999) {
-    zona = 'GBA / Buenos Aires'; costo = 4900;
-  } else if (cp >= 3000 && cp <= 5999) {
-    zona = 'Centro del país'; costo = 6800;
-  } else if (cp >= 6000 && cp <= 8999) {
-    zona = 'Interior'; costo = 8200;
-  } else if (cp >= 9000) {
-    zona = 'Patagonia / NOA'; costo = 10500;
-  } else {
-    return res.json({ error: true, mensaje: 'CP no reconocido. Consultanos por WhatsApp.' });
+  if (!cpStr || cpStr.length < 4) {
+    return res.json({ error: true, mensaje: 'Ingresá un CP de 4 dígitos.' });
   }
 
   const faltaParaGratis = Math.max(0, 100000 - total);
-  res.json({
-    gratis: false,
-    zona,
-    costo,
-    mensaje: `Envío a ${zona}: $${costo.toLocaleString('es-AR')}`,
-    faltaParaGratis,
-  });
+  const cpOrigen = process.env.OCA_CP_ORIGEN || '1754';
+  // 1 paño blackout ≈ 0.35 kg, volumen ≈ 15000 cm³ (60x25x10 cm enrollada)
+  const pesoKg = (panios * 0.35).toFixed(2);
+  const volumenCm3 = panios * 15000;
+
+  try {
+    const precio = await cotizarOCA(cpOrigen, cpStr, pesoKg, volumenCm3);
+    return res.json({
+      gratis: false,
+      costo: Math.round(precio),
+      zona: 'OCA',
+      mensaje: `Envío OCA a tu CP: $${Math.round(precio).toLocaleString('es-AR')}`,
+      faltaParaGratis,
+    });
+  } catch (e) {
+    // Fallback a tabla de zonas si OCA no responde
+    const cp = parseInt(cpStr);
+    let zona, costo;
+    if (cp >= 1000 && cp <= 1499)        { zona = 'CABA';               costo = 4500; }
+    else if (cp >= 1500 && cp <= 2999)   { zona = 'GBA / Bs.As.';       costo = 5800; }
+    else if (cp >= 3000 && cp <= 5999)   { zona = 'Centro del país';     costo = 7500; }
+    else if (cp >= 6000 && cp <= 8999)   { zona = 'Interior';            costo = 9200; }
+    else if (cp >= 9000)                 { zona = 'Patagonia / NOA';     costo = 11500; }
+    else { return res.json({ error: true, mensaje: 'CP no reconocido. Consultanos por WhatsApp.' }); }
+    return res.json({
+      gratis: false, zona, costo,
+      mensaje: `Envío OCA a ${zona}: $${costo.toLocaleString('es-AR')} (estimado)`,
+      faltaParaGratis,
+    });
+  }
 });
 
 // ── Health check ─────────────────────────────────────

@@ -1563,7 +1563,8 @@ async function calcularEnvio(){
   const btn=document.getElementById('envio-btn');
   btn.textContent='…'; btn.disabled=true;
   try{
-    const r=await fetch(`/api/envio?cp=${encodeURIComponent(cp)}&total=${tot}`);
+    const panios=S.ventanas.reduce((a,v)=>a+v.panios.bo+(v.tipo==='blackout_gasa'?v.panios.ga:0),0)||1;
+    const r=await fetch(`/api/envio?cp=${encodeURIComponent(cp)}&total=${tot}&panios=${panios}`);
     const d=await r.json();
     const el=document.getElementById('envio-result');
     if(d.gratis){
