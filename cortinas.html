@@ -535,6 +535,17 @@ body.safe-pad{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
     <div class="res-box" id="res-box"></div>
     <div class="res-cuotas" id="res-cuotas"></div>
     <div class="res-trans" id="res-trans"></div>
+
+    <!-- Calculador de envío -->
+    <div id="envio-box" style="margin:16px 0;border:1px solid var(--bd);border-radius:var(--r14);padding:16px;background:var(--Fd)">
+      <div id="envio-result" style="font-size:14px;color:var(--ts);text-align:center;min-height:20px"></div>
+      <div id="envio-input-row" style="display:flex;gap:8px;margin-top:10px">
+        <input id="envio-cp" type="number" placeholder="Código postal (ej: 1425)" maxlength="4"
+          style="flex:1;padding:10px 14px;border:1px solid var(--bd);border-radius:var(--r8);background:var(--W);color:var(--tp);font-size:14px">
+        <button id="envio-btn" style="background:var(--C);color:#fff;border:none;border-radius:var(--r8);padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">Calcular</button>
+      </div>
+    </div>
+
     <button class="btn-d" id="btn-cart">🛒 AGREGAR AL CARRITO</button>
     <div class="res-cta-sep">o consultá antes de comprar</div>
     <a class="btn-wa" id="btn-wa" href="#" target="_blank" rel="noopener noreferrer">
@@ -1137,6 +1148,17 @@ function renderResumen(){
   box.innerHTML=`<div class="res-hdr">TU CONFIGURACIÓN</div><div class="res-items">${itemsHtml}</div><div class="res-tot"><span class="rt-lbl">Total</span><span class="rt-amt">${ars(tot)}</span></div>`;
   document.getElementById('res-cuotas').textContent=`${CFG.CUOTAS} cuotas de ${ars(tot/CFG.CUOTAS)} sin interés`;
   document.getElementById('res-trans').textContent=`Con transferencia: ${ars(tot*(1-CFG.DESC_TRF))} (−${Math.round(CFG.DESC_TRF*100)}%)`;
+  /* Envío: si supera el umbral mostrarlo de una */
+  if(tot>=100000){
+    document.getElementById('envio-result').innerHTML='<strong style="color:#2a9d2a">🎉 Envío GRATIS a todo el país</strong>';
+    document.getElementById('envio-input-row').style.display='none';
+  } else {
+    const falta=ars(100000-tot);
+    document.getElementById('envio-result').textContent=`Sumá ${falta} más y el envío es GRATIS`;
+    document.getElementById('envio-input-row').style.display='flex';
+    document.getElementById('envio-btn').onclick=calcularEnvio;
+    document.getElementById('envio-cp').onkeydown=e=>{ if(e.key==='Enter') calcularEnvio(); };
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1281,7 +1303,7 @@ async function initCatalog() {
         id:         'bo-' + parseInt(key),
         alto:       parseInt(key),
         sku:        c.nombre,
-        precioUnit: c.precio,
+        precioUnit: c.precioTransf,
         variantId:  c.variant_id || null,
       }))
       .filter(b => b.alto && b.precioUnit)
@@ -1530,6 +1552,34 @@ document.getElementById('sticky-cta').onclick=()=>{
 
 document.getElementById('guide-modal').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); });
 document.getElementById('cart-modal').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); });
+
+/* ════════════════════════════════════════════════════════════
+   CALCULADOR DE ENVÍO
+════════════════════════════════════════════════════════════ */
+async function calcularEnvio(){
+  const cp=(document.getElementById('envio-cp').value||'').trim();
+  if(cp.length<4){ document.getElementById('envio-result').textContent='Ingresá un CP de 4 dígitos.'; return; }
+  const tot=S.ventanas.reduce((a,v)=>a+v.precio,0)+S.cuadros.reduce((a,c)=>a+c.precioUnit,0);
+  const btn=document.getElementById('envio-btn');
+  btn.textContent='…'; btn.disabled=true;
+  try{
+    const r=await fetch(`/api/envio?cp=${encodeURIComponent(cp)}&total=${tot}`);
+    const d=await r.json();
+    const el=document.getElementById('envio-result');
+    if(d.gratis){
+      el.innerHTML='<strong style="color:#2a9d2a">🎉 '+d.mensaje+'</strong>';
+    } else if(d.error){
+      el.textContent=d.mensaje;
+    } else {
+      const extras=d.faltaParaGratis>0?` · Sumá ${ars(d.faltaParaGratis)} más para envío gratis`:'';
+      el.innerHTML=`📦 <strong>${d.mensaje}</strong><span style="color:var(--ts);font-size:12px">${extras}</span>`;
+    }
+  } catch(e){
+    document.getElementById('envio-result').textContent='No se pudo calcular. Consultanos por WhatsApp.';
+  } finally{
+    btn.textContent='Calcular'; btn.disabled=false;
+  }
+}
 
 /* ════════════════════════════════════════════════════════════
    INIT

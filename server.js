@@ -39,6 +39,51 @@ try {
   console.error('Supabase ❌ error:', e.message);
 }
 
+// ── Subdominio cortinas → redirigir raíz a /cortinas ──
+app.use((req, res, next) => {
+  if (req.hostname === 'cortinas.pintoshogar.com.ar' && req.path === '/') {
+    return res.redirect(301, '/cortinas');
+  }
+  next();
+});
+
+// ── Calculador de envío por CP ─────────────────────────
+// GET /api/envio?cp=1234&total=95000
+app.get('/api/envio', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const cp = parseInt(req.query.cp) || 0;
+  const total = parseFloat(req.query.total) || 0;
+
+  if (total >= 100000) {
+    return res.json({ gratis: true, mensaje: 'Envío GRATIS a todo el país 🎉' });
+  }
+
+  // Zonas por CP argentino (4 dígitos)
+  let zona, costo;
+  if (cp >= 1000 && cp <= 1499) {
+    zona = 'CABA'; costo = 3800;
+  } else if (cp >= 1500 && cp <= 2999) {
+    zona = 'GBA / Buenos Aires'; costo = 4900;
+  } else if (cp >= 3000 && cp <= 5999) {
+    zona = 'Centro del país'; costo = 6800;
+  } else if (cp >= 6000 && cp <= 8999) {
+    zona = 'Interior'; costo = 8200;
+  } else if (cp >= 9000) {
+    zona = 'Patagonia / NOA'; costo = 10500;
+  } else {
+    return res.json({ error: true, mensaje: 'CP no reconocido. Consultanos por WhatsApp.' });
+  }
+
+  const faltaParaGratis = Math.max(0, 100000 - total);
+  res.json({
+    gratis: false,
+    zona,
+    costo,
+    mensaje: `Envío a ${zona}: $${costo.toLocaleString('es-AR')}`,
+    faltaParaGratis,
+  });
+});
+
 // ── Health check ─────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({
