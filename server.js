@@ -631,7 +631,7 @@ app.post('/api/promos/:shop_id', async (req, res) => {
 
 let _catalogoCache = null;
 let _catalogoCacheTime = 0;
-const _catalogoVersion = '3'; // incrementar para invalidar cache
+const _catalogoVersion = '4'; // incrementar para invalidar cache
 const CATALOGO_TTL = 30 * 60 * 1000;
 
 function parsearNombre(name) {
@@ -667,7 +667,15 @@ function procesarCatalogo(products) {
     const handle  = p.handle || '';
     const imagen  = (p.images && p.images[0]) ? (p.images[0].src || p.images[0].url || null) : null;
     const url     = `https://www.pintoshogar.com.ar/${handle}`;
-    const base    = { id: p.id, variant_id: String(variant.id || ''), nombre, precio, precioTransf, handle, imagen, url };
+    /* Mapa color → variant_id para pasar el color seleccionado al carrito */
+    const variantes = {};
+    if (p.variants) {
+      p.variants.forEach(v => {
+        const colorName = Array.isArray(v.values) ? v.values[0] : null;
+        if (colorName && v.id) variantes[colorName] = String(v.id);
+      });
+    }
+    const base    = { id: p.id, variant_id: String(variant.id || ''), variantes, nombre, precio, precioTransf, handle, imagen, url };
 
     if (/cuadro/i.test(low) && !/combo/i.test(low)) {
       if (/x6/i.test(low)) cuadros.push({ ...base, tipo: 'x6' });

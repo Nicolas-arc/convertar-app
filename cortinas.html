@@ -619,10 +619,11 @@ const CFG = {
     { maxAncho: 520, bo: 4, ga: 4 },
   ],
   GRUPOS_ALTO_BO: [
-    { maxAlto: 155, sku: 150 },
     { maxAlto: 215, sku: 210 },
+    { maxAlto: 225, sku: 220 },
     { maxAlto: 245, sku: 240 },
     { maxAlto: 265, sku: 260 },
+    { maxAlto: 285, sku: 280 },
     { maxAlto: 315, sku: 300 },
   ],
   GRUPOS_ALTO_GA: [
@@ -644,11 +645,12 @@ const WA_NUM = '__WA_NUM__';
 ════════════════════════════════════════════════════════════ */
 const CAT = {
   blackouts: [
-    { id:'bo-150', alto:150, sku:'Cortina Blackout x1P 150cm x 130cm', precioUnit:35293, variantId:null },
-    { id:'bo-210', alto:210, sku:'Cortina Blackout x1P 210cm x 130cm', precioUnit:34900, variantId:null },
-    { id:'bo-240', alto:240, sku:'Cortina Blackout x1P 240cm x 130cm', precioUnit:41200, variantId:null },
-    { id:'bo-260', alto:260, sku:'Cortina Blackout x1P 260cm x 130cm', precioUnit:47800, variantId:null },
-    { id:'bo-300', alto:300, sku:'Cortina Blackout x1P 300cm x 130cm', precioUnit:57400, variantId:null },
+    { id:'bo-210', alto:210, sku:'Cortina Blackout 210cm x 130cm', precioUnit:34900, variantId:null },
+    { id:'bo-220', alto:220, sku:'Cortina Blackout 220cm x 130cm', precioUnit:37000, variantId:null },
+    { id:'bo-240', alto:240, sku:'Cortina Blackout 240cm x 130cm', precioUnit:41200, variantId:null },
+    { id:'bo-260', alto:260, sku:'Cortina Blackout 260cm x 130cm', precioUnit:47800, variantId:null },
+    { id:'bo-280', alto:280, sku:'Cortina Blackout 280cm x 130cm', precioUnit:52000, variantId:null },
+    { id:'bo-300', alto:300, sku:'Cortina Blackout 300cm x 130cm', precioUnit:57400, variantId:null },
   ],
   gasas: [
     { id:'ga-210', alto:210, sku:'Gasa Premium x1P 210cm x 130cm', precioUnit:14200, variantId:null },
@@ -657,11 +659,10 @@ const CAT = {
     { id:'ga-300', alto:300, sku:'Gasa Premium x1P 300cm x 130cm', precioUnit:23600, variantId:null },
   ],
   colores: [
-    { id:'beige',    label:'Beige claro',  sub:'Lino natural', hex:'#C4AD8C' },
-    { id:'offwhite', label:'Off White',    sub:'Blanco roto',  hex:'#E2D9C8' },
-    { id:'gristopo', label:'Gris topo',    sub:'Gris cálido',  hex:'#9C9490' },
-    { id:'granito',  label:'Granito',      sub:'Gris piedra',  hex:'#6A6460' },
-    { id:'negro',    label:'Negro',        sub:'Negro intenso', hex:'#282626' },
+    { id:'beige',      label:'Beige claro', sub:'Simil lino natural', hex:'#C4AD8C', tn:'Beige claro Bifaz' },
+    { id:'vison',      label:'Visón',       sub:'Beige oscuro',       hex:'#9E8B72', tn:'Vison Bifaz' },
+    { id:'grismedio',  label:'Gris medio',  sub:'Gris cálido',        hex:'#9C9490', tn:'Gris medio Bifaz' },
+    { id:'blancotiza', label:'Blanco tiza', sub:'Blanco roto',        hex:'#E5E0D5', tn:'Blanco Tiza Bifaz' },
   ],
   cuadros: [
     { id:'cx3-aura', label:'Trilogía Aura Natural', tipo:'Set x3', precioUnit:24900, pal:['#C4AD8C','#9E9474','#D8D0C0'], variantId:null },
@@ -678,12 +679,15 @@ const CAT = {
   ],
 };
 
+/* Mapa alto → { 'Beige claro Bifaz': variantId, ... } — se rellena desde la API */
+let colorVariantMap = {};
+
 /* ════════════════════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════════════════════ */
 const S = {
   ventanas: [],
-  cfg: { ancho:null, alto:null, color:null, tipo:'solo_blackout', nombre:'DORMITORIO', ico:'🛏️' },
+  cfg: { ancho:null, alto:null, color:'beige', tipo:'solo_blackout', nombre:'DORMITORIO', ico:'🛏️' },
   cuadros: [],
   miniCfg: { nombre:'LIVING', ico:'🛋️', ancho:null, alto:null, color:'beige', tipo:'blackout_gasa' },
 };
@@ -746,19 +750,23 @@ function buildWAMessage(){
 }
 
 function buildTNCartURL(){
-  /* Genera URL de checkout TN con variant IDs reales.
-     Cuando variantId es null (catálogo mock) redirige a la tienda. */
   const pairs=[];
+  const colorEntry = CAT.colores.find(c => c.id === (S.cfg.color || 'beige'));
+  const tnColor = colorEntry ? colorEntry.tn : null;
+
   S.ventanas.forEach(v=>{
-    const bo=findBO(v.alto);
-    if(bo.variantId) pairs.push(bo.variantId+':'+v.panios.bo);
+    const bo = findBO(v.alto);
+    /* Buscar variant del color elegido; fallback al variant_id por defecto */
+    const boVid = (tnColor && colorVariantMap[bo.alto] && colorVariantMap[bo.alto][tnColor])
+      || bo.variantId;
+    if(boVid) pairs.push(boVid+':'+v.panios.bo);
     if(v.tipo==='blackout_gasa'){
-      const ga=findGA(v.alto);
+      const ga = findGA(v.alto);
       if(ga.variantId) pairs.push(ga.variantId+':'+v.panios.ga);
     }
   });
   S.cuadros.forEach(c=>{ if(c.variantId) pairs.push(c.variantId+':1'); });
-  if(!pairs.length) return null; // no variant IDs yet
+  if(!pairs.length) return null;
   return 'https://pintoshogar.com.ar/checkout/v3/start?products='+pairs.join(',');
 }
 
@@ -1267,7 +1275,7 @@ async function initCatalog() {
     const data = await r.json();
     if (!data || !data.cortinas) return;
 
-    /* ── Blackouts: un entry por alto (210, 240, 260, 300 cm) ── */
+    /* ── Blackouts: un entry por alto + mapa de colores → variant_id ── */
     const boFromAPI = Object.entries(data.cortinas)
       .map(([key, c]) => ({
         id:         'bo-' + parseInt(key),
@@ -1280,6 +1288,15 @@ async function initCatalog() {
       .sort((a, b) => a.alto - b.alto);
 
     if (boFromAPI.length) CAT.blackouts = boFromAPI;
+
+    /* Construir colorVariantMap: alto → { 'Beige claro Bifaz': variantId, ... } */
+    colorVariantMap = {};
+    Object.entries(data.cortinas).forEach(([key, c]) => {
+      const alto = parseInt(key);
+      if (c.variantes && Object.keys(c.variantes).length) {
+        colorVariantMap[alto] = c.variantes;
+      }
+    });
 
     /* ── Gasas (voile): mismo producto para todos los altos ──
        El servidor devuelve un único voile. Mantenemos los
