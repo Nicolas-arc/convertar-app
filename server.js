@@ -630,7 +630,7 @@ app.post('/api/promos/:shop_id', async (req, res) => {
 
 let _catalogoCache = null;
 let _catalogoCacheTime = 0;
-const _catalogoVersion = '2'; // incrementar para invalidar cache
+const _catalogoVersion = '3'; // incrementar para invalidar cache
 const CATALOGO_TTL = 30 * 60 * 1000;
 
 function parsearNombre(name) {
@@ -666,7 +666,7 @@ function procesarCatalogo(products) {
     const handle  = p.handle || '';
     const imagen  = (p.images && p.images[0]) ? (p.images[0].src || p.images[0].url || null) : null;
     const url     = `https://www.pintoshogar.com.ar/${handle}`;
-    const base    = { id: p.id, nombre, precio, precioTransf, handle, imagen, url };
+    const base    = { id: p.id, variant_id: String(variant.id || ''), nombre, precio, precioTransf, handle, imagen, url };
 
     if (/cuadro/i.test(low) && !/combo/i.test(low)) {
       if (/x6/i.test(low)) cuadros.push({ ...base, tipo: 'x6' });
@@ -1019,6 +1019,13 @@ function calcular() {
 </script>
 </body>
 </html>`);
+});
+
+// ── LANDING DE CORTINAS BLACKOUT ─────────────────────
+// GET /cortinas — landing de conversión, consume su propio /api/catalogo-cortinas
+app.get('/cortinas', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.sendFile(path.join(__dirname, 'cortinas.html'));
 });
 
 const PORT = process.env.PORT || 3000;
