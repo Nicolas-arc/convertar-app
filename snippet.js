@@ -8,6 +8,7 @@
 
   var SHOP_ID = 'pintoshogar';
   var API_URL = 'https://convertar-app-production.up.railway.app';
+  var WA_NUMBER = '5492235551148';
 
   // ── Session ID ───────────────────────────────────
   var sid = sessionStorage.getItem('cva_sid');
@@ -170,6 +171,9 @@
     if (pathActual.indexOf('/combos-home') > -1) {
       runHeroCombos();
     }
+
+    // WhatsApp widget — todas las páginas
+    runWAWidget();
   }
 
   // ════════════════════════════════════════════════
@@ -913,6 +917,209 @@
       }
       anchor.insertAdjacentElement('afterend', wrap);
     }, 6000);
+  }
+
+  // ════════════════════════════════════════════════
+  //  FEATURE 15 — WIDGET WHATSAPP RESPUESTAS RÁPIDAS
+  // ════════════════════════════════════════════════
+  function runWAWidget() {
+    if (document.getElementById('cva-wa-btn')) return;
+
+    var WA_BASE = 'https://wa.me/' + WA_NUMBER + '?text=';
+
+    var WA_ICON = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.116 1.529 5.843L0 24l6.302-1.512A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.017-1.376l-.36-.213-3.732.895.938-3.63-.234-.374A9.778 9.778 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>';
+
+    var PREGUNTAS = [
+      {
+        id: 'promos',
+        label: '🔥 Promos hoy',
+        resp: '<div style="display:flex;flex-direction:column;gap:8px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:10px;">' +
+            '<span style="font-size:24px;flex-shrink:0;">💳</span>' +
+            '<div><strong style="display:block;font-size:13px;color:#1a1a1a;">6 cuotas sin interés</strong>' +
+            '<span style="font-size:12px;color:#888;">Con todas las tarjetas de crédito</span></div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:10px;">' +
+            '<span style="font-size:24px;flex-shrink:0;">🏦</span>' +
+            '<div><strong style="display:block;font-size:13px;color:#1a1a1a;">15% OFF con transferencia</strong>' +
+            '<span style="font-size:12px;color:#888;">Mejor precio</span></div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:10px;">' +
+            '<span style="font-size:24px;flex-shrink:0;">🚚</span>' +
+            '<div><strong style="display:block;font-size:13px;color:#1a1a1a;">Envío gratis</strong>' +
+            '<span style="font-size:12px;color:#888;">En compras desde $99.999</span></div>' +
+          '</div>' +
+        '</div>',
+        tipo: 'resp'
+      },
+      {
+        id: 'envios',
+        label: '🚚 ¿Hacen envíos a todo el país?',
+        resp: 'Sí, a <strong>todo el país</strong> 🙌<br><br>Para calcular el costo de envío, ingresá tu código postal al comprar.<br><br>Si tu compra supera <strong>$99.999</strong>, el envío es <strong>gratis</strong>. ¡Y podés pagar en <strong>6 cuotas sin interés</strong>! 🎉',
+        tipo: 'resp'
+      },
+      {
+        id: 'cuadros',
+        label: '🖼️ Cuadros',
+        resp: 'Tenemos diseños para <strong>transformar tu hogar</strong>, o podés crear tus <strong>cuadros personalizados</strong>.<br><br>📐 Medidas estándar: <strong>30×20 cm</strong> y <strong>40×35 cm</strong><br>🪵 Marco de MDF 1 cm, listo para colgar<br>🎨 Diseño de vinilo impreso de alta calidad',
+        link: 'https://www.pintoshogar.com.ar/home1/cuadros-pintos-home/',
+        linkLabel: '🖼️ Ver todos los cuadros',
+        tipo: 'resp'
+      },
+      {
+        id: 'cortinas',
+        label: '🧵 Cortinas Black Out a medida',
+        resp: 'Necesitás el <strong>alto × ancho</strong> de tu ventana para saber cuál es la ideal.<br><br>📅 Confeccionamos los <strong>miércoles</strong>, entrega el viernes → plazo: <strong>5 a 10 días hábiles</strong> (a veces antes si hay stock).<br><br>Cada paño mide <strong>130 cm de ancho</strong>. Pasanos tus medidas y te decimos cuántos necesitás.',
+        link: 'https://www.pintoshogar.com.ar/black-out/black-out-a-medida/',
+        linkLabel: '🧵 Ver cortinas a medida',
+        tipo: 'resp'
+      },
+      {
+        id: 'cambios',
+        label: '🔄 ¿Hacen cambios?',
+        resp: 'Sí! Tenés <strong>10 días hábiles</strong> desde que recibís el producto para pedir un cambio o devolución.<br><br>📩 Escribí a <strong>soporte@pintoshome.com</strong> con tu número de orden.<br>📦 El producto debe estar sin usar y en su empaque original.<br><br>Si el error es nuestro, el envío va por nuestra cuenta.',
+        link: 'https://www.pintoshogar.com.ar/politica-de-devolucion/',
+        linkLabel: '📋 Ver política completa',
+        tipo: 'resp'
+      }
+    ];
+
+    css([
+      '#cva-wa-btn{position:fixed;bottom:20px;right:20px;width:56px;height:56px;',
+        'border-radius:50%;background:#25D366;border:none;cursor:pointer;z-index:99998;',
+        'box-shadow:0 4px 16px rgba(37,211,102,.45);',
+        'display:flex;align-items:center;justify-content:center;',
+        'transition:transform .2s,box-shadow .2s;padding:0;}',
+      '#cva-wa-btn:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(37,211,102,.55);}',
+      '#cva-wa-btn svg{width:32px;height:32px;fill:#fff;display:block;}',
+      '#cva-wa-panel{position:fixed;bottom:86px;right:16px;width:320px;',
+        'max-width:calc(100vw - 32px);background:#fff;border-radius:16px;',
+        'box-shadow:0 8px 40px rgba(0,0,0,.18);z-index:99997;overflow:hidden;',
+        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;',
+        'opacity:0;transform:translateY(10px) scale(.97);',
+        'transition:opacity .2s,transform .2s;pointer-events:none;}',
+      '#cva-wa-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:all;}',
+      '#cva-wa-header{background:#1a1a1a;padding:16px;display:flex;align-items:center;gap:12px;}',
+      '#cva-wa-avatar{width:40px;height:40px;border-radius:50%;background:#25D366;',
+        'display:flex;align-items:center;justify-content:center;flex-shrink:0;}',
+      '#cva-wa-avatar svg{width:22px;height:22px;fill:#fff;}',
+      '#cva-wa-htxt{flex:1;min-width:0;}',
+      '#cva-wa-htxt strong{display:block;font-size:14px;font-weight:700;color:#fff;}',
+      '#cva-wa-htxt span{font-size:12px;color:rgba(255,255,255,.5);}',
+      '#cva-wa-close{background:none;border:none;color:rgba(255,255,255,.45);',
+        'font-size:24px;line-height:1;cursor:pointer;padding:0;flex-shrink:0;}',
+      '#cva-wa-close:hover{color:#fff;}',
+      '#cva-wa-greeting{padding:14px 14px 10px;background:#ece5dd;}',
+      '#cva-wa-bubble{background:#fff;border-radius:0 12px 12px 12px;',
+        'padding:10px 14px;font-size:13px;color:#1a1a1a;line-height:1.5;',
+        'box-shadow:0 1px 3px rgba(0,0,0,.08);}',
+      '#cva-wa-qs{padding:10px 10px 6px;display:flex;flex-direction:column;gap:7px;}',
+      '.cva-wa-q{background:#fff;border:1.5px solid #e0e0e0;border-radius:10px;',
+        'padding:11px 14px;font-size:13px;font-weight:600;color:#1a1a1a;',
+        'cursor:pointer;text-align:left;width:100%;',
+        'transition:border-color .15s,background .15s;}',
+      '.cva-wa-q:hover{border-color:#25D366;background:#f0fdf4;}',
+      '#cva-wa-resp-wrap{padding:10px 14px;background:#ece5dd;display:none;}',
+      '#cva-wa-back{background:none;border:none;font-size:12px;color:#666;',
+        'cursor:pointer;padding:0 0 8px;display:flex;align-items:center;gap:4px;}',
+      '#cva-wa-back:hover{color:#1a1a1a;}',
+      '#cva-wa-resp-bubble{background:#fff;border-radius:0 12px 12px 12px;',
+        'padding:12px 14px;font-size:13px;color:#1a1a1a;line-height:1.6;',
+        'box-shadow:0 1px 3px rgba(0,0,0,.08);}',
+      '.cva-wa-resp-link{display:flex;align-items:center;justify-content:center;gap:7px;',
+        'background:#25D366;color:#fff;border-radius:9px;padding:10px 14px;',
+        'font-size:13px;font-weight:700;text-decoration:none;margin-top:10px;}',
+      '.cva-wa-resp-link svg{width:16px;height:16px;fill:#fff;flex-shrink:0;}',
+      '#cva-wa-cta{padding:0 10px 10px;}',
+      '#cva-wa-cta a{display:flex;align-items:center;justify-content:center;gap:8px;',
+        'background:#1a1a1a;color:#fff;border-radius:10px;padding:13px;',
+        'font-size:14px;font-weight:700;text-decoration:none;}',
+      '#cva-wa-cta a:hover{background:#333;}',
+      '#cva-wa-cta a svg{width:18px;height:18px;fill:#25D366;}',
+      '#cva-wa-foot{padding:6px;text-align:center;font-size:10px;color:#ccc;border-top:1px solid #f0f0f0;}'
+    ].join(''));
+
+    var waGeneral = WA_BASE + encodeURIComponent('Hola Pintos Home! Tengo una consulta 😊');
+
+    var btn = document.createElement('button');
+    btn.id = 'cva-wa-btn';
+    btn.setAttribute('aria-label', 'WhatsApp');
+    btn.innerHTML = WA_ICON;
+
+    var panel = document.createElement('div');
+    panel.id = 'cva-wa-panel';
+    panel.innerHTML = [
+      '<div id="cva-wa-header">',
+        '<div id="cva-wa-avatar">' + WA_ICON + '</div>',
+        '<div id="cva-wa-htxt"><strong>Pintos Home</strong><span>Respondemos enseguida ✓</span></div>',
+        '<button id="cva-wa-close">×</button>',
+      '</div>',
+      '<div id="cva-wa-greeting">',
+        '<div id="cva-wa-bubble">¡Hola! 👋 ¿En qué te podemos ayudar? Elegí una opción o escribinos directo.</div>',
+      '</div>',
+      '<div id="cva-wa-qs">',
+        PREGUNTAS.map(function (p) {
+          return '<button class="cva-wa-q" data-id="' + p.id + '">' + p.label + '</button>';
+        }).join(''),
+      '</div>',
+      '<div id="cva-wa-resp-wrap">',
+        '<button id="cva-wa-back">← Volver</button>',
+        '<div id="cva-wa-resp-bubble"></div>',
+      '</div>',
+      '<div id="cva-wa-cta"><a href="' + waGeneral + '" target="_blank">' + WA_ICON + 'Hablar con asesora</a></div>',
+      '<div id="cva-wa-foot">Respuestas de Pintos Home</div>'
+    ].join('');
+
+    document.body.appendChild(btn);
+    document.body.appendChild(panel);
+
+    var qsDiv = panel.querySelector('#cva-wa-qs');
+    var respWrap = panel.querySelector('#cva-wa-resp-wrap');
+    var respBubble = panel.querySelector('#cva-wa-resp-bubble');
+
+    function showQs() {
+      qsDiv.style.display = 'flex';
+      respWrap.style.display = 'none';
+    }
+
+    function showResp(p) {
+      if (p.tipo === 'wa') {
+        window.open(WA_BASE + p.wa, '_blank');
+        return;
+      }
+      var waLink = WA_BASE + encodeURIComponent('Hola Pintos Home! Quería consultar sobre: ' + p.label.replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ]/g, '').trim());
+      var extraLink = p.link
+        ? '<a class="cva-wa-resp-link" href="' + p.link + '" target="_blank" style="background:#1a1a1a;margin-top:8px;">' + (p.linkLabel || 'Ver más') + '</a>'
+        : '';
+      respBubble.innerHTML = p.resp + extraLink + '<a class="cva-wa-resp-link" href="' + waLink + '" target="_blank">' + WA_ICON + 'Consultar por WhatsApp</a>';
+      qsDiv.style.display = 'none';
+      respWrap.style.display = 'block';
+    }
+
+    btn.addEventListener('click', function () {
+      panel.classList.toggle('open');
+    });
+
+    panel.querySelector('#cva-wa-close').addEventListener('click', function () {
+      panel.classList.remove('open');
+    });
+
+    panel.querySelector('#cva-wa-back').addEventListener('click', showQs);
+
+    qsDiv.addEventListener('click', function (e) {
+      var q = e.target.closest('.cva-wa-q');
+      if (!q) return;
+      var id = q.dataset.id;
+      for (var i = 0; i < PREGUNTAS.length; i++) {
+        if (PREGUNTAS[i].id === id) { showResp(PREGUNTAS[i]); return; }
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        panel.classList.remove('open');
+      }
+    });
   }
 
   // ════════════════════════════════════════════════
