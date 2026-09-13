@@ -178,8 +178,6 @@
       runHeroCombos();
     }
 
-    // WhatsApp widget — todas las páginas
-    runWAWidget();
   }
 
   // ════════════════════════════════════════════════
