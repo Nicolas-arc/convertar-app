@@ -47,9 +47,15 @@
 
   // ── CSS Global ───────────────────────────────────
   css([
+    // Ocultar barra envío gratis
     '.js-free-shipping-progress,.js-cart-free-shipping,.cart-free-shipping,',
     '[class*="free-shipping-bar"],[class*="free-shipping-progress"],',
     '[data-store="free-shipping-bar"],[data-store="cart-free-shipping"]',
+    '{display:none!important;}',
+    // Ocultar botón WA nativo de TN (lo reemplazamos con nuestro widget)
+    '.js-go-to-whatsapp-button,.js-go-to-whatsapp,.whatsapp-button,',
+    '.js-whatsapp-button,[data-store="whatsapp-button"],[data-store="whatsapp"],',
+    '[class*="whatsapp-float"],[class*="whatsapp-btn"],[id*="whatsapp-button"]',
     '{display:none!important;}'
   ].join(''));
 
@@ -212,8 +218,9 @@
     }
 
     if (precioLista > precio) {
-      var cmpNativo = scope.querySelector('.js-compare-price-display,.price-compare,[data-store="compare-price"]');
-      if (cmpNativo) cmpNativo.style.setProperty('display', 'none', 'important');
+      scope.querySelectorAll('.js-compare-price-display,.price-compare,[data-store="compare-price"]').forEach(function(el) {
+        el.style.setProperty('display', 'none', 'important');
+      });
 
       s(priceEl, { 'display': 'inline-block', 'width': 'auto', 'max-width': 'none', 'flex-shrink': '0' });
       s(priceEl.parentNode, { 'display': 'flex', 'align-items': 'baseline', 'gap': '8px', 'flex-wrap': 'wrap' });
@@ -266,7 +273,8 @@
   //  FEATURE 2 — MEJOR PRECIO (TRANSFERENCIA) BADGE
   // ════════════════════════════════════════════════
   function runMejorPrecio(cfg) {
-    if (document.getElementById('cva-mp-prod')) return;
+    if (window._cvaMpDone || document.getElementById('cva-mp-prod')) return;
+    window._cvaMpDone = true;
     var mp = cfg.mejor_precio || {};
     var desc = (mp.descuento_pct || 10) / 100;
     var line1 = mp.chip_line1 || 'Mejor Precio';
@@ -292,6 +300,7 @@
       if (e.target.matches('select,input[type="radio"]')) {
         clearTimeout(window._cvaMpT);
         window._cvaMpT = setTimeout(function () {
+          window._cvaMpDone = false;
           var viejo = document.getElementById('cva-mp-prod');
           if (viejo) viejo.remove();
           runMejorPrecio(cfg);
