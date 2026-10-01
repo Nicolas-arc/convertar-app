@@ -396,6 +396,29 @@ app.get('/api/tn/test', async (req, res) => {
   }
 });
 
+// ── NÚMERO DE ORDEN (botón WhatsApp del checkout) ─
+// GET /api/tn/orden?id=2084023905 → { number: 58287 }
+// Público: lo llama el script NubeSDK desde la página de éxito. Devuelve solo el número.
+app.get('/api/tn/orden', async (req, res) => {
+  const id = String(req.query.id || '');
+  if (!/^\d+$/.test(id)) return res.status(400).json({ error: 'id inválido' });
+
+  const TN_TOKEN    = process.env.TN_TOKEN;
+  const TN_STORE_ID = process.env.TN_STORE_ID;
+  if (!TN_TOKEN || !TN_STORE_ID) return res.status(503).json({ error: 'TN_TOKEN o TN_STORE_ID no configurados en Railway' });
+
+  try {
+    const r = await fetch(`https://api.tiendanube.com/v1/${TN_STORE_ID}/orders/${id}?fields=number`, {
+      headers: { 'Authentication': `bearer ${TN_TOKEN}`, 'User-Agent': 'ConvertAR (nicolas@pintoshome.com)' }
+    });
+    if (!r.ok) return res.status(r.status).json({ error: `TN API error ${r.status}` });
+    const { number } = await r.json();
+    res.json({ number });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── TIENDANUBE API PROXY ──────────────────────────
 
 // GET /api/tn/products?page=1&q=busqueda — lista paginada para el panel
