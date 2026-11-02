@@ -1150,7 +1150,7 @@ app.get('/cortinas', (req, res) => {
   const filePath = path.join(__dirname, 'cortinas.html');
   fs.readFile(filePath, 'utf8', (err, html) => {
     if (err) { res.status(500).send('Error cargando landing'); return; }
-    const waNum = process.env.WA_CORTINAS || '5491158881880';
+    const waNum = process.env.WA_CORTINAS || '5492235551148';
     const out = html.replace('__WA_NUM__', waNum);
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
