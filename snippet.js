@@ -736,8 +736,9 @@
     if (!ref) return;
     ref.parentNode.insertBefore(hero, ref);
 
-    if (filtros.length > 0) {
-      var pillsHtml = filtros.map(function (f) {
+    var filtrosValidos = filtros.filter(function(f) { return f.key || f.label; });
+    if (filtrosValidos.length > 0) {
+      var pillsHtml = filtrosValidos.map(function (f) {
         return '<button class="cva-co-pill' + (f.key === 'todos' ? ' active' : '') + '" data-key="' + f.key + '"><span class="col">' + f.label + '</span><span class="cos">' + (f.sub || '') + '</span></button>';
       }).join('');
       var filtrosEl = document.createElement('div');
@@ -776,7 +777,6 @@
       aplicar('todos');
       new MutationObserver(function () { if (activoKey !== 'todos') aplicar(activoKey); }).observe(ref, { childList: true, subtree: true });
     }
-
   }
 
   // ════════════════════════════════════════════════
