@@ -699,6 +699,7 @@
     if (document.getElementById('cva-hero-cortinas')) return;
     var filtros = catCfg.filtros || [];
     var titulo = catCfg.hero_titulo || '¿Cuál es la cortina perfecta para tu ventana?';
+    var landingUrl = catCfg.landing_url || 'https://cortinas.pintoshogar.com.ar';
 
     css([
       '#cva-hero-cortinas{width:100%;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 50%,#2a2a2a 100%);display:flex;align-items:center;justify-content:center;padding:40px 24px;min-height:260px;}',
@@ -710,8 +711,10 @@
       '.hc-fbox .fl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);}',
       '.hc-fbox .fv{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;}',
       '.hc-fsep{font-size:20px;color:rgba(255,255,255,0.25);font-weight:200;}',
-      '.hc-note{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:400px;margin:0 auto;}',
+      '.hc-note{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:400px;margin:0 auto 20px;}',
       '.hc-note strong{color:rgba(255,255,255,0.8);}',
+      '.hc-cta{display:inline-block;margin-top:4px;padding:13px 32px;background:#CDB982;color:#1a1a1a;font-size:14px;font-weight:700;border-radius:999px;text-decoration:none;letter-spacing:0.3px;transition:background .2s,transform .15s;cursor:pointer;}',
+      '.hc-cta:hover{background:#e0cc96;transform:translateY(-1px);}',
       '#cva-filtros-cortinas{background:#fafaf9;padding:28px 16px 22px;text-align:center;border-bottom:1px solid #efefed;margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}',
       '#cva-filtros-cortinas h3{font-size:clamp(13px,2.2vw,16px);font-weight:700;color:#111;margin:0 0 6px;}',
       '#cva-filtros-cortinas p{font-size:12px;color:#888;margin:0 0 18px;}',
@@ -727,51 +730,53 @@
 
     var hero = document.createElement('div');
     hero.id = 'cva-hero-cortinas';
-    hero.innerHTML = '<div id="cva-hc-inner"><span class="hc-tag">Cortinas Black Out</span><h1>' + titulo + '</h1><div class="hc-formula"><div class="hc-fbox"><span class="fl">Alto</span><span class="fv">Tu ventana</span></div><span class="hc-fsep">×</span><div class="hc-fbox"><span class="fl">Ancho</span><span class="fv">Cantidad de paños</span></div><span class="hc-fsep">=</span><div class="hc-fbox"><span class="fl">Tu cortina</span><span class="fv">Perfecta</span></div></div><p class="hc-note">El <strong>alto</strong> define el tamaño de la cortina · El <strong>ancho</strong> define cuántos paños necesitás. Cada paño mide 130cm de ancho.</p></div>';
-
-    var pillsHtml = filtros.map(function (f) {
-      return '<button class="cva-co-pill' + (f.key === 'todos' ? ' active' : '') + '" data-key="' + f.key + '"><span class="col">' + f.label + '</span><span class="cos">' + (f.sub || '') + '</span></button>';
-    }).join('');
-
-    var filtrosEl = document.createElement('div');
-    filtrosEl.id = 'cva-filtros-cortinas';
-    filtrosEl.innerHTML = '<h3>¿Qué alto tiene tu ventana?</h3><p>Seleccioná y te mostramos exactamente las cortinas que te quedan</p><div class="cva-co-pills">' + pillsHtml + '</div><div id="cva-co-result"></div>';
+    hero.innerHTML = '<div id="cva-hc-inner"><span class="hc-tag">Cortinas Black Out</span><h1>' + titulo + '</h1><div class="hc-formula"><div class="hc-fbox"><span class="fl">Alto</span><span class="fv">Tu ventana</span></div><span class="hc-fsep">×</span><div class="hc-fbox"><span class="fl">Ancho</span><span class="fv">Cantidad de paños</span></div><span class="hc-fsep">=</span><div class="hc-fbox"><span class="fl">Tu cortina</span><span class="fv">Perfecta</span></div></div><p class="hc-note">El <strong>alto</strong> define el tamaño de la cortina · El <strong>ancho</strong> define cuántos paños necesitás. Cada paño mide 130cm de ancho.</p><a class="hc-cta" href="' + landingUrl + '">Configurá tu cortina →</a></div>';
 
     var ref = document.querySelector('.js-product-table,.products-grid,.js-products-container,#products');
     if (!ref) return;
     ref.parentNode.insertBefore(hero, ref);
-    ref.parentNode.insertBefore(filtrosEl, ref);
 
-    var activoKey = 'todos';
-    function matchFiltro(nombre, key) {
-      if (key === 'todos') return true;
-      if (key === 'h150') return /\b(120|130|140|150)\s*cm\s*x/i.test(nombre);
-      if (key === 'h210') return /\b210\s*cm\s*x/i.test(nombre);
-      if (key === 'h240') return /\b(220|230|240)\s*cm\s*x/i.test(nombre);
-      if (key === 'h260') return /\b(250|260)\s*cm\s*x/i.test(nombre);
-      if (key === 'h300') return /\b(270|280|290|300)\s*cm\s*x/i.test(nombre) || /\b3\s*m\b/i.test(nombre);
-      return true;
-    }
-    function aplicar(key) {
-      activoKey = key;
-      var cards = document.querySelectorAll('.js-item-product,.item-product');
-      var vis = 0;
-      cards.forEach(function (card) {
-        var n = ((card.querySelector('.js-item-name,.item-name') || {}).innerText || '').toLowerCase();
-        var ok = matchFiltro(n, key);
-        card.style.display = ok ? '' : 'none';
-        if (ok) vis++;
+    if (filtros.length > 0) {
+      var pillsHtml = filtros.map(function (f) {
+        return '<button class="cva-co-pill' + (f.key === 'todos' ? ' active' : '') + '" data-key="' + f.key + '"><span class="col">' + f.label + '</span><span class="cos">' + (f.sub || '') + '</span></button>';
+      }).join('');
+      var filtrosEl = document.createElement('div');
+      filtrosEl.id = 'cva-filtros-cortinas';
+      filtrosEl.innerHTML = '<h3>¿Qué alto tiene tu ventana?</h3><p>Seleccioná y te mostramos exactamente las cortinas que te quedan</p><div class="cva-co-pills">' + pillsHtml + '</div><div id="cva-co-result"></div>';
+      ref.parentNode.insertBefore(filtrosEl, ref);
+
+      var activoKey = 'todos';
+      function matchFiltro(nombre, key) {
+        if (key === 'todos') return true;
+        if (key === 'h150') return /\b(120|130|140|150)\s*cm\s*x/i.test(nombre);
+        if (key === 'h210') return /\b210\s*cm\s*x/i.test(nombre);
+        if (key === 'h240') return /\b(220|230|240)\s*cm\s*x/i.test(nombre);
+        if (key === 'h260') return /\b(250|260)\s*cm\s*x/i.test(nombre);
+        if (key === 'h300') return /\b(270|280|290|300)\s*cm\s*x/i.test(nombre) || /\b3\s*m\b/i.test(nombre);
+        return true;
+      }
+      function aplicar(key) {
+        activoKey = key;
+        var cards = document.querySelectorAll('.js-item-product,.item-product');
+        var vis = 0;
+        cards.forEach(function (card) {
+          var n = ((card.querySelector('.js-item-name,.item-name') || {}).innerText || '').toLowerCase();
+          var ok = matchFiltro(n, key);
+          card.style.display = ok ? '' : 'none';
+          if (ok) vis++;
+        });
+        document.querySelectorAll('.cva-co-pill').forEach(function (p) { p.classList.toggle('active', p.dataset.key === key); });
+        var res = document.getElementById('cva-co-result');
+        if (res) res.textContent = vis + ' producto' + (vis !== 1 ? 's' : '');
+      }
+      filtrosEl.addEventListener('click', function (e) {
+        var pill = e.target.closest('.cva-co-pill');
+        if (pill) aplicar(pill.dataset.key);
       });
-      document.querySelectorAll('.cva-co-pill').forEach(function (p) { p.classList.toggle('active', p.dataset.key === key); });
-      var res = document.getElementById('cva-co-result');
-      if (res) res.textContent = vis + ' producto' + (vis !== 1 ? 's' : '');
+      aplicar('todos');
+      new MutationObserver(function () { if (activoKey !== 'todos') aplicar(activoKey); }).observe(ref, { childList: true, subtree: true });
     }
-    filtrosEl.addEventListener('click', function (e) {
-      var pill = e.target.closest('.cva-co-pill');
-      if (pill) aplicar(pill.dataset.key);
-    });
-    aplicar('todos');
-    new MutationObserver(function () { if (activoKey !== 'todos') aplicar(activoKey); }).observe(ref, { childList: true, subtree: true });
+
   }
 
   // ════════════════════════════════════════════════

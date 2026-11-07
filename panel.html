@@ -1555,6 +1555,8 @@ function makeCatRow(slug, cat) {
     '<input class="form-input cat-titulo" placeholder="Elegí cómo querés transformar tu hogar" value="' + escHtml(cat.hero_titulo||'') + '" oninput="markDirty();syncCat()"></div>' +
     '<div class="form-group"><label class="form-label">URL imagen de fondo</label>' +
     '<input class="form-input cat-imagen" placeholder="https://cdn.tutienda.com/imagen.jpg" value="' + escHtml(cat.hero_imagen||'') + '" oninput="markDirty();syncCat()"></div>' +
+    '<div class="form-group"><label class="form-label">URL de la landing (botón CTA)</label>' +
+    '<input class="form-input cat-landing" placeholder="https://cortinas.pintoshogar.com.ar" value="' + escHtml(cat.landing_url||'') + '" oninput="markDirty();syncCat()"></div>' +
     '<div class="form-group"><label class="form-label">Pills de filtro</label>' +
     '<div class="filtros-list">' + filtrosHtml + '</div>' +
     '<button class="btn-add" style="margin-top:6px;" onclick="addFiltroRow(this)">+ Agregar filtro</button>' +
@@ -1602,6 +1604,7 @@ function syncCat() {
       tipo:        row.querySelector('.cat-tipo').value,
       hero_titulo: row.querySelector('.cat-titulo').value.trim(),
       hero_imagen: row.querySelector('.cat-imagen').value.trim(),
+      landing_url: row.querySelector('.cat-landing') ? row.querySelector('.cat-landing').value.trim() : '',
       filtros:     filtros
     };
   });
