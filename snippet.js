@@ -736,6 +736,14 @@
     if (!ref) return;
     ref.parentNode.insertBefore(hero, ref);
 
+    // Ocultar elementos nativos de TN que quedan entre el hero y los productos
+    // (subcategorías, nav de filtros de colección, etc.)
+    var sib = ref.previousElementSibling;
+    while (sib && sib.id !== 'cva-hero-cortinas') {
+      sib.style.display = 'none';
+      sib = sib.previousElementSibling;
+    }
+
     var filtrosValidos = filtros.filter(function(f) { return f.key || f.label; });
     if (filtrosValidos.length > 0) {
       var pillsHtml = filtrosValidos.map(function (f) {
